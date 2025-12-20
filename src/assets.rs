@@ -37,9 +37,18 @@ pub struct Level {
     pub width: usize,
     pub data: Vec<[u8; 3]>,
     pub camera: Camera2D,
+    pub min_pos: Vec2,
 }
 impl Level {
-    pub fn get_tile(&self, x: usize, y: usize) -> [u8; 3] {
+    pub fn get_tile(&self, x: i16, y: i16) -> [u8; 3] {
+        if (x as f32 * 8.0) < self.min_pos.x || (y as f32 * 8.0) < self.min_pos.y {
+            return [0; 3];
+        }
+        let x = (x - (self.min_pos.x / 8.0) as i16) as usize;
+        let y = (y - (self.min_pos.y / 8.0) as i16) as usize;
+        if x >= self.width || y >= self.data.len() / self.width {
+            return [0; 3];
+        }
         self.data[x + y * self.width]
     }
     pub fn load(data: &str, tileset: &Spritesheet) -> Self {
@@ -65,7 +74,7 @@ impl Level {
         }
         let width = max_x - min_x + 16;
         let height = max_y - min_y + 16;
-        dbg!(width, height);
+
         let mut data = vec![[0, 0, 0]; (width * height) as usize];
 
         for (index, chunks) in [first_chunks]
@@ -104,6 +113,7 @@ impl Level {
         set_default_camera();
         Self {
             width: width as usize,
+            min_pos: vec2((min_x * 8) as f32, (min_y * 8) as f32),
             camera,
             data,
         }

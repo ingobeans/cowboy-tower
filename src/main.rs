@@ -1,6 +1,6 @@
 use macroquad::{miniquad::window::screen_size, prelude::*};
 
-use crate::{assets::Assets, utils::*};
+use crate::{assets::Assets, player::Player, utils::*};
 
 mod assets;
 mod player;
@@ -9,11 +9,13 @@ mod utils;
 struct Game<'a> {
     assets: &'a Assets,
     camera: Camera2D,
+    player: Player,
 }
 impl<'a> Game<'a> {
     fn new(assets: &'a Assets) -> Self {
         Self {
             assets,
+            player: Player::new(vec2(0.0, -10.0 * 8.0)),
             camera: Camera2D::default(),
         }
     }
@@ -23,7 +25,8 @@ impl<'a> Game<'a> {
         let (actual_screen_width, actual_screen_height) = screen_size();
         let scale_factor =
             (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
-        self.camera.target += delta_time * 8.0 * get_input_axis() * 5.0;
+        self.player.update(delta_time, &self.assets.levels[0]);
+        self.camera.target = self.player.pos.floor();
         self.camera.zoom = vec2(
             1.0 / actual_screen_width * 2.0 * scale_factor,
             1.0 / actual_screen_height * 2.0 * scale_factor,
@@ -37,27 +40,13 @@ impl<'a> Game<'a> {
             .as_ref()
             .unwrap()
             .texture;
-        draw_texture_ex(
+        draw_texture(
             t,
-            0.0,
-            0.0,
+            self.assets.levels[0].min_pos.x,
+            self.assets.levels[0].min_pos.y,
             WHITE,
-            DrawTextureParams {
-                //dest_size: Some(t.size() * scale_factor),
-                ..Default::default()
-            },
         );
-        let t = &self.assets.cowboy.animations[0].get_at_time(0);
-        draw_texture_ex(
-            t,
-            0.0,
-            0.0,
-            WHITE,
-            DrawTextureParams {
-                //dest_size: Some(t.size() * scale_factor),
-                ..Default::default()
-            },
-        );
+        self.player.draw(self.assets);
     }
 }
 

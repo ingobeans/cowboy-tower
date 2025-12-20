@@ -1,9 +1,62 @@
 use macroquad::prelude::*;
 
-use crate::assets::Level;
+use crate::{
+    assets::{Assets, Level},
+    utils::get_input_axis,
+};
 
 fn ceil_g(a: f32) -> f32 {
     if a < 0.0 { a.floor() } else { a.ceil() }
+}
+
+pub struct Player {
+    pub pos: Vec2,
+    pub velocity: Vec2,
+    pub on_ground: bool,
+    pub facing_left: bool,
+}
+impl Player {
+    pub fn new(pos: Vec2) -> Self {
+        Self {
+            pos,
+            velocity: Vec2::ZERO,
+            on_ground: false,
+            facing_left: false,
+        }
+    }
+    pub fn update(&mut self, delta_time: f32, world: &Level) {
+        const MOVE_SPEED: f32 = 101.0;
+        const MOVE_ACCELERATION: f32 = 22.0;
+        const GRAVITY: f32 = 9.8 * 75.0;
+        const JUMP_FORCE: f32 = 160.0;
+
+        let input = get_input_axis();
+        self.velocity.x = self
+            .velocity
+            .x
+            .lerp(input.x * MOVE_SPEED, delta_time * MOVE_ACCELERATION);
+        self.velocity.y += GRAVITY * delta_time;
+
+        if self.on_ground && is_key_pressed(KeyCode::Space) {
+            self.velocity.y = -JUMP_FORCE;
+        }
+
+        (self.pos, self.on_ground) =
+            update_physicsbody(self.pos, &mut self.velocity, delta_time, world, true)
+    }
+    pub fn draw(&self, assets: &Assets) {
+        let t = &assets.cowboy.animations[0].get_at_time(0);
+        draw_texture_ex(
+            t,
+            self.pos.x.floor() - 4.0,
+            self.pos.y.floor() - 8.0,
+            WHITE,
+            DrawTextureParams {
+                flip_x: self.facing_left,
+                ..Default::default()
+            },
+        );
+    }
 }
 
 pub fn update_physicsbody(
@@ -31,7 +84,7 @@ pub fn update_physicsbody(
     }
 
     for (tx, ty) in tiles_y {
-        let tile = world.get_tile((tx / 2.0) as usize, (ty / 2.0) as usize)[0];
+        let tile = world.get_tile((tx) as i16, (ty) as i16)[0];
         if tile != 0 {
             let c = if velocity.y < 0.0 {
                 tile_y.floor() * 8.0
@@ -56,7 +109,7 @@ pub fn update_physicsbody(
     }
 
     for (tx, ty) in tiles_x {
-        let tile = world.get_tile((tx / 2.0) as usize, (ty / 2.0) as usize)[0];
+        let tile = world.get_tile((tx) as i16, (ty) as i16)[0];
         if tile != 0 {
             let c = if velocity.x < 0.0 {
                 tile_x.floor() * 8.0
