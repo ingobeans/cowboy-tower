@@ -19,24 +19,22 @@ impl<'a> Game<'a> {
         let scale_factor =
             (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
 
-        for (i, tile) in self.assets.levels[0].data.iter().enumerate() {
-            let x = i % self.assets.levels[0].width;
-            let y = i / self.assets.levels[0].width;
-            for t in tile {
-                if *t == 0 {
-                    continue;
-                }
-                let t = *t - 1;
-                self.assets.tileset.draw_tile(
-                    (x * 8) as f32 + 128.0,
-                    (y * 8) as f32 + 128.0,
-                    (t % 32) as f32,
-                    (t / 32) as f32,
-                    None,
-                );
-            }
-        }
-
+        let t = &self.assets.levels[0]
+            .camera
+            .render_target
+            .as_ref()
+            .unwrap()
+            .texture;
+        draw_texture_ex(
+            t,
+            0.0,
+            0.0,
+            WHITE,
+            DrawTextureParams {
+                dest_size: Some(t.size() * scale_factor),
+                ..Default::default()
+            },
+        );
         let t = &self.assets.cowboy.animations[0].get_at_time(0);
         draw_texture_ex(
             t,

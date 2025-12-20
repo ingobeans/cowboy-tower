@@ -5,6 +5,8 @@ use image::EncodableLayout;
 use include_dir::{Dir, include_dir};
 use macroquad::prelude::*;
 
+use crate::utils::create_camera;
+
 pub struct Assets {
     pub cowboy: AnimationsGroup,
     pub levels: Vec<Level>,
@@ -12,19 +14,21 @@ pub struct Assets {
 }
 impl Assets {
     pub fn load() -> Self {
+        let tileset = Spritesheet::new(
+            load_ase_texture(include_bytes!("../assets/tileset.ase"), None),
+            8.0,
+        );
+
         let mut levels = Vec::new();
         static LEVELS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/assets/levels");
         for file in LEVELS_DIR.files() {
-            let level = Level::load(file.contents_utf8().unwrap());
+            let level = Level::load(file.contents_utf8().unwrap(), &tileset);
             levels.push(level);
         }
         Self {
             levels,
             cowboy: AnimationsGroup::from_file(include_bytes!("../assets/cowboy.ase")),
-            tileset: Spritesheet::new(
-                load_ase_texture(include_bytes!("../assets/tileset.ase"), None),
-                8.0,
-            ),
+            tileset,
         }
     }
 }
@@ -32,17 +36,17 @@ impl Assets {
 pub struct Level {
     pub width: usize,
     pub data: Vec<[u8; 3]>,
+    pub camera: Camera2D,
 }
 impl Level {
     pub fn get_tile(&self, x: usize, y: usize) -> [u8; 3] {
         self.data[x + y * self.width]
     }
-    pub fn load(data: &str) -> Self {
+    pub fn load(data: &str, tileset: &Spritesheet) -> Self {
         let mut layers = data.split("<layer");
         layers.next();
         let first = layers.next().unwrap();
         let first_chunks = get_all_chunks(first);
-        dbg!(first_chunks.len());
         let mut min_x = i16::MAX;
         let mut max_x = i16::MIN;
         let mut min_y = i16::MAX;
@@ -59,9 +63,9 @@ impl Level {
                 max_y = *y;
             }
         }
-        dbg!(max_x, min_x);
         let width = max_x - min_x + 16;
         let height = max_y - min_y + 16;
+        dbg!(width, height);
         let mut data = vec![[0, 0, 0]; (width * height) as usize];
 
         for (index, chunks) in [first_chunks]
@@ -77,8 +81,30 @@ impl Level {
                 }
             }
         }
+        let mut camera = create_camera((width * 8) as f32, (height * 8) as f32);
+        camera.target = vec2((width * 16) as f32 / 2.0, (height * 16) as f32 / 2.0);
+        set_camera(&camera);
+        for (i, tile) in data.iter().enumerate() {
+            let x = i % width as usize;
+            let y = i / width as usize;
+            for t in tile {
+                if *t == 0 {
+                    continue;
+                }
+                let t = *t - 1;
+                tileset.draw_tile(
+                    (x * 8) as f32,
+                    (y * 8) as f32,
+                    (t % 32) as f32,
+                    (t / 32) as f32,
+                    None,
+                );
+            }
+        }
+        set_default_camera();
         Self {
             width: width as usize,
+            camera,
             data,
         }
     }
