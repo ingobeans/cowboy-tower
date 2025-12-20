@@ -13,3 +13,20 @@ pub fn create_camera(w: f32, h: f32) -> Camera2D {
         ..Default::default()
     }
 }
+
+pub fn get_input_axis() -> Vec2 {
+    let mut i = Vec2::ZERO;
+    if is_key_down(KeyCode::A) {
+        i.x -= 1.0;
+    }
+    if is_key_down(KeyCode::D) {
+        i.x += 1.0;
+    }
+    if is_key_down(KeyCode::W) {
+        i.y -= 1.0;
+    }
+    if is_key_down(KeyCode::S) {
+        i.y += 1.0;
+    }
+    i
+}
