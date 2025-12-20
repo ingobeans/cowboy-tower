@@ -14,6 +14,8 @@ pub struct Player {
     pub velocity: Vec2,
     pub on_ground: bool,
     pub facing_left: bool,
+    pub moving: bool,
+    pub time: f32,
 }
 impl Player {
     pub fn new(pos: Vec2) -> Self {
@@ -22,6 +24,8 @@ impl Player {
             velocity: Vec2::ZERO,
             on_ground: false,
             facing_left: false,
+            moving: false,
+            time: 0.0,
         }
     }
     pub fn update(&mut self, delta_time: f32, world: &Level) {
@@ -30,12 +34,18 @@ impl Player {
         const GRAVITY: f32 = 9.8 * 75.0;
         const JUMP_FORCE: f32 = 160.0;
 
+        self.time += delta_time;
         let input = get_input_axis();
         self.velocity.x = self
             .velocity
             .x
             .lerp(input.x * MOVE_SPEED, delta_time * MOVE_ACCELERATION);
         self.velocity.y += GRAVITY * delta_time;
+
+        self.moving = input.x != 0.0;
+        if self.moving {
+            self.facing_left = input.x.is_sign_negative();
+        }
 
         if self.on_ground && is_key_pressed(KeyCode::Space) {
             self.velocity.y = -JUMP_FORCE;
@@ -45,9 +55,10 @@ impl Player {
             update_physicsbody(self.pos, &mut self.velocity, delta_time, world, true)
     }
     pub fn draw(&self, assets: &Assets) {
-        let t = &assets.cowboy.animations[0].get_at_time(0);
+        let texture = assets.cowboy.animations[if self.moving { 1 } else { 0 }]
+            .get_at_time((self.time * 1000.0) as u32);
         draw_texture_ex(
-            t,
+            texture,
             self.pos.x.floor() - 4.0,
             self.pos.y.floor() - 8.0,
             WHITE,
