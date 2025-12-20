@@ -82,7 +82,7 @@ impl Level {
             }
         }
         let mut camera = create_camera((width * 8) as f32, (height * 8) as f32);
-        camera.target = vec2((width * 16) as f32 / 2.0, (height * 16) as f32 / 2.0);
+        camera.target = vec2((width * 8) as f32 / 2.0, (height * 8) as f32 / 2.0);
         set_camera(&camera);
         for (i, tile) in data.iter().enumerate() {
             let x = i % width as usize;
