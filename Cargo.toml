@@ -1,0 +1,9 @@
+[package]
+name = "cowboy-tower"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+asefile = "0.3.8"
+macroquad = { version = "0.4.14", features = ["audio"] }
+image = "0.24.9"
