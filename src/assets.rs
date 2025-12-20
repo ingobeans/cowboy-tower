@@ -2,17 +2,162 @@ use std::collections::HashMap;
 
 use asefile::AsepriteFile;
 use image::EncodableLayout;
+use include_dir::{Dir, include_dir};
 use macroquad::prelude::*;
 
 pub struct Assets {
     pub cowboy: AnimationsGroup,
+    pub levels: Vec<Level>,
+    pub tileset: Spritesheet,
 }
 impl Assets {
     pub fn load() -> Self {
+        let mut levels = Vec::new();
+        static LEVELS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/assets/levels");
+        for file in LEVELS_DIR.files() {
+            let level = Level::load(file.contents_utf8().unwrap());
+            levels.push(level);
+        }
         Self {
+            levels,
             cowboy: AnimationsGroup::from_file(include_bytes!("../assets/cowboy.ase")),
+            tileset: Spritesheet::new(
+                load_ase_texture(include_bytes!("../assets/tileset.ase"), None),
+                8.0,
+            ),
         }
     }
+}
+
+pub struct Level {
+    pub width: usize,
+    pub data: Vec<[u8; 3]>,
+}
+impl Level {
+    pub fn get_tile(&self, x: usize, y: usize) -> [u8; 3] {
+        self.data[x + y * self.width]
+    }
+    pub fn load(data: &str) -> Self {
+        let mut layers = data.split("<layer");
+        layers.next();
+        let first = layers.next().unwrap();
+        let first_chunks = get_all_chunks(first);
+        dbg!(first_chunks.len());
+        let mut min_x = i16::MAX;
+        let mut max_x = i16::MIN;
+        let mut min_y = i16::MAX;
+        let mut max_y = i16::MIN;
+        for (x, y) in first_chunks.keys() {
+            if *x < min_x {
+                min_x = *x;
+            } else if *x > max_x {
+                max_x = *x;
+            }
+            if *y < min_y {
+                min_y = *y;
+            } else if *y > max_y {
+                max_y = *y;
+            }
+        }
+        dbg!(max_x, min_x);
+        let width = max_x - min_x + 16;
+        let height = max_y - min_y + 16;
+        let mut data = vec![[0, 0, 0]; (width * height) as usize];
+
+        for (index, chunks) in [first_chunks]
+            .into_iter()
+            .chain(layers.map(|f| get_all_chunks(f)))
+            .enumerate()
+        {
+            for ((cx, cy), chunk) in chunks.iter() {
+                for (i, tile) in chunk.tiles.iter().enumerate() {
+                    let x = (i % 16) + (*cx - min_x) as usize;
+                    let y = (i / 16) + (*cy - min_y) as usize;
+                    data[x + y * width as usize][index] = *tile;
+                }
+            }
+        }
+        Self {
+            width: width as usize,
+            data,
+        }
+    }
+}
+#[derive(Clone)]
+pub struct Chunk {
+    pub x: i16,
+    pub y: i16,
+    pub tiles: Vec<u8>,
+}
+impl Chunk {
+    pub fn tile_at(&self, x: usize, y: usize) -> Option<u8> {
+        if x > 16 || y > 16 {
+            return None;
+        }
+        self.tiles.get(x + y * 16).cloned()
+    }
+}
+
+fn get_all_chunks(xml: &str) -> HashMap<(i16, i16), Chunk> {
+    let mut chunks = HashMap::new();
+    let mut xml = xml.to_string();
+    while let Some((current, remains)) = xml.split_once("</chunk>") {
+        let new = parse_chunk(current);
+        chunks.insert((new.x, new.y), new);
+        xml = remains.to_string();
+    }
+
+    chunks
+}
+
+fn get_layer<'a>(xml: &'a str, layer: &str) -> &'a str {
+    let split = format!(" name=\"{layer}");
+    xml.split_once(&split)
+        .unwrap()
+        .1
+        .split_once(">")
+        .unwrap()
+        .1
+        .split_once("</layer>")
+        .unwrap()
+        .0
+}
+
+fn parse_chunk(xml: &str) -> Chunk {
+    let (tag, data) = xml
+        .split_once("<chunk ")
+        .unwrap()
+        .1
+        .split_once(">")
+        .unwrap();
+
+    let x = tag
+        .split_once("x=\"")
+        .unwrap()
+        .1
+        .split_once("\"")
+        .unwrap()
+        .0
+        .parse()
+        .unwrap();
+    let y = tag
+        .split_once("y=\"")
+        .unwrap()
+        .1
+        .split_once("\"")
+        .unwrap()
+        .0
+        .parse()
+        .unwrap();
+
+    let mut split = data.split(',');
+
+    let mut chunk = vec![0; 16 * 16];
+    for item in &mut chunk {
+        let a = split.next().unwrap().trim();
+        *item = a.parse().unwrap()
+    }
+    Chunk { x, y, tiles: chunk }
 }
 
 pub struct Animation {

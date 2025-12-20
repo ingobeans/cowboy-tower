@@ -3,6 +3,7 @@ use macroquad::{miniquad::window::screen_size, prelude::*};
 use crate::{assets::Assets, utils::*};
 
 mod assets;
+mod player;
 mod utils;
 
 struct Game<'a> {
@@ -17,6 +18,24 @@ impl<'a> Game<'a> {
         let (actual_screen_width, actual_screen_height) = screen_size();
         let scale_factor =
             (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
+
+        for (i, tile) in self.assets.levels[0].data.iter().enumerate() {
+            let x = i % self.assets.levels[0].width;
+            let y = i / self.assets.levels[0].width;
+            for t in tile {
+                if *t == 0 {
+                    continue;
+                }
+                let t = *t - 1;
+                self.assets.tileset.draw_tile(
+                    (x * 8) as f32 + 128.0,
+                    (y * 8) as f32 + 128.0,
+                    (t % 32) as f32,
+                    (t / 32) as f32,
+                    None,
+                );
+            }
+        }
 
         let t = &self.assets.cowboy.animations[0].get_at_time(0);
         draw_texture_ex(
