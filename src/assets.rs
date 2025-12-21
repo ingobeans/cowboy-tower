@@ -54,22 +54,25 @@ impl Level {
     pub fn load(data: &str, tileset: &Spritesheet) -> Self {
         let mut layers = data.split("<layer");
         layers.next();
-        let first = layers.next().unwrap();
-        let first_chunks = get_all_chunks(first);
+        let chunks: Vec<HashMap<(i16, i16), Chunk>> = layers.map(|f| get_all_chunks(f)).collect();
         let mut min_x = i16::MAX;
         let mut max_x = i16::MIN;
         let mut min_y = i16::MAX;
         let mut max_y = i16::MIN;
-        for (x, y) in first_chunks.keys() {
-            if *x < min_x {
-                min_x = *x;
-            } else if *x > max_x {
-                max_x = *x;
-            }
-            if *y < min_y {
-                min_y = *y;
-            } else if *y > max_y {
-                max_y = *y;
+        for chunk in &chunks {
+            for (x, y) in chunk.keys() {
+                if *x < min_x {
+                    min_x = *x;
+                }
+                if *x > max_x {
+                    max_x = *x;
+                }
+                if *y < min_y {
+                    min_y = *y;
+                }
+                if *y > max_y {
+                    max_y = *y;
+                }
             }
         }
         let width = max_x - min_x + 16;
@@ -77,11 +80,7 @@ impl Level {
 
         let mut data = vec![[0, 0, 0]; (width * height) as usize];
 
-        for (index, chunks) in [first_chunks]
-            .into_iter()
-            .chain(layers.map(|f| get_all_chunks(f)))
-            .enumerate()
-        {
+        for (index, chunks) in chunks.iter().enumerate() {
             for ((cx, cy), chunk) in chunks.iter() {
                 for (i, tile) in chunk.tiles.iter().enumerate() {
                     let x = (i % 16) + (*cx - min_x) as usize;
