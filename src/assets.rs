@@ -38,6 +38,7 @@ pub struct Level {
     pub data: Vec<[u8; 3]>,
     pub camera: Camera2D,
     pub min_pos: Vec2,
+    pub max_pos: Vec2,
 }
 impl Level {
     pub fn get_tile(&self, x: i16, y: i16) -> [u8; 3] {
@@ -113,6 +114,7 @@ impl Level {
         Self {
             width: width as usize,
             min_pos: vec2((min_x * 8) as f32, (min_y * 8) as f32),
+            max_pos: vec2((max_x * 8) as f32, (max_y * 8) as f32),
             camera,
             data,
         }
