@@ -63,6 +63,18 @@ impl<'a> Game<'a> {
 
         let t = &level.camera.render_target.as_ref().unwrap().texture;
         draw_texture(t, level.min_pos.x, level.min_pos.y, WHITE);
+        for (pos, ty) in &level.enemies {
+            draw_texture_ex(
+                ty.animation.animations[0].get_at_time(0),
+                pos.x.floor() - 4.0,
+                pos.y.floor() - 8.0,
+                WHITE,
+                DrawTextureParams {
+                    flip_x: true,
+                    ..Default::default()
+                },
+            );
+        }
         self.player.draw(self.assets);
     }
 }

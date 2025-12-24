@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::LazyLock};
 
 use asefile::AsepriteFile;
 use image::EncodableLayout;
@@ -33,8 +33,18 @@ impl Assets {
     }
 }
 
+pub struct EnemyType {
+    pub animation: AnimationsGroup,
+}
+pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
+    vec![EnemyType {
+        animation: AnimationsGroup::from_file(include_bytes!("../assets/bandit.ase")),
+    }]
+});
+
 pub struct Level {
     pub width: usize,
+    pub enemies: Vec<(Vec2, &'static EnemyType)>,
     pub data: Vec<[u8; 3]>,
     pub camera: Camera2D,
     pub min_pos: Vec2,
@@ -55,12 +65,13 @@ impl Level {
     pub fn load(data: &str, tileset: &Spritesheet) -> Self {
         let mut layers = data.split("<layer");
         layers.next();
-        let chunks: Vec<HashMap<(i16, i16), Chunk>> = layers.map(|f| get_all_chunks(f)).collect();
+        let layers_chunks: Vec<HashMap<(i16, i16), Chunk>> =
+            layers.map(|f| get_all_chunks(f)).collect();
         let mut min_x = i16::MAX;
         let mut max_x = i16::MIN;
         let mut min_y = i16::MAX;
         let mut max_y = i16::MIN;
-        for chunk in &chunks {
+        for chunk in &layers_chunks {
             for (x, y) in chunk.keys() {
                 if *x < min_x {
                     min_x = *x;
@@ -80,13 +91,26 @@ impl Level {
         let height = max_y - min_y + 16;
 
         let mut data = vec![[0, 0, 0]; (width * height) as usize];
+        let mut enemies = Vec::new();
 
-        for (index, chunks) in chunks.iter().enumerate() {
+        for (index, chunks) in layers_chunks.iter().enumerate() {
             for ((cx, cy), chunk) in chunks.iter() {
                 for (i, tile) in chunk.tiles.iter().enumerate() {
                     let x = (i % 16) + (*cx - min_x) as usize;
                     let y = (i / 16) + (*cy - min_y) as usize;
-                    data[x + y * width as usize][index] = *tile;
+                    if index == layers_chunks.len() - 1 {
+                        if *tile <= 32 && *tile > 1 {
+                            enemies.push((
+                                vec2(
+                                    ((x) * 8) as f32 + (min_x * 8) as f32,
+                                    ((y) * 8) as f32 + (min_y * 8) as f32,
+                                ),
+                                &ENEMIES[(*tile - 2) as usize],
+                            ));
+                        }
+                    } else {
+                        data[x + y * width as usize][index] = *tile;
+                    }
                 }
             }
         }
@@ -115,6 +139,7 @@ impl Level {
             width: width as usize,
             min_pos: vec2((min_x * 8) as f32, (min_y * 8) as f32),
             max_pos: vec2((max_x * 8) as f32, (max_y * 8) as f32),
+            enemies,
             camera,
             data,
         }
