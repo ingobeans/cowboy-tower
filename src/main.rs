@@ -32,7 +32,7 @@ impl<'a> Game<'a> {
             1.0 / actual_screen_height * 2.0 * scale_factor,
         );
         set_camera(&self.camera);
-        clear_background(Color::from_hex(0x3c9f9c));
+        clear_background(Color::from_hex(0x1CB7FF));
 
         let level = &self.assets.levels[0];
         let min_y = self.camera.target.y + actual_screen_height / scale_factor / 2.0;
