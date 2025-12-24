@@ -2,7 +2,7 @@ use macroquad::prelude::*;
 
 use crate::{
     assets::{Assets, Level},
-    utils::get_input_axis,
+    utils::*,
 };
 
 fn ceil_g(a: f32) -> f32 {
@@ -11,6 +11,7 @@ fn ceil_g(a: f32) -> f32 {
 
 pub struct Player {
     pub pos: Vec2,
+    pub camera_pos: Vec2,
     pub velocity: Vec2,
     pub on_ground: bool,
     pub facing_left: bool,
@@ -21,6 +22,7 @@ impl Player {
     pub fn new(pos: Vec2) -> Self {
         Self {
             pos,
+            camera_pos: pos,
             velocity: Vec2::ZERO,
             on_ground: false,
             facing_left: false,
@@ -52,7 +54,18 @@ impl Player {
         }
 
         (self.pos, self.on_ground) =
-            update_physicsbody(self.pos, &mut self.velocity, delta_time, world, true)
+            update_physicsbody(self.pos, &mut self.velocity, delta_time, world, true);
+        self.camera_pos.x = self.pos.x.max(world.min_pos.x + SCREEN_WIDTH / 2.0 - 64.0);
+        let target = self.pos.y - 22.0;
+        if self.camera_pos.y < target {
+            self.camera_pos.y = target;
+        } else {
+            let delta = self.camera_pos.y - target;
+            let max_delta = 3.5 * 8.0;
+            if delta.abs() > max_delta {
+                self.camera_pos.y = max_delta * if delta < 0.0 { -1.0 } else { 1.0 } + target;
+            }
+        }
     }
     pub fn draw(&self, assets: &Assets) {
         let texture = assets.cowboy.animations[if self.moving { 1 } else { 0 }]

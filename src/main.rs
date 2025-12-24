@@ -26,7 +26,7 @@ impl<'a> Game<'a> {
         let scale_factor =
             (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
         self.player.update(delta_time, &self.assets.levels[0]);
-        self.camera.target = self.player.pos.floor() - vec2(0.0, 32.0);
+        self.camera.target = self.player.camera_pos.floor();
         self.camera.zoom = vec2(
             1.0 / actual_screen_width * 2.0 * scale_factor,
             1.0 / actual_screen_height * 2.0 * scale_factor,
