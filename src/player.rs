@@ -103,7 +103,7 @@ impl Player {
         for texture in [legs, torso] {
             draw_texture_ex(
                 texture,
-                self.pos.x.floor() - texture.width() / 2.0,
+                self.pos.x.floor() - texture.width() / 2.0 + 4.0,
                 self.pos.y.floor() - 8.0,
                 WHITE,
                 DrawTextureParams {
