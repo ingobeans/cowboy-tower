@@ -40,6 +40,8 @@ struct Projectile {
     sprite: usize,
     /// Is projectile fired by the player?
     friendly: bool,
+    /// True when projectile hits an enemy, marker to show that it should be destroyed.
+    dead: bool,
 }
 
 struct Game<'a> {
@@ -136,7 +138,19 @@ impl<'a> Game<'a> {
                     ..Default::default()
                 },
             );
-            true
+            let mut hit_by_projectile = false;
+            for projectile in self.projectiles.iter_mut() {
+                if projectile.friendly
+                    && ((projectile.pos.x - 4.0)..(projectile.pos.x + 4.0))
+                        .contains(&(enemy.pos.x + 4.0))
+                    && ((projectile.pos.y - 4.0)..(projectile.pos.y + 4.0)).contains(&enemy.pos.y)
+                {
+                    projectile.dead = true;
+                    hit_by_projectile = true;
+                    break;
+                }
+            }
+            !hit_by_projectile
         });
         self.player.draw(self.assets);
         self.projectiles.retain_mut(|projectile| {
@@ -151,6 +165,9 @@ impl<'a> Game<'a> {
                     ..Default::default()
                 },
             );
+            if projectile.dead {
+                return false;
+            }
             let tx = (projectile.pos.x / 8.0) as i16;
             let ty = (projectile.pos.y / 8.0) as i16;
             let hit_wall = level.get_tile(tx, ty)[1] != 0;
