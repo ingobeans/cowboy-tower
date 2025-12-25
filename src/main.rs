@@ -34,12 +34,20 @@ fn load_enemies(input: Vec<(Vec2, &'static EnemyType)>) -> Vec<Enemy> {
         .collect()
 }
 
+struct Projectile {
+    pos: Vec2,
+    direction: Vec2,
+    sprite: usize,
+    /// Is projectile fired by the player?
+    friendly: bool,
+}
+
 struct Game<'a> {
     assets: &'a Assets,
     camera: Camera2D,
     player: Player,
     enemies: Vec<Enemy>,
-    projectiles: Vec<(Vec2, usize)>,
+    projectiles: Vec<Projectile>,
 }
 impl<'a> Game<'a> {
     fn new(assets: &'a Assets) -> Self {
@@ -57,7 +65,8 @@ impl<'a> Game<'a> {
         let (actual_screen_width, actual_screen_height) = screen_size();
         let scale_factor =
             (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
-        self.player.update(delta_time, &self.assets.levels[0]);
+        self.player
+            .update(delta_time, &self.assets.levels[0], &mut self.projectiles);
         self.camera.target = self.player.camera_pos.floor();
         self.camera.zoom = vec2(
             1.0 / actual_screen_width * 2.0 * scale_factor,
@@ -130,6 +139,24 @@ impl<'a> Game<'a> {
             true
         });
         self.player.draw(self.assets);
+        self.projectiles.retain_mut(|projectile| {
+            projectile.pos += projectile.direction * delta_time * 128.0;
+            draw_texture_ex(
+                &self.assets.projectiles.frames[projectile.sprite].0,
+                projectile.pos.x.floor() - 4.0,
+                projectile.pos.y.floor() - 4.0,
+                WHITE,
+                DrawTextureParams {
+                    flip_x: projectile.direction.x < 0.0,
+                    ..Default::default()
+                },
+            );
+            let tx = (projectile.pos.x / 8.0) as i16;
+            let ty = (projectile.pos.y / 8.0) as i16;
+            let hit_wall = level.get_tile(tx, ty)[1] != 0;
+
+            !hit_wall
+        });
     }
 }
 

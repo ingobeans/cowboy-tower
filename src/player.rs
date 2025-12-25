@@ -1,6 +1,7 @@
 use macroquad::prelude::*;
 
 use crate::{
+    Projectile,
     assets::{Assets, Level},
     utils::*,
 };
@@ -34,20 +35,31 @@ impl Player {
             shooting: 0.0,
         }
     }
-    pub fn update(&mut self, delta_time: f32, world: &Level) {
+    pub fn update(&mut self, delta_time: f32, world: &Level, projectiles: &mut Vec<Projectile>) {
         const MOVE_SPEED: f32 = 101.0;
         const MOVE_ACCELERATION: f32 = 22.0;
         const GRAVITY: f32 = 9.8 * 75.0;
         const JUMP_FORCE: f32 = 160.0;
 
+        let input = get_input_axis();
         self.time += delta_time;
         if self.shooting > 0.0 {
             self.shooting += delta_time;
         } else if is_mouse_button_pressed(MouseButton::Left) {
             self.shooting += delta_time;
+            projectiles.push(Projectile {
+                pos: self.pos
+                    + if self.facing_left {
+                        vec2(-8.0, 0.0)
+                    } else {
+                        vec2(8.0, 0.0)
+                    },
+                direction: vec2(if self.facing_left { -1.0 } else { 1.0 }, 0.0),
+                sprite: 0,
+                friendly: true,
+            });
         }
 
-        let input = get_input_axis();
         self.velocity.x = self
             .velocity
             .x
