@@ -17,6 +17,8 @@ struct Enemy {
     velocity: Vec2,
     ty: &'static EnemyType,
     time: f32,
+    /// Set to zero when alive. On death, tracks death animation time
+    death_frames: f32,
     /// Random seed for each enemy, used for random-esque movement and behaviour
     wibble_wobble: f32,
 }
@@ -29,6 +31,7 @@ fn load_enemies(input: Vec<(Vec2, &'static EnemyType)>) -> Vec<Enemy> {
             velocity: Vec2::ZERO,
             ty: f.1,
             time: 0.0,
+            death_frames: 0.0,
             wibble_wobble: rand::gen_range(0.0, PI * 2.0),
         })
         .collect()
@@ -108,24 +111,41 @@ impl<'a> Game<'a> {
         draw_texture(t, level.min_pos.x, level.min_pos.y, WHITE);
         self.enemies.retain_mut(|enemy| {
             enemy.time += delta_time;
-            match enemy.ty.movement_type {
-                MovementType::None => {}
-                MovementType::Wander => {
-                    let value = enemy.time + enemy.wibble_wobble;
-                    let value =
-                        value.sin() * (value * 3.0 + 1.5).sin() * (value * 4.0 + 8.0).sin().powi(2);
-                    let value = if value.abs() < 0.1 {
-                        0.0
-                    } else if value.is_sign_positive() {
+            if enemy.death_frames > 0.0 {
+                enemy.death_frames += delta_time;
+                enemy.time = 0.0;
+            } else {
+                match enemy.ty.movement_type {
+                    MovementType::None => {}
+                    MovementType::Wander => {
+                        let value = enemy.time + enemy.wibble_wobble;
+                        let value = value.sin()
+                            * (value * 3.0 + 1.5).sin()
+                            * (value * 4.0 + 8.0).sin().powi(2);
+                        let value = if value.abs() < 0.1 {
+                            0.0
+                        } else if value.is_sign_positive() {
+                            1.0
+                        } else {
+                            -1.0
+                        };
+                        enemy.velocity.x = value * 16.0;
+                    }
+                }
+                (enemy.pos, _) =
+                    update_physicsbody(enemy.pos, &mut enemy.velocity, delta_time, &level, true);
+            }
+            let rotation = if enemy.death_frames <= 0.0 {
+                0.0
+            } else {
+                (enemy.death_frames * 1000.0 * 2.0 / self.assets.blood.total_length as f32).min(1.0)
+                    * (PI / 4.0)
+                    * (if enemy.pos.x > self.player.pos.x {
                         1.0
                     } else {
                         -1.0
-                    };
-                    enemy.velocity.x = value * 16.0;
-                }
-            }
-            (enemy.pos, _) =
-                update_physicsbody(enemy.pos, &mut enemy.velocity, delta_time, &level, true);
+                    })
+            };
             let animation_id = if enemy.velocity.x.abs() > 5.0 { 1 } else { 0 };
             draw_texture_ex(
                 enemy.ty.animation.animations[animation_id]
@@ -135,22 +155,43 @@ impl<'a> Game<'a> {
                 WHITE,
                 DrawTextureParams {
                     flip_x: enemy.pos.x > self.player.pos.x,
+                    rotation,
                     ..Default::default()
                 },
             );
-            let mut hit_by_projectile = false;
-            for projectile in self.projectiles.iter_mut() {
-                if projectile.friendly
-                    && ((projectile.pos.x - 4.0)..(projectile.pos.x + 4.0))
-                        .contains(&(enemy.pos.x + 4.0))
-                    && ((projectile.pos.y - 4.0)..(projectile.pos.y + 4.0)).contains(&enemy.pos.y)
-                {
-                    projectile.dead = true;
-                    hit_by_projectile = true;
-                    break;
+            if enemy.death_frames <= 0.0 {
+                let mut hit_by_projectile = false;
+                for projectile in self.projectiles.iter_mut() {
+                    if projectile.friendly
+                        && ((projectile.pos.x - 4.0)..(projectile.pos.x + 4.0))
+                            .contains(&(enemy.pos.x + 4.0))
+                        && ((projectile.pos.y - 4.0)..(projectile.pos.y + 4.0))
+                            .contains(&enemy.pos.y)
+                    {
+                        projectile.dead = true;
+                        hit_by_projectile = true;
+                        break;
+                    }
                 }
+                if hit_by_projectile {
+                    enemy.death_frames += delta_time;
+                }
+                true
+            } else {
+                draw_texture_ex(
+                    self.assets
+                        .blood
+                        .get_at_time((enemy.death_frames * 1000.0) as u32),
+                    enemy.pos.x.floor() - 4.0,
+                    enemy.pos.y.floor() - 8.0,
+                    WHITE,
+                    DrawTextureParams {
+                        flip_x: enemy.pos.x > self.player.pos.x,
+                        ..Default::default()
+                    },
+                );
+                enemy.death_frames * 1000.0 <= self.assets.blood.total_length as f32
             }
-            !hit_by_projectile
         });
         self.player.draw(self.assets);
         self.projectiles.retain_mut(|projectile| {

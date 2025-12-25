@@ -13,6 +13,7 @@ pub struct Assets {
     pub levels: Vec<Level>,
     pub tileset: Spritesheet,
     pub projectiles: Animation,
+    pub blood: Animation,
 }
 impl Assets {
     pub fn load() -> Self {
@@ -32,6 +33,7 @@ impl Assets {
             torso: AnimationsGroup::from_file(include_bytes!("../assets/torso.ase")),
             legs: AnimationsGroup::from_file(include_bytes!("../assets/legs.ase")),
             projectiles: Animation::from_file(include_bytes!("../assets/projectiles.ase")),
+            blood: Animation::from_file(include_bytes!("../assets/blood.ase")),
             tileset,
         }
     }
