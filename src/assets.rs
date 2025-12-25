@@ -8,9 +8,11 @@ use macroquad::prelude::*;
 use crate::utils::create_camera;
 
 pub struct Assets {
-    pub cowboy: AnimationsGroup,
+    pub torso: AnimationsGroup,
+    pub legs: AnimationsGroup,
     pub levels: Vec<Level>,
     pub tileset: Spritesheet,
+    pub projectiles: Animation,
 }
 impl Assets {
     pub fn load() -> Self {
@@ -27,7 +29,9 @@ impl Assets {
         }
         Self {
             levels,
-            cowboy: AnimationsGroup::from_file(include_bytes!("../assets/cowboy.ase")),
+            torso: AnimationsGroup::from_file(include_bytes!("../assets/torso.ase")),
+            legs: AnimationsGroup::from_file(include_bytes!("../assets/legs.ase")),
+            projectiles: Animation::from_file(include_bytes!("../assets/projectiles.ase")),
             tileset,
         }
     }

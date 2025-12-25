@@ -17,6 +17,9 @@ pub struct Player {
     pub facing_left: bool,
     pub moving: bool,
     pub time: f32,
+    /// If player isnt actively shooting a projectile, this is 0.
+    /// Otherwise it will be the time for the shoot animation.
+    pub shooting: f32,
 }
 impl Player {
     pub fn new(pos: Vec2) -> Self {
@@ -28,6 +31,7 @@ impl Player {
             facing_left: false,
             moving: false,
             time: 0.0,
+            shooting: 0.0,
         }
     }
     pub fn update(&mut self, delta_time: f32, world: &Level) {
@@ -37,6 +41,12 @@ impl Player {
         const JUMP_FORCE: f32 = 160.0;
 
         self.time += delta_time;
+        if self.shooting > 0.0 {
+            self.shooting += delta_time;
+        } else if is_mouse_button_pressed(MouseButton::Left) {
+            self.shooting += delta_time;
+        }
+
         let input = get_input_axis();
         self.velocity.x = self
             .velocity
@@ -67,19 +77,28 @@ impl Player {
             }
         }
     }
-    pub fn draw(&self, assets: &Assets) {
-        let texture = assets.cowboy.animations[if self.moving { 1 } else { 0 }]
+    pub fn draw(&mut self, assets: &Assets) {
+        if self.shooting * 1000.0 >= assets.torso.animations[1].total_length as f32 {
+            self.shooting = 0.0;
+        }
+
+        // draw legs and torso textures
+        let legs = assets.legs.animations[if self.moving { 1 } else { 0 }]
             .get_at_time((self.time * 1000.0) as u32);
-        draw_texture_ex(
-            texture,
-            self.pos.x.floor() - 4.0,
-            self.pos.y.floor() - 8.0,
-            WHITE,
-            DrawTextureParams {
-                flip_x: self.facing_left,
-                ..Default::default()
-            },
-        );
+        let torso = assets.torso.animations[if self.shooting > 0.0 { 1 } else { 0 }]
+            .get_at_time((self.shooting * 1000.0) as u32);
+        for texture in [legs, torso] {
+            draw_texture_ex(
+                texture,
+                self.pos.x.floor() - texture.width() / 2.0,
+                self.pos.y.floor() - 8.0,
+                WHITE,
+                DrawTextureParams {
+                    flip_x: self.facing_left,
+                    ..Default::default()
+                },
+            );
+        }
     }
 }
 
