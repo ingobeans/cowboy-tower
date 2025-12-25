@@ -115,8 +115,10 @@ impl<'a> Game<'a> {
             }
             (enemy.pos, _) =
                 update_physicsbody(enemy.pos, &mut enemy.velocity, delta_time, &level, true);
+            let animation_id = if enemy.velocity.x.abs() > 5.0 { 1 } else { 0 };
             draw_texture_ex(
-                enemy.ty.animation.animations[0].get_at_time(0),
+                enemy.ty.animation.animations[animation_id]
+                    .get_at_time((enemy.time * 1000.0) as u32),
                 enemy.pos.x.floor() - 4.0,
                 enemy.pos.y.floor() - 8.0,
                 WHITE,
