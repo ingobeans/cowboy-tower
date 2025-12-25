@@ -33,12 +33,26 @@ impl Assets {
     }
 }
 
+pub enum MovementType {
+    None,
+    Wander,
+}
+
+pub enum AttackType {
+    None,
+    Shoot,
+}
+
 pub struct EnemyType {
     pub animation: AnimationsGroup,
+    pub movement_type: MovementType,
+    pub attack_type: AttackType,
 }
 pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
     vec![EnemyType {
         animation: AnimationsGroup::from_file(include_bytes!("../assets/bandit.ase")),
+        movement_type: MovementType::Wander,
+        attack_type: AttackType::Shoot,
     }]
 });
 
@@ -102,8 +116,8 @@ impl Level {
                         if *tile <= 32 && *tile > 1 {
                             enemies.push((
                                 vec2(
-                                    ((x) * 8) as f32 + (min_x * 8) as f32,
-                                    ((y) * 8) as f32 + (min_y * 8) as f32,
+                                    (x * 8) as f32 + (min_x * 8) as f32,
+                                    (y * 8) as f32 + (min_y * 8) as f32,
                                 ),
                                 &ENEMIES[(*tile - 2) as usize],
                             ));
