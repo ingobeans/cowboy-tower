@@ -176,7 +176,7 @@ impl<'a> Game<'a> {
                     }
                 }
                 (enemy.pos, _) =
-                    update_physicsbody(enemy.pos, &mut enemy.velocity, delta_time, &level, true);
+                    update_physicsbody(enemy.pos, &mut enemy.velocity, delta_time, level, true);
             }
             let rotation = if enemy.death_frames <= 0.0 {
                 0.0

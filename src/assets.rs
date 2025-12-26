@@ -41,11 +41,13 @@ impl Assets {
     }
 }
 
+#[allow(dead_code)]
 pub enum MovementType {
     None,
     Wander,
 }
 
+#[allow(dead_code)]
 pub enum AttackType {
     None,
     Shoot(usize),
@@ -89,8 +91,7 @@ impl Level {
     pub fn load(data: &str, tileset: &Spritesheet) -> Self {
         let mut layers = data.split("<layer");
         layers.next();
-        let layers_chunks: Vec<HashMap<(i16, i16), Chunk>> =
-            layers.map(|f| get_all_chunks(f)).collect();
+        let layers_chunks: Vec<HashMap<(i16, i16), Chunk>> = layers.map(get_all_chunks).collect();
         let mut min_x = i16::MAX;
         let mut max_x = i16::MIN;
         let mut min_y = i16::MAX;
@@ -175,14 +176,6 @@ pub struct Chunk {
     pub y: i16,
     pub tiles: Vec<u8>,
 }
-impl Chunk {
-    pub fn tile_at(&self, x: usize, y: usize) -> Option<u8> {
-        if x > 16 || y > 16 {
-            return None;
-        }
-        self.tiles.get(x + y * 16).cloned()
-    }
-}
 
 fn get_all_chunks(xml: &str) -> HashMap<(i16, i16), Chunk> {
     let mut chunks = HashMap::new();
@@ -194,19 +187,6 @@ fn get_all_chunks(xml: &str) -> HashMap<(i16, i16), Chunk> {
     }
 
     chunks
-}
-
-fn get_layer<'a>(xml: &'a str, layer: &str) -> &'a str {
-    let split = format!(" name=\"{layer}");
-    xml.split_once(&split)
-        .unwrap()
-        .1
-        .split_once(">")
-        .unwrap()
-        .1
-        .split_once("</layer>")
-        .unwrap()
-        .0
 }
 
 fn parse_chunk(xml: &str) -> Chunk {
@@ -294,7 +274,6 @@ pub struct AnimationsGroup {
     pub tag_names: HashMap<String, usize>,
 }
 impl AnimationsGroup {
-    #[expect(dead_code)]
     pub fn get_by_name(&self, name: &str) -> &Animation {
         &self.animations[*self.tag_names.get(name).unwrap()]
     }
