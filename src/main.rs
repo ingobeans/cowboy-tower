@@ -33,7 +33,7 @@ fn load_enemies(input: Vec<(Vec2, &'static EnemyType)>) -> Vec<Enemy> {
             ty: f.1,
             time: 0.0,
             death_frames: 0.0,
-            attack_time: rand::gen_range(0.0, f.1.attack_delay),
+            attack_time: 0.0,
             wibble_wobble: rand::gen_range(0.0, PI * 2.0),
         })
         .collect()
@@ -118,24 +118,24 @@ impl<'a> Game<'a> {
                 enemy.death_frames += delta_time;
                 enemy.time = 0.0;
             } else {
-                if enemy.attack_time <= 0.0 {
-                    match enemy.ty.movement_type {
-                        MovementType::None => {}
-                        MovementType::Wander => {
-                            let value = enemy.time + enemy.wibble_wobble;
-                            let value = value.sin()
-                                * (value * 3.0 + 1.5).sin()
-                                * (value * 4.0 + 8.0).sin().powi(2);
-                            let value = if value.abs() < 0.1 {
-                                0.0
-                            } else if value.is_sign_positive() {
-                                1.0
-                            } else {
-                                -1.0
-                            };
-                            enemy.velocity.x = value * 16.0;
-                        }
+                match enemy.ty.movement_type {
+                    MovementType::None => {}
+                    MovementType::Wander => {
+                        let value = enemy.time + enemy.wibble_wobble;
+                        let value = value.sin()
+                            * (value * 3.0 + 1.5).sin()
+                            * (value * 4.0 + 8.0).sin().powi(2);
+                        let value = if value.abs() < 0.1 {
+                            0.0
+                        } else if value.is_sign_positive() {
+                            1.0
+                        } else {
+                            -1.0
+                        };
+                        enemy.velocity.x = value * 16.0;
                     }
+                }
+                if enemy.attack_time <= 0.0 {
                     if self.player.death_frames <= 0.0 {
                         enemy.attack_time += delta_time;
                         match enemy.ty.attack_time {
@@ -170,6 +170,7 @@ impl<'a> Game<'a> {
                     enemy.attack_time += delta_time;
                     if enemy.attack_time * 1000.0
                         > enemy.ty.animation.get_by_name("attack").total_length as f32
+                            + enemy.ty.attack_delay * 1000.0
                     {
                         enemy.attack_time = 0.0;
                     }
@@ -188,7 +189,10 @@ impl<'a> Game<'a> {
                         -1.0
                     })
             };
-            let (animation_id, time) = if enemy.attack_time > 0.0 {
+            let (animation_id, time) = if enemy.attack_time > 0.0
+                && enemy.attack_time * 1000.0
+                    < enemy.ty.animation.get_by_name("attack").total_length as f32
+            {
                 (enemy.ty.animation.tag_names["attack"], enemy.attack_time)
             } else {
                 (if enemy.velocity.x.abs() > 5.0 { 1 } else { 0 }, enemy.time)
