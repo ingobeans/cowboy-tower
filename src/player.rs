@@ -27,7 +27,7 @@ impl Player {
     pub fn new(pos: Vec2) -> Self {
         Self {
             pos,
-            camera_pos: pos,
+            camera_pos: pos - vec2(0.0, 100.0),
             velocity: Vec2::ZERO,
             on_ground: false,
             facing_left: false,

@@ -60,7 +60,7 @@ impl<'a> Game<'a> {
     fn new(assets: &'a Assets) -> Self {
         Self {
             assets,
-            player: Player::new(vec2(0.0, -10.0 * 8.0)),
+            player: Player::new(assets.levels[0].player_spawn),
             camera: Camera2D::default(),
             enemies: load_enemies(assets.levels[0].enemies.clone()),
             projectiles: Vec::new(),

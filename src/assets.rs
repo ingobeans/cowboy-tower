@@ -75,6 +75,7 @@ pub struct Level {
     pub camera: Camera2D,
     pub min_pos: Vec2,
     pub max_pos: Vec2,
+    pub player_spawn: Vec2,
 }
 impl Level {
     pub fn get_tile(&self, x: i16, y: i16) -> [u8; 3] {
@@ -139,12 +140,22 @@ impl Level {
                 }
             }
         }
+        let mut player_spawn = (usize::MAX, usize::MAX);
         let mut camera = create_camera((width * 8) as f32, (height * 8) as f32);
         camera.target = vec2((width * 8) as f32 / 2.0, (height * 8) as f32 / 2.0);
         set_camera(&camera);
         for (i, tile) in data.iter().enumerate() {
             let x = i % width as usize;
             let y = i / width as usize;
+            if tile[1] != 0 {
+                if x < player_spawn.0 {
+                    player_spawn.0 = x;
+                    player_spawn.1 = usize::MAX;
+                }
+                if y < player_spawn.1 && x <= player_spawn.0 {
+                    player_spawn.1 = y;
+                }
+            }
             for t in tile {
                 if *t == 0 {
                     continue;
@@ -160,10 +171,16 @@ impl Level {
             }
         }
         set_default_camera();
+        let min_pos = vec2((min_x * 8) as f32, (min_y * 8) as f32);
+        let player_spawn = vec2(
+            (player_spawn.0 * 8) as f32 + min_pos.x,
+            (player_spawn.1 * 8) as f32 + min_pos.y - 8.0,
+        );
         Self {
+            player_spawn,
             width: width as usize,
-            min_pos: vec2((min_x * 8) as f32, (min_y * 8) as f32),
             max_pos: vec2((max_x * 8) as f32, (max_y * 8) as f32),
+            min_pos,
             enemies,
             camera,
             data,
