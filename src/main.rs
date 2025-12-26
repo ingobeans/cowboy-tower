@@ -136,32 +136,34 @@ impl<'a> Game<'a> {
                             enemy.velocity.x = value * 16.0;
                         }
                     }
-                    enemy.attack_time += delta_time;
-                    match enemy.ty.attack_time {
-                        AttackType::None => {
-                            enemy.attack_time = 0.0;
-                        }
-                        AttackType::Shoot(sprite) => {
-                            self.projectiles.push(Projectile {
-                                pos: enemy.pos
-                                    + if enemy.pos.x > self.player.pos.x {
-                                        vec2(-8.0, 0.0)
-                                    } else {
-                                        vec2(8.0, 0.0)
-                                    }
-                                    + vec2(4.0, 0.0),
-                                direction: vec2(
-                                    if enemy.pos.x > self.player.pos.x {
-                                        -0.8
-                                    } else {
-                                        0.8
-                                    },
-                                    0.0,
-                                ),
-                                sprite,
-                                friendly: false,
-                                dead: false,
-                            });
+                    if self.player.death_frames <= 0.0 {
+                        enemy.attack_time += delta_time;
+                        match enemy.ty.attack_time {
+                            AttackType::None => {
+                                enemy.attack_time = 0.0;
+                            }
+                            AttackType::Shoot(sprite) => {
+                                self.projectiles.push(Projectile {
+                                    pos: enemy.pos
+                                        + if enemy.pos.x > self.player.pos.x {
+                                            vec2(-8.0, 0.0)
+                                        } else {
+                                            vec2(8.0, 0.0)
+                                        }
+                                        + vec2(4.0, 0.0),
+                                    direction: vec2(
+                                        if enemy.pos.x > self.player.pos.x {
+                                            -0.8
+                                        } else {
+                                            0.8
+                                        },
+                                        0.0,
+                                    ),
+                                    sprite,
+                                    friendly: false,
+                                    dead: false,
+                                });
+                            }
                         }
                     }
                 } else {
@@ -186,7 +188,7 @@ impl<'a> Game<'a> {
                         -1.0
                     })
             };
-            let (animation_id, time) = if enemy.attack_time >= 0.0 {
+            let (animation_id, time) = if enemy.attack_time > 0.0 {
                 (enemy.ty.animation.tag_names["attack"], enemy.attack_time)
             } else {
                 (if enemy.velocity.x.abs() > 5.0 { 1 } else { 0 }, enemy.time)
