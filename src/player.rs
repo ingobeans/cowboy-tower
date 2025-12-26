@@ -59,7 +59,8 @@ impl Player {
                         vec2(-8.0, 0.0)
                     } else {
                         vec2(8.0, 0.0)
-                    },
+                    }
+                    + vec2(4.0, 0.0),
                 direction: vec2(if self.facing_left { -1.0 } else { 1.0 }, 0.0),
                 sprite: 0,
                 friendly: true,
