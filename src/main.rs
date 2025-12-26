@@ -72,6 +72,7 @@ impl<'a> Game<'a> {
         let (actual_screen_width, actual_screen_height) = screen_size();
         let scale_factor =
             (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
+
         self.player
             .update(delta_time, &self.assets.levels[0], &mut self.projectiles);
         self.camera.target = self.player.camera_pos.floor();
@@ -250,6 +251,15 @@ impl<'a> Game<'a> {
             );
             if projectile.dead {
                 return false;
+            }
+            if !projectile.friendly
+                && self.player.death_frames <= 0.0
+                && ((projectile.pos.x - 4.0)..(projectile.pos.x + 4.0))
+                    .contains(&(self.player.pos.x + 4.0))
+                && ((projectile.pos.y - 4.0)..(projectile.pos.y + 4.0)).contains(&self.player.pos.y)
+            {
+                self.player.death_frames += delta_time;
+                projectile.dead = true;
             }
             let tx = (projectile.pos.x / 8.0) as i16;
             let ty = (projectile.pos.y / 8.0) as i16;

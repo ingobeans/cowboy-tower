@@ -18,6 +18,7 @@ pub struct Player {
     pub facing_left: bool,
     pub moving: bool,
     pub time: f32,
+    pub death_frames: f32,
     /// If player isnt actively shooting a projectile, this is 0.
     /// Otherwise it will be the time for the shoot animation.
     pub shooting: f32,
@@ -32,10 +33,15 @@ impl Player {
             facing_left: false,
             moving: false,
             time: 0.0,
+            death_frames: 0.0,
             shooting: 0.0,
         }
     }
     pub fn update(&mut self, delta_time: f32, world: &Level, projectiles: &mut Vec<Projectile>) {
+        if self.death_frames > 0.0 {
+            self.death_frames += delta_time;
+            return;
+        }
         const MOVE_SPEED: f32 = 101.0;
         const MOVE_ACCELERATION: f32 = 22.0;
         const GRAVITY: f32 = 9.8 * 75.0;
@@ -91,6 +97,21 @@ impl Player {
         }
     }
     pub fn draw(&mut self, assets: &Assets) {
+        if self.death_frames > 0.0 {
+            let time = ((self.death_frames * 1000.0) as u32).min(assets.die.total_length - 1);
+            let texture = assets.die.get_at_time(time);
+            draw_texture_ex(
+                texture,
+                self.pos.x.floor() - 11.0,
+                self.pos.y.floor() - 8.0,
+                WHITE,
+                DrawTextureParams {
+                    flip_x: self.facing_left,
+                    ..Default::default()
+                },
+            );
+            return;
+        }
         if self.shooting * 1000.0 >= assets.torso.animations[1].total_length as f32 {
             self.shooting = 0.0;
         }

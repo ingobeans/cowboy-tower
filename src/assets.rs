@@ -14,6 +14,7 @@ pub struct Assets {
     pub tileset: Spritesheet,
     pub projectiles: Animation,
     pub blood: Animation,
+    pub die: Animation,
 }
 impl Assets {
     pub fn load() -> Self {
@@ -34,6 +35,7 @@ impl Assets {
             legs: AnimationsGroup::from_file(include_bytes!("../assets/legs.ase")),
             projectiles: Animation::from_file(include_bytes!("../assets/projectiles.ase")),
             blood: Animation::from_file(include_bytes!("../assets/blood.ase")),
+            die: Animation::from_file(include_bytes!("../assets/die.ase")),
             tileset,
         }
     }
