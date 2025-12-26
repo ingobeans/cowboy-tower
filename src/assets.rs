@@ -46,19 +46,21 @@ pub enum MovementType {
 
 pub enum AttackType {
     None,
-    Shoot,
+    Shoot(usize),
 }
 
 pub struct EnemyType {
     pub animation: AnimationsGroup,
     pub movement_type: MovementType,
-    pub attack_type: AttackType,
+    pub attack_time: AttackType,
+    pub attack_delay: f32,
 }
 pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
     vec![EnemyType {
         animation: AnimationsGroup::from_file(include_bytes!("../assets/bandit.ase")),
         movement_type: MovementType::Wander,
-        attack_type: AttackType::Shoot,
+        attack_time: AttackType::Shoot(1),
+        attack_delay: 1.5,
     }]
 });
 
