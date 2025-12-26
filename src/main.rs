@@ -55,6 +55,8 @@ struct Game<'a> {
     player: Player,
     enemies: Vec<Enemy>,
     projectiles: Vec<Projectile>,
+    level: usize,
+    fade_timer: f32,
 }
 impl<'a> Game<'a> {
     fn new(assets: &'a Assets) -> Self {
@@ -64,7 +66,16 @@ impl<'a> Game<'a> {
             camera: Camera2D::default(),
             enemies: load_enemies(assets.levels[0].enemies.clone()),
             projectiles: Vec::new(),
+            level: 0,
+            fade_timer: 0.0,
         }
+    }
+    fn load_level(&mut self, level: usize) {
+        self.level = level;
+        self.projectiles.clear();
+        self.enemies = load_enemies(self.assets.levels[level].enemies.clone());
+        self.player = Player::new(self.assets.levels[level].player_spawn);
+        self.fade_timer = 0.5;
     }
     fn update(&mut self) {
         // cap delta time to a minimum of 60 fps.
@@ -75,6 +86,7 @@ impl<'a> Game<'a> {
 
         self.player
             .update(delta_time, &self.assets.levels[0], &mut self.projectiles);
+
         self.camera.target = self.player.camera_pos.floor();
         self.camera.zoom = vec2(
             1.0 / actual_screen_width * 2.0 * scale_factor,
@@ -273,6 +285,26 @@ impl<'a> Game<'a> {
 
             !hit_wall
         });
+        if self.fade_timer > 0.0 {
+            self.fade_timer -= delta_time;
+        }
+        let mut fade_amt = self.fade_timer * 2.0;
+        let delta = self.player.death_frames - self.assets.die.total_length as f32 / 1000.0;
+        if delta > 0.0 {
+            if delta > 0.5 {
+                self.load_level(0);
+            }
+            fade_amt = delta * 2.0;
+        }
+        if fade_amt > 0.0 {
+            draw_rectangle(
+                self.camera.target.x - actual_screen_width / scale_factor / 2.0,
+                self.camera.target.y - actual_screen_height / scale_factor / 2.0,
+                actual_screen_width,
+                actual_screen_height,
+                BLACK.with_alpha(fade_amt),
+            );
+        }
     }
 }
 
