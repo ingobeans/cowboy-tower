@@ -63,7 +63,7 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
     vec![EnemyType {
         animation: AnimationsGroup::from_file(include_bytes!("../assets/bandit.ase")),
         movement_type: MovementType::Wander,
-        attack_time: AttackType::Shoot(1),
+        attack_time: AttackType::None, //AttackType::Shoot(1),
         attack_delay: 1.5,
     }]
 });
@@ -76,6 +76,7 @@ pub struct Level {
     pub min_pos: Vec2,
     pub max_pos: Vec2,
     pub player_spawn: Vec2,
+    pub lasso_targets: Vec<Vec2>,
 }
 impl Level {
     pub fn get_tile(&self, x: i16, y: i16) -> [u8; 3] {
@@ -118,6 +119,7 @@ impl Level {
 
         let mut data = vec![[0, 0, 0]; (width * height) as usize];
         let mut enemies = Vec::new();
+        let mut lasso_targets = Vec::new();
 
         for (index, chunks) in layers_chunks.iter().enumerate() {
             for ((cx, cy), chunk) in chunks.iter() {
@@ -125,7 +127,13 @@ impl Level {
                     let x = (i % 16) + (*cx - min_x) as usize;
                     let y = (i / 16) + (*cy - min_y) as usize;
                     if index == layers_chunks.len() - 1 {
-                        if *tile <= 32 && *tile > 1 {
+                        if *tile == 1 {
+                            data[x + y * width as usize][index - 1] = *tile;
+                            lasso_targets.push(vec2(
+                                (x * 8) as f32 + (min_x * 8) as f32 + 4.0,
+                                (y * 8) as f32 + (min_y * 8) as f32 + 4.0,
+                            ));
+                        } else if *tile <= 32 && *tile > 1 {
                             enemies.push((
                                 vec2(
                                     (x * 8) as f32 + (min_x * 8) as f32,
@@ -181,6 +189,7 @@ impl Level {
             width: width as usize,
             max_pos: vec2((max_x * 8) as f32, (max_y * 8) as f32),
             min_pos,
+            lasso_targets,
             enemies,
             camera,
             data,
