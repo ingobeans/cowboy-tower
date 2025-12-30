@@ -21,6 +21,7 @@ pub struct Player {
     pub moving: bool,
     pub time: f32,
     pub active_lasso: Option<(f32, Vec2, f32, f32, bool, Vec2)>,
+    pub lasso_target: Option<Vec2>,
     pub death_frames: f32,
     /// If player isnt actively shooting a projectile, this is 0.
     /// Otherwise it will be the time for the shoot animation.
@@ -32,6 +33,7 @@ impl Player {
             pos,
             camera_pos: pos - vec2(0.0, 100.0),
             active_lasso: None,
+            lasso_target: None,
             velocity: Vec2::ZERO,
             on_ground: false,
             facing_left: false,
@@ -74,9 +76,8 @@ impl Player {
             });
         }
 
-        let mut can_move = true;
         if let Some((time, pos, velocity, lasso_length, in_swing, start)) = &mut self.active_lasso {
-            can_move = false;
+            self.lasso_target = None;
             *lasso_length = lasso_length.min(32.0);
             if *time > 0.0 {
                 *time += delta_time;
@@ -127,39 +128,41 @@ impl Player {
             if !is_mouse_button_down(MouseButton::Right) {
                 self.active_lasso = None;
             }
-        }
-        if can_move {
-            if is_mouse_button_pressed(MouseButton::Right) {
-                // find nearest lasso target in direction player is facing
-                let mut targets: Vec<&Vec2> = world
-                    .lasso_targets
-                    .iter()
-                    .filter(|f| {
-                        f.distance(self.pos) <= MAX_LASSO_DISTANCE
-                            && if self.facing_left {
-                                f.x < self.pos.x
-                            } else {
-                                f.x > self.pos.x
-                            }
-                    })
-                    .collect();
-                if !targets.is_empty() {
-                    targets.sort_by(|a, b| {
-                        (a.x.powi(2) + a.y.powi(2))
-                            .sqrt()
-                            .total_cmp(&(b.x.powi(2) + b.y.powi(2)).sqrt())
-                    });
-                    let closest = targets[0].clone();
-
-                    self.active_lasso = Some((
-                        delta_time,
-                        closest,
-                        f32::NAN,
-                        closest.distance(self.pos),
-                        false,
-                        self.pos,
-                    ));
-                }
+        } else {
+            // find nearest lasso target in direction player is facing
+            let mut targets: Vec<&Vec2> = world
+                .lasso_targets
+                .iter()
+                .filter(|f| {
+                    f.distance(self.pos) <= MAX_LASSO_DISTANCE
+                        && if self.facing_left {
+                            f.x < self.pos.x
+                        } else {
+                            f.x > self.pos.x
+                        }
+                })
+                .collect();
+            self.lasso_target = None;
+            if !targets.is_empty() {
+                targets.sort_by(|a, b| {
+                    (a.x.powi(2) + a.y.powi(2))
+                        .sqrt()
+                        .total_cmp(&(b.x.powi(2) + b.y.powi(2)).sqrt())
+                });
+                let closest = targets[0].clone();
+                self.lasso_target = Some(closest);
+            }
+            if is_mouse_button_pressed(MouseButton::Right)
+                && let Some(target) = &self.lasso_target
+            {
+                self.active_lasso = Some((
+                    delta_time,
+                    *target,
+                    f32::NAN,
+                    target.distance(self.pos),
+                    false,
+                    self.pos,
+                ));
             }
 
             self.velocity.x = self
@@ -214,6 +217,20 @@ impl Player {
             );
             return;
         }
+
+        if let Some(target) = &self.lasso_target {
+            draw_texture_ex(
+                &assets.target.get_at_time((self.time * 1000.0) as u32),
+                target.x - 8.0,
+                target.y - 8.0,
+                WHITE,
+                DrawTextureParams {
+                    flip_x: self.facing_left,
+                    ..Default::default()
+                },
+            );
+        }
+
         let mut torso = assets.torso.animations[if self.shooting > 0.0 { 1 } else { 0 }]
             .get_at_time((self.shooting * 1000.0) as u32);
         if let Some((time, pos, _, _, _, _)) = &mut self.active_lasso {

@@ -15,6 +15,7 @@ pub struct Assets {
     pub projectiles: Animation,
     pub blood: Animation,
     pub die: Animation,
+    pub target: Animation,
 }
 impl Assets {
     pub fn load() -> Self {
@@ -36,6 +37,7 @@ impl Assets {
             projectiles: Animation::from_file(include_bytes!("../assets/projectiles.ase")),
             blood: Animation::from_file(include_bytes!("../assets/blood.ase")),
             die: Animation::from_file(include_bytes!("../assets/die.ase")),
+            target: Animation::from_file(include_bytes!("../assets/target.ase")),
             tileset,
         }
     }
