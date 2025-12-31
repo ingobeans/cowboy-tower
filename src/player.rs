@@ -113,12 +113,14 @@ impl Player {
                     * if right_half_circle { 1.0 } else { -1.0 };
             } else {
                 const MOVE_SPEED: f32 = 128.0;
-                let hook_delta = *start - *pos;
-                let normalized = hook_delta.normalize();
-                let scaled = normalized * *lasso_length;
-                let moved = *pos + scaled;
+                let mut target_pos = (*start - *pos).normalize() * *lasso_length + *pos;
+                let new_target_pos = (self.pos - *pos).normalize() * *lasso_length + *pos;
+                if new_target_pos.y > target_pos.y {
+                    *start = self.pos;
+                    target_pos = new_target_pos;
+                }
 
-                let delta = moved - self.pos;
+                let delta = target_pos - self.pos;
                 let normalized = delta.normalize();
                 self.velocity = self
                     .velocity
