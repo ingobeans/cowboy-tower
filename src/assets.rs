@@ -65,7 +65,7 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
     vec![EnemyType {
         animation: AnimationsGroup::from_file(include_bytes!("../assets/bandit.ase")),
         movement_type: MovementType::Wander,
-        attack_time: AttackType::None, //AttackType::Shoot(1),
+        attack_time: AttackType::Shoot(1),
         attack_delay: 1.5,
     }]
 });
