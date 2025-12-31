@@ -203,8 +203,13 @@ impl Player {
             }
         }
         let old_velocity = self.velocity;
-        (self.pos, self.on_ground) =
+        let touched_death_tile;
+        (self.pos, self.on_ground, touched_death_tile) =
             update_physicsbody(self.pos, &mut self.velocity, delta_time, world, true);
+
+        if touched_death_tile && self.death_frames <= 0.0 {
+            self.death_frames = delta_time;
+        }
 
         if old_velocity.length() > self.velocity.length()
             && let Some(lasso) = &mut self.active_lasso
@@ -317,8 +322,9 @@ pub fn update_physicsbody(
     delta_time: f32,
     world: &Level,
     tall: bool,
-) -> (Vec2, bool) {
+) -> (Vec2, bool, bool) {
     let mut grounded = false;
+    let mut touched_death_tile = false;
     let mut new = pos + *velocity * delta_time;
 
     let tile_x = pos.x / 8.0;
@@ -337,6 +343,10 @@ pub fn update_physicsbody(
 
     for (tx, ty) in tiles_y {
         let tile = world.get_tile((tx) as i16, (ty) as i16)[1];
+        if tile == 128 + 1 {
+            touched_death_tile = true;
+            continue;
+        }
         if tile != 0 {
             let c = if velocity.y < 0.0 {
                 tile_y.floor() * 8.0
@@ -362,6 +372,10 @@ pub fn update_physicsbody(
 
     for (tx, ty) in tiles_x {
         let tile = world.get_tile((tx) as i16, (ty) as i16)[1];
+        if tile == 128 + 1 {
+            touched_death_tile = true;
+            continue;
+        }
         if tile != 0 {
             let c = if velocity.x < 0.0 {
                 tile_x.floor() * 8.0
@@ -373,5 +387,5 @@ pub fn update_physicsbody(
             break;
         }
     }
-    (new, grounded)
+    (new, grounded, touched_death_tile)
 }
