@@ -103,8 +103,10 @@ impl Player {
             }
             if lasso.in_swing {
                 self.moving = false;
-                // without this the player over time builds more and more speed
-                const DRAG_FACTOR: f32 = 0.85;
+                // without drag the player over time builds more and more speed.
+                // the drag factor is also relative to the lasso length since a shorter lasso length
+                // yields faster acceleration
+                let drag_factor: f32 = 0.8 * lasso.lasso_length / 32.0;
 
                 let down = vec2(0.0, lasso.lasso_length);
                 let delta = self.pos - lasso.hook_pos;
@@ -115,7 +117,7 @@ impl Player {
                     lasso.speed = (-self.velocity.x).clamp(-GRAVITY, GRAVITY);
                 }
 
-                lasso.speed *= 1.0.lerp(DRAG_FACTOR, delta_time);
+                lasso.speed *= 1.0.lerp(drag_factor, delta_time);
 
                 let new_angle = angle + lasso.speed * delta_time / lasso.lasso_length;
                 let new_delta_normalized = Vec2::from_angle(new_angle);
