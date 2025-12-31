@@ -12,6 +12,21 @@ fn ceil_g(a: f32) -> f32 {
     if a < 0.0 { a.floor() } else { a.ceil() }
 }
 
+struct ActiveLasso {
+    time: f32,
+    hook_pos: Vec2,
+    speed: f32,
+    lasso_length: f32,
+    in_swing: bool,
+    /// When further away than [lasso_length], player will lerp towards the nearest point
+    /// on the lasso arch. This is the source that is used to find the nearest point.
+    ///
+    /// The source is only changed if a new source which would yield a higher Y value on the target point is found.
+    ///
+    /// This behaviour is fine tuned to make the lerping look as un-awkward as possible
+    lerp_source: Vec2,
+}
+
 pub struct Player {
     pub pos: Vec2,
     pub camera_pos: Vec2,
@@ -20,7 +35,7 @@ pub struct Player {
     pub facing_left: bool,
     pub moving: bool,
     pub time: f32,
-    pub active_lasso: Option<(f32, Vec2, f32, f32, bool, Vec2)>,
+    active_lasso: Option<ActiveLasso>,
     pub lasso_target: Option<Vec2>,
     pub death_frames: f32,
     /// If player isnt actively shooting a projectile, this is 0.
@@ -57,7 +72,7 @@ impl Player {
 
         if self.shooting > 0.0 {
             self.shooting += delta_time;
-        } else if self.active_lasso.is_none_or(|f| f.0 == 0.0)
+        } else if self.active_lasso.as_ref().is_none_or(|f| f.time == 0.0)
             && is_mouse_button_pressed(MouseButton::Left)
         {
             self.shooting += delta_time;
@@ -76,47 +91,50 @@ impl Player {
             });
         }
 
-        if let Some((time, pos, velocity, lasso_length, in_swing, start)) = &mut self.active_lasso {
+        if let Some(lasso) = &mut self.active_lasso {
             self.lasso_target = None;
-            *lasso_length = lasso_length.min(32.0);
-            if *time > 0.0 {
-                *time += delta_time;
+            lasso.lasso_length = lasso.lasso_length.min(32.0);
+            if lasso.time > 0.0 {
+                lasso.time += delta_time;
             }
-            if !*in_swing && self.pos.distance(*pos) - 2.0 <= *lasso_length {
-                *in_swing = true;
-                *velocity = f32::NAN;
+            if !lasso.in_swing && self.pos.distance(lasso.hook_pos) - 2.0 <= lasso.lasso_length {
+                lasso.in_swing = true;
+                lasso.speed = f32::NAN;
             }
-            if *in_swing {
+            if lasso.in_swing {
                 self.moving = false;
                 // without this the player over time builds more and more speed
                 const DRAG_FACTOR: f32 = 0.85;
 
-                let down = vec2(0.0, *lasso_length);
-                let delta = self.pos - *pos;
+                let down = vec2(0.0, lasso.lasso_length);
+                let delta = self.pos - lasso.hook_pos;
 
                 let angle = delta.to_angle();
                 let right_half_circle = angle < PI / 2.0 && angle > -PI / 2.0;
-                if velocity.is_nan() {
-                    *velocity = (-self.velocity.x).clamp(-GRAVITY, GRAVITY);
+                if lasso.speed.is_nan() {
+                    lasso.speed = (-self.velocity.x).clamp(-GRAVITY, GRAVITY);
                 }
 
-                *velocity *= 1.0.lerp(DRAG_FACTOR, delta_time);
+                lasso.speed *= 1.0.lerp(DRAG_FACTOR, delta_time);
 
-                let new_angle = angle + *velocity * delta_time / *lasso_length;
+                let new_angle = angle + lasso.speed * delta_time / lasso.lasso_length;
                 let new_delta_normalized = Vec2::from_angle(new_angle);
-                let new_delta = new_delta_normalized * *lasso_length;
+                let new_delta = new_delta_normalized * lasso.lasso_length;
                 let move_amt = new_delta - delta;
                 self.velocity = move_amt / delta_time;
 
                 let down_delta_delta = down - delta;
-                *velocity += down_delta_delta.y * delta_time * GRAVITY / *lasso_length
+                lasso.speed += down_delta_delta.y * delta_time * GRAVITY / lasso.lasso_length
                     * if right_half_circle { 1.0 } else { -1.0 };
             } else {
                 const MOVE_SPEED: f32 = 128.0;
-                let mut target_pos = (*start - *pos).normalize() * *lasso_length + *pos;
-                let new_target_pos = (self.pos - *pos).normalize() * *lasso_length + *pos;
+                let mut target_pos = (lasso.lerp_source - lasso.hook_pos).normalize()
+                    * lasso.lasso_length
+                    + lasso.hook_pos;
+                let new_target_pos =
+                    (self.pos - lasso.hook_pos).normalize() * lasso.lasso_length + lasso.hook_pos;
                 if new_target_pos.y > target_pos.y {
-                    *start = self.pos;
+                    lasso.lerp_source = self.pos;
                     target_pos = new_target_pos;
                 }
 
@@ -157,14 +175,14 @@ impl Player {
             if is_mouse_button_pressed(MouseButton::Right)
                 && let Some(target) = &self.lasso_target
             {
-                self.active_lasso = Some((
-                    delta_time,
-                    *target,
-                    f32::NAN,
-                    target.distance(self.pos),
-                    false,
-                    self.pos,
-                ));
+                self.active_lasso = Some(ActiveLasso {
+                    time: delta_time,
+                    hook_pos: *target,
+                    speed: f32::NAN,
+                    lasso_length: target.distance(self.pos),
+                    in_swing: false,
+                    lerp_source: self.pos,
+                });
             }
 
             self.velocity.x = self
@@ -187,9 +205,9 @@ impl Player {
             update_physicsbody(self.pos, &mut self.velocity, delta_time, world, true);
 
         if old_velocity.length() > self.velocity.length()
-            && let Some((_, _, velocity, _, _, _)) = &mut self.active_lasso
+            && let Some(lasso) = &mut self.active_lasso
         {
-            *velocity = 0.0;
+            lasso.speed = 0.0;
         }
         self.camera_pos.x = self.pos.x.max(world.min_pos.x + SCREEN_WIDTH / 2.0 - 64.0);
         let target = self.pos.y - 22.0;
@@ -235,27 +253,27 @@ impl Player {
 
         let mut torso = assets.torso.animations[if self.shooting > 0.0 { 1 } else { 0 }]
             .get_at_time((self.shooting * 1000.0) as u32);
-        if let Some((time, pos, _, _, _, _)) = &mut self.active_lasso {
+        if let Some(lasso) = &mut self.active_lasso {
             const LASSO_EXTEND_TIME: f32 = 0.2;
             const LASSO_EARLY_START: f32 = 0.1;
-            let delta = *time - assets.torso.animations[2].total_length as f32 / 1000.0;
-            if *time > 0.0 {
-                let mut active_time = *time;
+            let delta = lasso.time - assets.torso.animations[2].total_length as f32 / 1000.0;
+            if lasso.time > 0.0 {
+                let mut active_time = lasso.time;
                 if delta > 0.0 {
                     active_time = (assets.torso.animations[2].total_length - 1) as f32;
                     if delta + LASSO_EARLY_START > LASSO_EXTEND_TIME {
-                        *time = 0.0;
+                        lasso.time = 0.0;
                     }
                 }
                 torso = assets.torso.animations[2].get_at_time((active_time * 1000.0) as u32);
             }
-            if delta + LASSO_EARLY_START > 0.0 || *time == 0.0 {
-                let amt = if *time == 0.0 {
+            if delta + LASSO_EARLY_START > 0.0 || lasso.time == 0.0 {
+                let amt = if lasso.time == 0.0 {
                     1.0
                 } else {
                     (delta + LASSO_EARLY_START) / LASSO_EXTEND_TIME
                 };
-                let target_delta_pos = *pos - self.pos;
+                let target_delta_pos = lasso.hook_pos - self.pos;
                 let normalized = target_delta_pos.normalize();
                 let scaled = normalized * target_delta_pos.length() * amt;
                 let moved = scaled + self.pos;
