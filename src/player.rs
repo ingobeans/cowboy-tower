@@ -280,7 +280,7 @@ impl Player {
                 let scaled = normalized * target_delta_pos.length() * amt;
                 let moved = scaled + self.pos;
                 draw_line(
-                    self.pos.x,
+                    self.pos.x + if self.facing_left { 8.0 } else { 0.0 },
                     self.pos.y,
                     moved.x,
                     moved.y,
