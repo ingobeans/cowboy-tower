@@ -82,7 +82,10 @@ pub struct Level {
 }
 impl Level {
     pub fn get_tile(&self, x: i16, y: i16) -> [u8; 3] {
-        if (x as f32 * 8.0) < self.min_pos.x || (y as f32 * 8.0) < self.min_pos.y {
+        if (x as f32 * 8.0) < self.min_pos.x || ((x - 16) as f32 * 8.0) >= self.max_pos.x {
+            return [0, 1, 0];
+        }
+        if (y as f32 * 8.0) < self.min_pos.y {
             return [0; 3];
         }
         let x = (x - (self.min_pos.x / 8.0) as i16) as usize;
