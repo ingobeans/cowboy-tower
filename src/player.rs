@@ -343,7 +343,7 @@ pub fn update_physicsbody(
 
     for (tx, ty) in tiles_y {
         let tile = world.get_tile((tx) as i16, (ty) as i16)[1];
-        if tile == 128 + 1 {
+        if tile == 128 + 1 && !grounded {
             touched_death_tile = true;
             continue;
         }
@@ -352,6 +352,7 @@ pub fn update_physicsbody(
                 tile_y.floor() * 8.0
             } else {
                 grounded = true;
+                touched_death_tile = false;
                 tile_y.ceil() * 8.0
             };
             new.y = c;
@@ -373,7 +374,6 @@ pub fn update_physicsbody(
     for (tx, ty) in tiles_x {
         let tile = world.get_tile((tx) as i16, (ty) as i16)[1];
         if tile == 128 + 1 {
-            touched_death_tile = true;
             continue;
         }
         if tile != 0 {
