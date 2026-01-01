@@ -76,7 +76,7 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
 pub struct Level {
     pub width: usize,
     pub enemies: Vec<(Vec2, &'static EnemyType)>,
-    pub data: Vec<[u8; 3]>,
+    pub data: Vec<[u16; 3]>,
     pub camera: Camera2D,
     pub min_pos: Vec2,
     pub max_pos: Vec2,
@@ -84,7 +84,7 @@ pub struct Level {
     pub lasso_targets: Vec<Vec2>,
 }
 impl Level {
-    pub fn get_tile(&self, x: i16, y: i16) -> [u8; 3] {
+    pub fn get_tile(&self, x: i16, y: i16) -> [u16; 3] {
         if (x as f32 * 8.0) < self.min_pos.x || ((x - 16) as f32 * 8.0) >= self.max_pos.x {
             return [0, 1, 0];
         }
@@ -208,7 +208,7 @@ impl Level {
 pub struct Chunk {
     pub x: i16,
     pub y: i16,
-    pub tiles: Vec<u8>,
+    pub tiles: Vec<u16>,
 }
 
 fn get_all_chunks(xml: &str) -> HashMap<(i16, i16), Chunk> {
