@@ -10,6 +10,7 @@ use crate::utils::create_camera;
 pub struct Assets {
     pub torso: AnimationsGroup,
     pub legs: AnimationsGroup,
+    pub elevator: AnimationsGroup,
     pub levels: Vec<Level>,
     pub tileset: Spritesheet,
     pub projectiles: Animation,
@@ -30,10 +31,12 @@ impl Assets {
             let level = Level::load(file.contents_utf8().unwrap(), &tileset);
             levels.push(level);
         }
+        println!("loaded {} levels", levels.len());
         Self {
             levels,
             torso: AnimationsGroup::from_file(include_bytes!("../assets/torso.ase")),
             legs: AnimationsGroup::from_file(include_bytes!("../assets/legs.ase")),
+            elevator: AnimationsGroup::from_file(include_bytes!("../assets/elevator.ase")),
             projectiles: Animation::from_file(include_bytes!("../assets/projectiles.ase")),
             blood: Animation::from_file(include_bytes!("../assets/blood.ase")),
             die: Animation::from_file(include_bytes!("../assets/die.ase")),

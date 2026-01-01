@@ -57,6 +57,7 @@ struct Game<'a> {
     projectiles: Vec<Projectile>,
     level: usize,
     fade_timer: f32,
+    level_complete: Option<f32>,
 }
 impl<'a> Game<'a> {
     fn new(assets: &'a Assets) -> Self {
@@ -68,6 +69,7 @@ impl<'a> Game<'a> {
             projectiles: Vec::new(),
             level: 0,
             fade_timer: 0.0,
+            level_complete: None,
         }
     }
     fn load_level(&mut self, level: usize) {
@@ -84,8 +86,44 @@ impl<'a> Game<'a> {
         let scale_factor =
             (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
 
-        self.player
-            .update(delta_time, &self.assets.levels[0], &mut self.projectiles);
+        let level = &self.assets.levels[self.level];
+        let elevator_texture = self.assets.elevator.animations[0].get_at_time(0);
+        let elevator_doors_animation = &self.assets.elevator.animations[1];
+        let elevator_pos = vec2(
+            level.max_pos.x + 16.0 * 8.0 - elevator_texture.width(),
+            level.player_spawn.y - elevator_texture.height() + 8.0,
+        );
+
+        if self.player.pos.x > elevator_pos.x + 12.0 && self.level_complete.is_none() {
+            self.level_complete = Some(0.0);
+        }
+        if let Some(time) = &mut self.level_complete {
+            if *time == 0.0 {
+                self.player.time += delta_time;
+                self.player.moving = true;
+                const ELEVATOR_OFFSET: Vec2 = vec2(14.0, 48.0);
+                const MOVE_SPEED: f32 = 16.0;
+                self.player.pos = self
+                    .player
+                    .pos
+                    .move_towards(elevator_pos + ELEVATOR_OFFSET, delta_time * MOVE_SPEED);
+                if self.player.pos.distance(elevator_pos + ELEVATOR_OFFSET) <= 1.0 {
+                    *time = delta_time;
+                }
+            } else {
+                *time += delta_time;
+                if *time * 1000.0 > elevator_doors_animation.total_length as f32 {
+                    self.level_complete = None;
+                    self.load_level(self.level + 1);
+                }
+            }
+        } else {
+            self.player.update(
+                delta_time,
+                &self.assets.levels[self.level],
+                &mut self.projectiles,
+            );
+        }
 
         self.camera.target = self.player.camera_pos.floor();
         self.camera.zoom = vec2(
@@ -95,7 +133,6 @@ impl<'a> Game<'a> {
         set_camera(&self.camera);
         clear_background(Color::from_hex(0x1CB7FF));
 
-        let level = &self.assets.levels[0];
         let min_y = self.camera.target.y + actual_screen_height / scale_factor / 2.0;
         let min_y_tile = (min_y / 8.0).ceil();
 
@@ -108,7 +145,6 @@ impl<'a> Game<'a> {
             max_y - min_y,
             Color::from_hex(0x300f0a),
         );
-
         for y in max_y_tile as i16..min_y_tile as i16 {
             self.assets
                 .tileset
@@ -124,6 +160,14 @@ impl<'a> Game<'a> {
 
         let t = &level.camera.render_target.as_ref().unwrap().texture;
         draw_texture(t, level.min_pos.x, level.min_pos.y, WHITE);
+
+        draw_rectangle(
+            elevator_pos.x,
+            max_y,
+            elevator_texture.width(),
+            elevator_pos.y - max_y,
+            Color::from_hex(0x3e2004),
+        );
         self.enemies.retain_mut(|enemy| {
             enemy.time += delta_time;
             if enemy.death_frames > 0.0 {
@@ -254,7 +298,12 @@ impl<'a> Game<'a> {
                 enemy.death_frames * 1000.0 <= self.assets.blood.total_length as f32
             }
         });
+        draw_texture(elevator_texture, elevator_pos.x, elevator_pos.y, WHITE);
         self.player.draw(self.assets);
+        if let Some(time) = &self.level_complete {
+            let texture = elevator_doors_animation.get_at_time((*time * 1000.0) as u32);
+            draw_texture(texture, elevator_pos.x, elevator_pos.y, WHITE);
+        }
         self.projectiles.retain_mut(|projectile| {
             projectile.pos += projectile.direction * delta_time * 128.0;
             draw_texture_ex(
@@ -292,7 +341,7 @@ impl<'a> Game<'a> {
         let delta = self.player.death_frames - self.assets.die.total_length as f32 / 1000.0;
         if delta > 0.0 {
             if delta > 0.5 {
-                self.load_level(0);
+                self.load_level(self.level);
             }
             fade_amt = delta * 2.0;
         }
@@ -310,6 +359,7 @@ impl<'a> Game<'a> {
 
 #[macroquad::main("cowboy tower")]
 async fn main() {
+    //miniquad::window::set_window_size(SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32);
     let assets = Assets::load();
     let mut game = Game::new(&assets);
 
