@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::{env::args, f32::consts::PI};
 
 use macroquad::{miniquad::window::screen_size, prelude::*};
 
@@ -60,14 +60,14 @@ struct Game<'a> {
     level_complete: Option<f32>,
 }
 impl<'a> Game<'a> {
-    fn new(assets: &'a Assets) -> Self {
+    fn new(assets: &'a Assets, level: usize) -> Self {
         Self {
             assets,
-            player: Player::new(assets.levels[0].player_spawn),
+            level,
+            player: Player::new(assets.levels[level].player_spawn),
             camera: Camera2D::default(),
-            enemies: load_enemies(assets.levels[0].enemies.clone()),
+            enemies: load_enemies(assets.levels[level].enemies.clone()),
             projectiles: Vec::new(),
-            level: 0,
             fade_timer: 0.0,
             level_complete: None,
         }
@@ -361,7 +361,13 @@ impl<'a> Game<'a> {
 async fn main() {
     //miniquad::window::set_window_size(SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32);
     let assets = Assets::load();
-    let mut game = Game::new(&assets);
+    let mut level = 0;
+    for arg in args() {
+        if let Ok(index) = arg.parse::<usize>() {
+            level = index;
+        }
+    }
+    let mut game = Game::new(&assets, level);
 
     loop {
         game.update();
