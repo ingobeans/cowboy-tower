@@ -65,12 +65,20 @@ pub struct EnemyType {
     pub attack_delay: f32,
 }
 pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
-    vec![EnemyType {
-        animation: AnimationsGroup::from_file(include_bytes!("../assets/bandit.ase")),
-        movement_type: MovementType::Wander,
-        attack_time: AttackType::Shoot(1),
-        attack_delay: 1.5,
-    }]
+    vec![
+        EnemyType {
+            animation: AnimationsGroup::from_file(include_bytes!("../assets/bandit.ase")),
+            movement_type: MovementType::Wander,
+            attack_time: AttackType::Shoot(1),
+            attack_delay: 1.5,
+        },
+        EnemyType {
+            animation: AnimationsGroup::from_file(include_bytes!("../assets/bandit2.ase")),
+            movement_type: MovementType::None,
+            attack_time: AttackType::Shoot(1),
+            attack_delay: 2.0,
+        },
+    ]
 });
 
 pub struct Level {
