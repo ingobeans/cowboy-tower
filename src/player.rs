@@ -35,6 +35,7 @@ pub struct Player {
     pub facing_left: bool,
     pub moving: bool,
     pub time: f32,
+    pub jump_time: f32,
     active_lasso: Option<ActiveLasso>,
     pub lasso_target: Option<Vec2>,
     pub death_frames: f32,
@@ -51,6 +52,7 @@ impl Player {
             lasso_target: None,
             velocity: Vec2::ZERO,
             on_ground: false,
+            jump_time: 0.0,
             facing_left: false,
             moving: false,
             time: 0.0,
@@ -68,6 +70,12 @@ impl Player {
         const JUMP_FORCE: f32 = 160.0;
         self.time += delta_time;
         let input = get_input_axis();
+
+        if self.on_ground {
+            self.jump_time = 0.0;
+        } else if self.jump_time > 0.0 {
+            self.jump_time += delta_time
+        }
 
         if self.shooting > 0.0 {
             self.shooting += delta_time;
@@ -196,6 +204,7 @@ impl Player {
             }
 
             if self.on_ground && is_key_pressed(KeyCode::Space) {
+                self.jump_time = delta_time;
                 self.velocity.y = -JUMP_FORCE;
             }
         }
@@ -296,8 +305,17 @@ impl Player {
         }
 
         // draw legs and torso textures
-        let legs = assets.legs.animations[if self.moving { 1 } else { 0 }]
-            .get_at_time((self.time * 1000.0) as u32);
+
+        let legs = if self.jump_time > 0.0 {
+            let anim = &assets.legs.animations[2];
+            if self.jump_time * 1000.0 >= anim.total_length as f32 {
+                self.jump_time = 0.0;
+            }
+            anim.get_at_time((self.jump_time * 1000.0) as u32)
+        } else {
+            assets.legs.animations[if self.moving { 1 } else { 0 }]
+                .get_at_time((self.time * 1000.0) as u32)
+        };
         for texture in [legs, torso] {
             draw_texture_ex(
                 texture,
