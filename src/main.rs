@@ -49,6 +49,19 @@ struct Projectile {
     dead: bool,
 }
 
+fn get_player_spawn(assets: &Assets, level: usize) -> Vec2 {
+    let left_level_end = level % 2 != 0;
+    let player_spawn = if left_level_end {
+        vec2(
+            assets.levels[level].max_pos.x + 16.0 * 8.0 - 3.0 * 8.0,
+            assets.levels[level].player_spawn.y,
+        )
+    } else {
+        assets.levels[level].player_spawn + vec2(8.0, 0.0)
+    };
+    player_spawn
+}
+
 struct Game<'a> {
     assets: &'a Assets,
     camera: Camera2D,
@@ -64,7 +77,7 @@ impl<'a> Game<'a> {
         Self {
             assets,
             level,
-            player: Player::new(assets.levels[level].player_spawn),
+            player: Player::new(get_player_spawn(assets, level)),
             camera: Camera2D::default(),
             enemies: load_enemies(assets.levels[level].enemies.clone()),
             projectiles: Vec::new(),
@@ -76,8 +89,9 @@ impl<'a> Game<'a> {
         self.level = level;
         self.projectiles.clear();
         self.enemies = load_enemies(self.assets.levels[level].enemies.clone());
-        self.player = Player::new(self.assets.levels[level].player_spawn);
         self.fade_timer = 0.5;
+        self.player = Player::new(get_player_spawn(self.assets, level));
+        self.player.facing_left = self.level % 2 != 0;
     }
     fn update(&mut self) {
         // cap delta time to a minimum of 60 fps.
@@ -87,14 +101,23 @@ impl<'a> Game<'a> {
             (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
 
         let level = &self.assets.levels[self.level];
+
+        let left_level_end = self.level % 2 != 0;
+
         let elevator_texture = self.assets.elevator.animations[0].get_at_time(0);
         let elevator_doors_animation = &self.assets.elevator.animations[1];
         let elevator_pos = vec2(
-            level.max_pos.x + 16.0 * 8.0 - elevator_texture.width(),
+            if left_level_end {
+                level.player_spawn.x
+            } else {
+                level.max_pos.x + 16.0 * 8.0 - elevator_texture.width()
+            },
             level.player_spawn.y - elevator_texture.height() + 8.0,
         );
 
-        if self.player.pos.x > elevator_pos.x + 12.0 && self.level_complete.is_none() {
+        if self.level_complete.is_none()
+            && (self.player.pos.x - (elevator_pos.x + elevator_texture.width() / 2.0)).abs() <= 6.0
+        {
             self.level_complete = Some(0.0);
         }
         if let Some(time) = &mut self.level_complete {
@@ -298,9 +321,26 @@ impl<'a> Game<'a> {
                 enemy.death_frames * 1000.0 <= self.assets.blood.total_length as f32
             }
         });
+        // draw level beginning elevator
+        if self.level > 0 {
+            draw_texture(
+                self.assets.elevator.animations[2]
+                    .get_at_time(((0.5 - self.fade_timer) * 1000.0) as u32),
+                get_player_spawn(self.assets, self.level).x
+                    + if left_level_end {
+                        3.0 * 8.0 - elevator_texture.width()
+                    } else {
+                        -8.0
+                    },
+                elevator_pos.y,
+                WHITE,
+            );
+        }
+        // draw level end elevator
         draw_texture(elevator_texture, elevator_pos.x, elevator_pos.y, WHITE);
         self.player.draw(self.assets);
         if let Some(time) = &self.level_complete {
+            // draw level end elevator door animation if level complete
             let texture = elevator_doors_animation.get_at_time((*time * 1000.0) as u32);
             draw_texture(texture, elevator_pos.x, elevator_pos.y, WHITE);
         }
