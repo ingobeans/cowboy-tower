@@ -17,6 +17,8 @@ struct Enemy {
     velocity: Vec2,
     ty: &'static EnemyType,
     time: f32,
+    /// Used for attack type ShootAfter
+    has_attacked: bool,
     attack_time: f32,
     /// Set to zero when alive. On death, tracks death animation time
     death_frames: f32,
@@ -32,6 +34,7 @@ fn load_enemies(input: Vec<(Vec2, &'static EnemyType)>) -> Vec<Enemy> {
             velocity: Vec2::ZERO,
             ty: f.1,
             time: 0.0,
+            has_attacked: false,
             death_frames: 0.0,
             attack_time: 0.0,
             wibble_wobble: rand::gen_range(0.0, PI * 2.0),
@@ -42,11 +45,68 @@ fn load_enemies(input: Vec<(Vec2, &'static EnemyType)>) -> Vec<Enemy> {
 struct Projectile {
     pos: Vec2,
     direction: Vec2,
-    sprite: usize,
+    type_index: usize,
+    time: f32,
     /// Is projectile fired by the player?
     friendly: bool,
     /// True when projectile hits an enemy, marker to show that it should be destroyed.
     dead: bool,
+}
+impl Projectile {
+    fn new(type_index: usize, pos: Vec2, direction: Vec2) -> Self {
+        Self {
+            pos,
+            direction: direction * Self::base_speed(type_index),
+            type_index,
+            time: 0.0,
+            friendly: type_index == 0,
+            dead: false,
+        }
+    }
+    fn base_speed(type_index: usize) -> f32 {
+        match type_index {
+            1 | 2 => 128.0 * 0.8,
+            3 => 0.0,
+            _ => 128.0,
+        }
+    }
+    fn is_physics_based(&self) -> bool {
+        match &self.type_index {
+            2 => true,
+            _ => false,
+        }
+    }
+    fn get_payload(&self) -> Option<Projectile> {
+        match &self.type_index {
+            2 => Some(Projectile::new(3, self.pos, Vec2::ZERO)),
+            _ => None,
+        }
+    }
+    fn get_collision_size(&self) -> f32 {
+        match &self.type_index {
+            3 => 17.0,
+            _ => 8.0,
+        }
+    }
+    fn can_kill(&self) -> bool {
+        match &self.type_index {
+            2 => false,
+            _ => true,
+        }
+    }
+    fn should_die_on_kill(&self) -> bool {
+        match &self.type_index {
+            3 => false,
+            _ => true,
+        }
+    }
+    fn get_lifetime(&self) -> f32 {
+        match &self.type_index {
+            2 => 1.0,
+            3 => 0.5,
+            _ => 0.0,
+        }
+    }
 }
 
 fn get_player_spawn(assets: &Assets, level: usize) -> Vec2 {
@@ -217,41 +277,64 @@ impl<'a> Game<'a> {
                 if enemy.attack_time <= 0.0 {
                     if self.player.death_frames <= 0.0 {
                         enemy.attack_time += delta_time;
-                        match enemy.ty.attack_time {
+                        match enemy.ty.attack_type {
                             AttackType::None => {
                                 enemy.attack_time = 0.0;
                             }
+                            AttackType::ShootAfter(_) => {}
                             AttackType::Shoot(sprite) => {
-                                self.projectiles.push(Projectile {
-                                    pos: enemy.pos
+                                self.projectiles.push(Projectile::new(
+                                    sprite,
+                                    enemy.pos
                                         + if enemy.pos.x > self.player.pos.x {
                                             vec2(-8.0, 0.0)
                                         } else {
                                             vec2(8.0, 0.0)
                                         }
                                         + vec2(4.0, 0.0),
-                                    direction: vec2(
+                                    vec2(
                                         if enemy.pos.x > self.player.pos.x {
-                                            -0.8
+                                            -1.0
                                         } else {
-                                            0.8
+                                            1.0
                                         },
                                         0.0,
                                     ),
-                                    sprite,
-                                    friendly: false,
-                                    dead: false,
-                                });
+                                ));
                             }
                         }
                     }
                 } else {
                     enemy.attack_time += delta_time;
-                    if enemy.attack_time * 1000.0
-                        > enemy.ty.animation.get_by_name("attack").total_length as f32
-                            + enemy.ty.attack_delay * 1000.0
+                    let delta = enemy.attack_time * 1000.0
+                        - enemy.ty.animation.get_by_name("attack").total_length as f32;
+                    if delta >= 0.0
+                        && !enemy.has_attacked
+                        && let AttackType::ShootAfter(sprite) = enemy.ty.attack_type
                     {
+                        self.projectiles.push(Projectile::new(
+                            sprite,
+                            enemy.pos
+                                + if enemy.pos.x > self.player.pos.x {
+                                    vec2(-8.0, 0.0)
+                                } else {
+                                    vec2(8.0, 0.0)
+                                }
+                                + vec2(4.0, 0.0),
+                            vec2(
+                                if enemy.pos.x > self.player.pos.x {
+                                    -1.0
+                                } else {
+                                    1.0
+                                },
+                                0.0,
+                            ),
+                        ));
+                        enemy.has_attacked = true;
+                    }
+                    if delta >= enemy.ty.attack_delay * 1000.0 {
                         enemy.attack_time = 0.0;
+                        enemy.has_attacked = false;
                     }
                 }
                 (enemy.pos, _, _) =
@@ -291,12 +374,13 @@ impl<'a> Game<'a> {
                 let mut hit_by_projectile = false;
                 for projectile in self.projectiles.iter_mut() {
                     if projectile.friendly
+                        && projectile.can_kill()
                         && ((projectile.pos.x - 4.0)..(projectile.pos.x + 4.0))
                             .contains(&(enemy.pos.x + 4.0))
                         && ((projectile.pos.y - 4.0)..(projectile.pos.y + 4.0))
                             .contains(&enemy.pos.y)
                     {
-                        projectile.dead = true;
+                        projectile.dead |= projectile.should_die_on_kill();
                         hit_by_projectile = true;
                         break;
                     }
@@ -344,15 +428,42 @@ impl<'a> Game<'a> {
             let texture = elevator_doors_animation.get_at_time((*time * 1000.0) as u32);
             draw_texture(texture, elevator_pos.x, elevator_pos.y, WHITE);
         }
+        let mut new_projectiles = Vec::new();
         self.projectiles.retain_mut(|projectile| {
-            projectile.pos += projectile.direction * delta_time * 128.0;
+            let physics_based = projectile.is_physics_based();
+
+            if physics_based {
+                const OFFSET: Vec2 = vec2(4.0, 4.0);
+                projectile.direction.y += GRAVITY * delta_time;
+
+                let (new_pos, on_ground, _) = update_physicsbody(
+                    projectile.pos - OFFSET,
+                    &mut projectile.direction,
+                    delta_time,
+                    level,
+                    false,
+                );
+                projectile.pos = new_pos + OFFSET;
+                if on_ground {
+                    projectile.direction.x = projectile.direction.x.lerp(0.0, delta_time * 2.0);
+                }
+            } else {
+                projectile.pos += projectile.direction * delta_time;
+            }
+            let rotation = if !physics_based {
+                0.0
+            } else {
+                projectile.time * 10.0
+            };
             draw_texture_ex(
-                &self.assets.projectiles.frames[projectile.sprite].0,
-                projectile.pos.x.floor() - 4.0,
-                projectile.pos.y.floor() - 4.0,
+                &self.assets.projectiles.animations[projectile.type_index]
+                    .get_at_time((projectile.time * 1000.0) as u32),
+                projectile.pos.x.floor() - 20.0,
+                projectile.pos.y.floor() - 20.0,
                 WHITE,
                 DrawTextureParams {
                     flip_x: projectile.direction.x < 0.0,
+                    rotation,
                     ..Default::default()
                 },
             );
@@ -360,20 +471,32 @@ impl<'a> Game<'a> {
                 return false;
             }
             if !projectile.friendly
+                && projectile.can_kill()
                 && self.player.death_frames <= 0.0
-                && ((projectile.pos.x - 4.0)..(projectile.pos.x + 4.0))
-                    .contains(&(self.player.pos.x + 4.0))
-                && ((projectile.pos.y - 4.0)..(projectile.pos.y + 4.0)).contains(&self.player.pos.y)
+                && (self.player.pos + vec2(4.0, 4.0)).distance(projectile.pos)
+                    < projectile.get_collision_size()
             {
                 self.player.death_frames += delta_time;
-                projectile.dead = true;
+                projectile.dead |= projectile.should_die_on_kill();
             }
-            let tx = (projectile.pos.x / 8.0) as i16;
-            let ty = (projectile.pos.y / 8.0) as i16;
-            let hit_wall = level.get_tile(tx, ty)[1] != 0;
+            projectile.time += delta_time;
+            let lifetime = projectile.get_lifetime();
+            let died = lifetime != 0.0 && projectile.time >= lifetime;
+            if died && let Some(payload) = projectile.get_payload() {
+                new_projectiles.push(payload);
+            }
+            !died
+                && if !physics_based {
+                    let tx = (projectile.pos.x / 8.0) as i16;
+                    let ty = (projectile.pos.y / 8.0) as i16;
+                    let hit_wall = level.get_tile(tx, ty)[1] != 0;
 
-            !hit_wall
+                    !hit_wall
+                } else {
+                    true
+                }
         });
+        self.projectiles.append(&mut new_projectiles);
         if self.fade_timer > 0.0 {
             self.fade_timer -= delta_time;
         }

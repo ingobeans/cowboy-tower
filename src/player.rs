@@ -65,7 +65,6 @@ impl Player {
         }
         const MOVE_SPEED: f32 = 101.0;
         const MOVE_ACCELERATION: f32 = 22.0;
-        const GRAVITY: f32 = 9.8 * 75.0;
         const JUMP_FORCE: f32 = 160.0;
         self.time += delta_time;
         let input = get_input_axis();
@@ -76,19 +75,17 @@ impl Player {
             && is_mouse_button_pressed(MouseButton::Left)
         {
             self.shooting += delta_time;
-            projectiles.push(Projectile {
-                pos: self.pos
+            projectiles.push(Projectile::new(
+                0,
+                self.pos
                     + if self.facing_left {
                         vec2(-8.0, 0.0)
                     } else {
                         vec2(8.0, 0.0)
                     }
                     + vec2(4.0, 0.0),
-                direction: vec2(if self.facing_left { -1.0 } else { 1.0 }, 0.0),
-                sprite: 0,
-                friendly: true,
-                dead: false,
-            });
+                vec2(if self.facing_left { -1.0 } else { 1.0 }, 0.0),
+            ));
         }
 
         if let Some(lasso) = &mut self.active_lasso {

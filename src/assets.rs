@@ -13,7 +13,7 @@ pub struct Assets {
     pub elevator: AnimationsGroup,
     pub levels: Vec<Level>,
     pub tileset: Spritesheet,
-    pub projectiles: Animation,
+    pub projectiles: AnimationsGroup,
     pub blood: Animation,
     pub die: Animation,
     pub target: Animation,
@@ -37,7 +37,7 @@ impl Assets {
             torso: AnimationsGroup::from_file(include_bytes!("../assets/torso.ase")),
             legs: AnimationsGroup::from_file(include_bytes!("../assets/legs.ase")),
             elevator: AnimationsGroup::from_file(include_bytes!("../assets/elevator.ase")),
-            projectiles: Animation::from_file(include_bytes!("../assets/projectiles.ase")),
+            projectiles: AnimationsGroup::from_file(include_bytes!("../assets/projectiles.ase")),
             blood: Animation::from_file(include_bytes!("../assets/blood.ase")),
             die: Animation::from_file(include_bytes!("../assets/die.ase")),
             target: Animation::from_file(include_bytes!("../assets/target.ase")),
@@ -56,12 +56,14 @@ pub enum MovementType {
 pub enum AttackType {
     None,
     Shoot(usize),
+    /// Like shoot, but projectile is fired after animation is completed
+    ShootAfter(usize),
 }
 
 pub struct EnemyType {
     pub animation: AnimationsGroup,
     pub movement_type: MovementType,
-    pub attack_time: AttackType,
+    pub attack_type: AttackType,
     pub attack_delay: f32,
 }
 pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
@@ -69,13 +71,19 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/bandit.ase")),
             movement_type: MovementType::Wander,
-            attack_time: AttackType::Shoot(1),
+            attack_type: AttackType::Shoot(1),
             attack_delay: 1.5,
         },
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/bandit2.ase")),
             movement_type: MovementType::None,
-            attack_time: AttackType::Shoot(1),
+            attack_type: AttackType::Shoot(1),
+            attack_delay: 2.0,
+        },
+        EnemyType {
+            animation: AnimationsGroup::from_file(include_bytes!("../assets/demo_bandit.ase")),
+            movement_type: MovementType::Wander,
+            attack_type: AttackType::ShootAfter(2),
             attack_delay: 2.0,
         },
     ]
