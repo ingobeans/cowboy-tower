@@ -57,7 +57,7 @@ fn get_player_spawn(assets: &Assets, level: usize) -> Vec2 {
             assets.levels[level].player_spawn.y,
         )
     } else {
-        assets.levels[level].player_spawn + vec2(8.0, 0.0)
+        assets.levels[level].player_spawn + vec2(16.0, 0.0)
     };
     player_spawn
 }
@@ -330,7 +330,7 @@ impl<'a> Game<'a> {
                     + if left_level_end {
                         3.0 * 8.0 - elevator_texture.width()
                     } else {
-                        -8.0
+                        -2.0 * 8.0
                     },
                 elevator_pos.y,
                 WHITE,
