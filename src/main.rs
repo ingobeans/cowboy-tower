@@ -112,7 +112,7 @@ impl<'a> Game<'a> {
                 }
             } else {
                 *time += delta_time;
-                if *time * 1000.0 > elevator_doors_animation.total_length as f32 {
+                if *time * 1000.0 >= elevator_doors_animation.total_length as f32 {
                     self.level_complete = None;
                     self.load_level(self.level + 1);
                 }

@@ -257,6 +257,9 @@ impl Player {
                 },
             );
         }
+        if self.shooting * 1000.0 >= assets.torso.animations[1].total_length as f32 {
+            self.shooting = 0.0;
+        }
 
         let mut torso = assets.torso.animations[if self.shooting > 0.0 { 1 } else { 0 }]
             .get_at_time((self.shooting * 1000.0) as u32);
@@ -293,9 +296,6 @@ impl Player {
                     Color::from_hex(0x773421),
                 );
             }
-        }
-        if self.shooting * 1000.0 >= assets.torso.animations[1].total_length as f32 {
-            self.shooting = 0.0;
         }
 
         // draw legs and torso textures
