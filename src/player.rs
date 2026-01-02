@@ -337,8 +337,8 @@ pub fn update_physicsbody(
         (ceil_g(tile_x), (new.y / 8.0).trunc()),
     ];
     if tall {
-        tiles_y.push((tile_x.trunc(), (new.y / 8.0).trunc() - 1.0));
-        tiles_y.push((ceil_g(tile_x), (new.y / 8.0).trunc() - 1.0));
+        tiles_y.push((tile_x.trunc(), (new.y / 8.0).floor() - 1.0));
+        tiles_y.push((ceil_g(tile_x), (new.y / 8.0).floor() - 1.0));
     }
 
     for (tx, ty) in tiles_y {
@@ -367,8 +367,8 @@ pub fn update_physicsbody(
         ((new.x / 8.0).trunc(), (new.y / 8.0).trunc()),
     ];
     if tall {
-        tiles_x.push(((new.x / 8.0).trunc(), (new.y / 8.0).trunc() - 1.0));
-        tiles_x.push((ceil_g(new.x / 8.0), (new.y / 8.0).trunc() - 1.0));
+        tiles_x.push(((new.x / 8.0).trunc(), (new.y / 8.0).floor() - 1.0));
+        tiles_x.push((ceil_g(new.x / 8.0), (new.y / 8.0).floor() - 1.0));
     }
 
     for (tx, ty) in tiles_x {
