@@ -486,7 +486,7 @@ impl<'a> Game<'a> {
                 new_projectiles.push(payload);
             }
             !died
-                && if !physics_based {
+                && if !physics_based && projectile.should_die_on_kill() {
                     let tx = (projectile.pos.x / 8.0) as i16;
                     let ty = (projectile.pos.y / 8.0) as i16;
                     let hit_wall = level.get_tile(tx, ty)[1] != 0;
