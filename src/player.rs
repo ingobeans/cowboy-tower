@@ -38,7 +38,7 @@ pub struct Player {
     pub jump_time: f32,
     active_lasso: Option<ActiveLasso>,
     pub lasso_target: Option<Vec2>,
-    pub death_frames: f32,
+    pub death: Option<(f32, usize)>,
     /// If player isnt actively shooting a projectile, this is 0.
     /// Otherwise it will be the time for the shoot animation.
     pub shooting: f32,
@@ -56,13 +56,13 @@ impl Player {
             facing_left: false,
             moving: false,
             time: 0.0,
-            death_frames: 0.0,
+            death: None,
             shooting: 0.0,
         }
     }
     pub fn update(&mut self, delta_time: f32, world: &Level, projectiles: &mut Vec<Projectile>) {
-        if self.death_frames > 0.0 {
-            self.death_frames += delta_time;
+        if let Some(death) = &mut self.death {
+            death.0 += delta_time;
             return;
         }
         const MOVE_SPEED: f32 = 101.0;
@@ -213,8 +213,10 @@ impl Player {
         (self.pos, self.on_ground, touched_death_tile) =
             update_physicsbody(self.pos, &mut self.velocity, delta_time, world, true);
 
-        if touched_death_tile && self.death_frames <= 0.0 {
-            self.death_frames = delta_time;
+        if let Some(tile) = touched_death_tile
+            && self.death.is_none()
+        {
+            self.death = Some((0.0, DEATH_TILES.iter().position(|f| *f == tile).unwrap()));
         }
 
         if old_velocity.length() > self.velocity.length()
@@ -239,9 +241,10 @@ impl Player {
         }
     }
     pub fn draw(&mut self, assets: &Assets) {
-        if self.death_frames > 0.0 {
-            let time = ((self.death_frames * 1000.0) as u32).min(assets.die.total_length - 1);
-            let texture = assets.die.get_at_time(time);
+        if let Some(death) = self.death {
+            let time =
+                ((death.0 * 1000.0) as u32).min(assets.die.animations[death.1].total_length - 1);
+            let texture = assets.die.animations[death.1].get_at_time(time);
             draw_texture_ex(
                 texture,
                 self.pos.x.floor() - 11.0,
@@ -341,9 +344,9 @@ pub fn update_physicsbody(
     delta_time: f32,
     world: &Level,
     tall: bool,
-) -> (Vec2, bool, bool) {
+) -> (Vec2, bool, Option<u16>) {
     let mut grounded = false;
-    let mut touched_death_tile = false;
+    let mut touched_death_tile = None;
     let mut new = pos + *velocity * delta_time;
 
     let tile_x = pos.x / 8.0;
@@ -362,8 +365,8 @@ pub fn update_physicsbody(
 
     for (tx, ty) in tiles_y {
         let tile = world.get_tile((tx) as i16, (ty) as i16)[1];
-        if tile == 128 + 1 && !grounded {
-            touched_death_tile = true;
+        if !grounded && tile > 0 && DEATH_TILES.contains(&(tile - 1)) {
+            touched_death_tile = Some(tile - 1);
             continue;
         }
         if tile != 0 {
@@ -371,7 +374,7 @@ pub fn update_physicsbody(
                 tile_y.floor() * 8.0
             } else {
                 grounded = true;
-                touched_death_tile = false;
+                touched_death_tile = None;
                 tile_y.ceil() * 8.0
             };
             new.y = c;
@@ -392,7 +395,7 @@ pub fn update_physicsbody(
 
     for (tx, ty) in tiles_x {
         let tile = world.get_tile((tx) as i16, (ty) as i16)[1];
-        if tile == 128 + 1 {
+        if tile > 0 && DEATH_TILES.contains(&(tile - 1)) {
             continue;
         }
         if tile != 0 {

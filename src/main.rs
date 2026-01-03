@@ -279,7 +279,7 @@ impl<'a> Game<'a> {
                     }
                 }
                 if enemy.attack_time <= 0.0 {
-                    if self.player.death_frames <= 0.0 {
+                    if self.player.death.is_none() {
                         enemy.attack_time += delta_time;
                         match enemy.ty.attack_type {
                             AttackType::None => {
@@ -487,11 +487,11 @@ impl<'a> Game<'a> {
             }
             if !projectile.friendly
                 && projectile.can_kill()
-                && self.player.death_frames <= 0.0
+                && self.player.death.is_none()
                 && (self.player.pos + vec2(4.0, 4.0)).distance(projectile.pos)
                     < projectile.get_collision_size()
             {
-                self.player.death_frames += delta_time;
+                self.player.death = Some((0.0, 0));
                 projectile.dead |= projectile.should_die_on_kill();
             }
             projectile.time += delta_time;
@@ -516,12 +516,14 @@ impl<'a> Game<'a> {
             self.fade_timer -= delta_time;
         }
         let mut fade_amt = self.fade_timer * 2.0;
-        let delta = self.player.death_frames - self.assets.die.total_length as f32 / 1000.0;
-        if delta > 0.0 {
-            if delta > 0.5 {
-                self.load_level(self.level);
+        if let Some(death) = &self.player.death {
+            let delta = death.0 - self.assets.die.animations[death.1].total_length as f32 / 1000.0;
+            if delta > 0.0 {
+                if delta > 0.5 {
+                    self.load_level(self.level);
+                }
+                fade_amt = delta * 2.0;
             }
-            fade_amt = delta * 2.0;
         }
         if fade_amt > 0.0 {
             draw_rectangle(

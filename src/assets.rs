@@ -15,7 +15,7 @@ pub struct Assets {
     pub tileset: Spritesheet,
     pub projectiles: AnimationsGroup,
     pub blood: Animation,
-    pub die: Animation,
+    pub die: AnimationsGroup,
     pub target: Animation,
     pub animated_tiles: Vec<Animation>,
 }
@@ -40,7 +40,7 @@ impl Assets {
             elevator: AnimationsGroup::from_file(include_bytes!("../assets/elevator.ase")),
             projectiles: AnimationsGroup::from_file(include_bytes!("../assets/projectiles.ase")),
             blood: Animation::from_file(include_bytes!("../assets/blood.ase")),
-            die: Animation::from_file(include_bytes!("../assets/die.ase")),
+            die: AnimationsGroup::from_file(include_bytes!("../assets/die.ase")),
             target: Animation::from_file(include_bytes!("../assets/target.ase")),
             animated_tiles: vec![Animation::from_file(include_bytes!("../assets/lava.ase"))],
             tileset,
