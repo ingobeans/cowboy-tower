@@ -41,14 +41,6 @@ fn load_enemies(input: Vec<(Vec2, &'static EnemyType)>) -> Vec<Enemy> {
         })
         .collect()
 }
-fn load_horses(mut input: Vec<Horse>, level: usize) -> Vec<Horse> {
-    if level % 2 != 0 {
-        for horse in &mut input {
-            horse.facing_left = !horse.facing_left;
-        }
-    }
-    input
-}
 
 struct Projectile {
     pos: Vec2,
@@ -150,7 +142,7 @@ impl<'a> Game<'a> {
             player: Player::new(get_player_spawn(assets, level)),
             camera: Camera2D::default(),
             enemies: load_enemies(assets.levels[level].enemies.clone()),
-            horses: load_horses(assets.levels[level].horses.clone(), level),
+            horses: assets.levels[level].horses.clone(),
             projectiles: Vec::new(),
             fade_timer: 0.0,
             level_complete: None,
@@ -161,7 +153,7 @@ impl<'a> Game<'a> {
         self.level = level;
         self.projectiles.clear();
         self.enemies = load_enemies(self.assets.levels[level].enemies.clone());
-        self.horses = load_horses(self.assets.levels[level].horses.clone(), level);
+        self.horses = self.assets.levels[level].horses.clone();
         self.fade_timer = 0.5;
         self.player = Player::new(get_player_spawn(self.assets, level));
         self.player.facing_left = self.level % 2 != 0;
@@ -201,15 +193,14 @@ impl<'a> Game<'a> {
             const HORSE_SPEED: f32 = 128.0;
             horse.time += delta_time;
             if horse.running {
-                horse.velocity.x = horse.velocity.x.lerp(
-                    HORSE_SPEED * if horse.facing_left { -1.0 } else { 1.0 },
-                    1.0 * delta_time,
-                );
+                horse.velocity = horse
+                    .velocity
+                    .lerp(HORSE_SPEED * horse.direction, 1.0 * delta_time);
             }
-            let old_velocity = horse.velocity.x;
+            let old_velocity = horse.velocity;
             (horse.pos, _, _) =
-                update_physicsbody(horse.pos, &mut horse.velocity, delta_time, level, true);
-            if old_velocity > horse.velocity.x {
+                update_physicsbody(horse.pos, &mut horse.velocity, delta_time, level, false);
+            if old_velocity.length() > horse.velocity.length() || horse.velocity.length() == 0.0 {
                 horse.running = false;
             }
         }
@@ -471,18 +462,30 @@ impl<'a> Game<'a> {
         draw_texture(elevator_texture, elevator_pos.x, elevator_pos.y, WHITE);
         // draw horses
         for horse in self.horses.iter() {
+            let flip = horse.is_flipped();
+            let normal = horse.get_normal();
             draw_texture_ex(
                 self.assets.horse.animations
                     [if horse.running { 2 } else { 0 } + if horse.player_riding { 1 } else { 0 }]
                 .get_at_time((horse.time * 1000.0) as u32),
-                horse.pos.x.floor() - 16.0,
-                horse.pos.y.floor() - 24.0,
+                horse.pos.x.floor() - 12.0 + normal.x * 12.0,
+                horse.pos.y.floor() - 12.0 + normal.y * 12.0,
                 WHITE,
                 DrawTextureParams {
-                    flip_x: horse.facing_left,
+                    flip_x: flip,
+                    rotation: horse.direction.to_angle() - if flip { PI } else { 0.0 },
                     ..Default::default()
                 },
-            );
+            ); /* debug: draw horse collision and horse normal
+            draw_rectangle(horse.pos.x.floor(), horse.pos.y.floor(), 8.0, 8.0, RED);
+            draw_line(
+            horse.pos.x,
+            horse.pos.y,
+            horse.pos.x + normal.x * 16.0,
+            horse.pos.y + normal.y * 16.0,
+            1.0,
+            YELLOW,
+            );*/
         }
         self.player.draw(self.assets);
         if let Some(time) = &self.level_complete {

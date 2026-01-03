@@ -217,8 +217,10 @@ impl Player {
                 if let Some(horse) = self.riding {
                     self.riding = None;
                     self.jump_time = delta_time;
-                    self.velocity.y = -JUMP_FORCE;
-                    self.velocity.x = horses[horse].velocity.x;
+                    self.velocity = horses[horse].velocity;
+
+                    let normal = horses[horse].get_normal();
+                    self.velocity += normal * JUMP_FORCE;
                     horses[horse].player_riding = false;
                 } else {
                     // check if by horse
@@ -247,7 +249,7 @@ impl Player {
         let touched_death_tile;
 
         if let Some(horse) = &self.riding {
-            self.pos = horses[*horse].pos - vec2(0.0, 16.0);
+            self.pos = horses[*horse].pos + horses[*horse].get_normal() * 16.0;
         } else {
             (self.pos, self.on_ground, touched_death_tile) =
                 update_physicsbody(self.pos, &mut self.velocity, delta_time, world, true);

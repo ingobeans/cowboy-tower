@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::LazyLock};
+use std::{collections::HashMap, f32::consts::PI, sync::LazyLock};
 
 use asefile::AsepriteFile;
 use image::EncodableLayout;
@@ -98,15 +98,30 @@ pub struct Horse {
     pub pos: Vec2,
     pub time: f32,
     pub velocity: Vec2,
-    pub facing_left: bool,
+    pub direction: Vec2,
+    flip: bool,
     pub running: bool,
     pub player_riding: bool,
 }
 impl Horse {
-    pub fn new(pos: Vec2, facing_left: bool) -> Self {
+    pub fn is_flipped(&self) -> bool {
+        let mut flip = self.direction.x < 0.0;
+        if self.flip {
+            flip = !flip;
+        }
+        flip
+    }
+    pub fn get_normal(&self) -> Vec2 {
+        let normal = Vec2::from_angle(
+            self.direction.to_angle() - PI / 2.0 - if self.is_flipped() { PI } else { 0.0 },
+        );
+        normal
+    }
+    pub fn new(pos: Vec2, direction: Vec2, flip: bool) -> Self {
         Self {
             pos,
-            facing_left,
+            direction,
+            flip,
             time: 0.0,
             velocity: Vec2::ZERO,
             running: false,
@@ -175,6 +190,8 @@ impl Level {
         let mut lasso_targets = Vec::new();
         let mut animated_tiles = Vec::new();
 
+        let mut horse_arrows: Vec<(Vec2, bool)> = Vec::new();
+
         for (index, chunks) in layers_chunks.iter().enumerate() {
             for ((cx, cy), chunk) in chunks.iter() {
                 for (i, tile) in chunk.tiles.iter().enumerate() {
@@ -201,7 +218,16 @@ impl Level {
                                     (x * 8) as f32 + (min_x * 8) as f32,
                                     (y * 8) as f32 + (min_y * 8) as f32,
                                 ),
+                                vec2(1.0, 0.0),
                                 false,
+                            ));
+                        } else if *tile == 416 + 1 || *tile == 417 + 1 {
+                            horse_arrows.push((
+                                vec2(
+                                    (x * 8) as f32 + (min_x * 8) as f32,
+                                    (y * 8) as f32 + (min_y * 8) as f32,
+                                ),
+                                *tile == 417 + 1,
                             ));
                         }
                     } else if *tile == 320 + 1 {
@@ -217,6 +243,16 @@ impl Level {
                     }
                 }
             }
+        }
+        'horseloop: for horse in horses.iter_mut() {
+            for (arrow, flip) in horse_arrows.iter() {
+                if arrow.distance(horse.pos) == 8.0 {
+                    horse.direction = (*arrow - horse.pos).normalize();
+                    horse.flip = *flip;
+                    continue 'horseloop;
+                }
+            }
+            println!("warn: no horse arrow found for horse at {:?}", horse.pos);
         }
         let mut player_spawn = (usize::MAX, usize::MAX);
         let mut camera = create_camera((width * 8) as f32, (height * 8) as f32);
