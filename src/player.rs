@@ -222,7 +222,11 @@ impl Player {
         {
             lasso.speed = 0.0;
         }
-        self.camera_pos.x = self.pos.x.max(world.min_pos.x + SCREEN_WIDTH / 2.0 - 64.0);
+        self.camera_pos.x = self
+            .pos
+            .x
+            .max(world.min_pos.x + SCREEN_WIDTH / 2.0 - 64.0)
+            .min(world.max_pos.x + 16.0 * 8.0 - (SCREEN_WIDTH / 2.0 - 64.0));
         let target = self.pos.y - 22.0;
         if self.camera_pos.y < target {
             self.camera_pos.y = target;
