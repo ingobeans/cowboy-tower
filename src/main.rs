@@ -3,7 +3,7 @@ use std::{env::args, f32::consts::PI};
 use macroquad::{miniquad::window::screen_size, prelude::*};
 
 use crate::{
-    assets::{Assets, AttackType, EnemyType, MovementType},
+    assets::{Assets, AttackType, EnemyType, Horse, MovementType},
     player::{Player, update_physicsbody},
     utils::*,
 };
@@ -40,6 +40,14 @@ fn load_enemies(input: Vec<(Vec2, &'static EnemyType)>) -> Vec<Enemy> {
             wibble_wobble: rand::gen_range(0.0, PI * 2.0),
         })
         .collect()
+}
+fn load_horses(mut input: Vec<Horse>, level: usize) -> Vec<Horse> {
+    if level % 2 != 0 {
+        for horse in &mut input {
+            horse.facing_left = !horse.facing_left;
+        }
+    }
+    input
 }
 
 struct Projectile {
@@ -127,6 +135,7 @@ struct Game<'a> {
     camera: Camera2D,
     player: Player,
     enemies: Vec<Enemy>,
+    horses: Vec<Horse>,
     projectiles: Vec<Projectile>,
     level: usize,
     fade_timer: f32,
@@ -141,6 +150,7 @@ impl<'a> Game<'a> {
             player: Player::new(get_player_spawn(assets, level)),
             camera: Camera2D::default(),
             enemies: load_enemies(assets.levels[level].enemies.clone()),
+            horses: load_horses(assets.levels[level].horses.clone(), level),
             projectiles: Vec::new(),
             fade_timer: 0.0,
             level_complete: None,
@@ -151,6 +161,7 @@ impl<'a> Game<'a> {
         self.level = level;
         self.projectiles.clear();
         self.enemies = load_enemies(self.assets.levels[level].enemies.clone());
+        self.horses = load_horses(self.assets.levels[level].horses.clone(), level);
         self.fade_timer = 0.5;
         self.player = Player::new(get_player_spawn(self.assets, level));
         self.player.facing_left = self.level % 2 != 0;
@@ -183,6 +194,26 @@ impl<'a> Game<'a> {
         {
             self.level_complete = Some(0.0);
         }
+
+        // update horses
+
+        for horse in self.horses.iter_mut() {
+            const HORSE_SPEED: f32 = 128.0;
+            horse.time += delta_time;
+            if horse.running {
+                horse.velocity.x = horse.velocity.x.lerp(
+                    HORSE_SPEED * if horse.facing_left { -1.0 } else { 1.0 },
+                    1.0 * delta_time,
+                );
+            }
+            let old_velocity = horse.velocity.x;
+            (horse.pos, _, _) =
+                update_physicsbody(horse.pos, &mut horse.velocity, delta_time, level, true);
+            if old_velocity > horse.velocity.x {
+                horse.running = false;
+            }
+        }
+
         if let Some(time) = &mut self.level_complete {
             if *time == 0.0 {
                 self.player.time += delta_time;
@@ -208,6 +239,7 @@ impl<'a> Game<'a> {
                 delta_time,
                 &self.assets.levels[self.level],
                 &mut self.projectiles,
+                &mut self.horses,
             );
         }
 
@@ -254,6 +286,16 @@ impl<'a> Game<'a> {
             elevator_pos.y - max_y,
             Color::from_hex(0x3e2004),
         );
+        // draw animated tiles
+        for (pos, index) in level.animated_tiles.iter() {
+            let time = self.time + pos.x.powi(2) + pos.y.powi(2) * 100.0;
+            draw_texture(
+                self.assets.animated_tiles[*index].get_at_time((time * 1000.0) as u32),
+                pos.x,
+                pos.y,
+                WHITE,
+            );
+        }
         self.enemies.retain_mut(|enemy| {
             enemy.time += delta_time;
             if enemy.death_frames > 0.0 {
@@ -409,16 +451,6 @@ impl<'a> Game<'a> {
                 enemy.death_frames * 1000.0 <= self.assets.blood.total_length as f32
             }
         });
-        // draw animated tiles
-        for (pos, index) in level.animated_tiles.iter() {
-            let time = self.time + pos.x.powi(2) + pos.y.powi(2) * 100.0;
-            draw_texture(
-                self.assets.animated_tiles[*index].get_at_time((time * 1000.0) as u32),
-                pos.x,
-                pos.y,
-                WHITE,
-            );
-        }
 
         // draw level beginning elevator
         if self.level > 0 {
@@ -437,6 +469,21 @@ impl<'a> Game<'a> {
         }
         // draw level end elevator
         draw_texture(elevator_texture, elevator_pos.x, elevator_pos.y, WHITE);
+        // draw horses
+        for horse in self.horses.iter() {
+            draw_texture_ex(
+                self.assets.horse.animations
+                    [if horse.running { 2 } else { 0 } + if horse.player_riding { 1 } else { 0 }]
+                .get_at_time((horse.time * 1000.0) as u32),
+                horse.pos.x.floor() - 16.0,
+                horse.pos.y.floor() - 24.0,
+                WHITE,
+                DrawTextureParams {
+                    flip_x: horse.facing_left,
+                    ..Default::default()
+                },
+            );
+        }
         self.player.draw(self.assets);
         if let Some(time) = &self.level_complete {
             // draw level end elevator door animation if level complete

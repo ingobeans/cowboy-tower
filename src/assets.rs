@@ -14,6 +14,7 @@ pub struct Assets {
     pub levels: Vec<Level>,
     pub tileset: Spritesheet,
     pub projectiles: AnimationsGroup,
+    pub horse: AnimationsGroup,
     pub blood: Animation,
     pub die: AnimationsGroup,
     pub target: Animation,
@@ -39,6 +40,7 @@ impl Assets {
             legs: AnimationsGroup::from_file(include_bytes!("../assets/legs.ase")),
             elevator: AnimationsGroup::from_file(include_bytes!("../assets/elevator.ase")),
             projectiles: AnimationsGroup::from_file(include_bytes!("../assets/projectiles.ase")),
+            horse: AnimationsGroup::from_file(include_bytes!("../assets/horse.ase")),
             blood: Animation::from_file(include_bytes!("../assets/blood.ase")),
             die: AnimationsGroup::from_file(include_bytes!("../assets/die.ase")),
             target: Animation::from_file(include_bytes!("../assets/target.ase")),
@@ -91,9 +93,32 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
     ]
 });
 
+#[derive(Clone, Copy)]
+pub struct Horse {
+    pub pos: Vec2,
+    pub time: f32,
+    pub velocity: Vec2,
+    pub facing_left: bool,
+    pub running: bool,
+    pub player_riding: bool,
+}
+impl Horse {
+    pub fn new(pos: Vec2, facing_left: bool) -> Self {
+        Self {
+            pos,
+            facing_left,
+            time: 0.0,
+            velocity: Vec2::ZERO,
+            running: false,
+            player_riding: false,
+        }
+    }
+}
+
 pub struct Level {
     pub width: usize,
     pub enemies: Vec<(Vec2, &'static EnemyType)>,
+    pub horses: Vec<Horse>,
     pub data: Vec<[u16; 3]>,
     pub camera: Camera2D,
     pub min_pos: Vec2,
@@ -146,6 +171,7 @@ impl Level {
 
         let mut data = vec![[0, 0, 0]; (width * height) as usize];
         let mut enemies = Vec::new();
+        let mut horses = Vec::new();
         let mut lasso_targets = Vec::new();
         let mut animated_tiles = Vec::new();
 
@@ -168,6 +194,14 @@ impl Level {
                                     (y * 8) as f32 + (min_y * 8) as f32,
                                 ),
                                 &ENEMIES[(*tile - 2) as usize],
+                            ));
+                        } else if *tile == 384 + 1 {
+                            horses.push(Horse::new(
+                                vec2(
+                                    (x * 8) as f32 + (min_x * 8) as f32,
+                                    (y * 8) as f32 + (min_y * 8) as f32,
+                                ),
+                                false,
                             ));
                         }
                     } else if *tile == 320 + 1 {
@@ -226,6 +260,7 @@ impl Level {
             max_pos: vec2((max_x * 8) as f32, (max_y * 8) as f32),
             min_pos,
             lasso_targets,
+            horses,
             enemies,
             animated_tiles,
             camera,

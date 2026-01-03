@@ -4,7 +4,7 @@ use macroquad::prelude::*;
 
 use crate::{
     Projectile,
-    assets::{Assets, Level},
+    assets::{Assets, Horse, Level},
     utils::*,
 };
 
@@ -36,6 +36,8 @@ pub struct Player {
     pub moving: bool,
     pub time: f32,
     pub jump_time: f32,
+    /// Index of horse being ridden
+    pub riding: Option<usize>,
     active_lasso: Option<ActiveLasso>,
     pub lasso_target: Option<Vec2>,
     pub death: Option<(f32, usize)>,
@@ -50,6 +52,7 @@ impl Player {
             camera_pos: pos - vec2(0.0, 100.0),
             active_lasso: None,
             lasso_target: None,
+            riding: None,
             velocity: Vec2::ZERO,
             on_ground: false,
             jump_time: 0.0,
@@ -60,7 +63,13 @@ impl Player {
             shooting: 0.0,
         }
     }
-    pub fn update(&mut self, delta_time: f32, world: &Level, projectiles: &mut Vec<Projectile>) {
+    pub fn update(
+        &mut self,
+        delta_time: f32,
+        world: &Level,
+        projectiles: &mut Vec<Projectile>,
+        horses: &mut Vec<Horse>,
+    ) {
         if let Some(death) = &mut self.death {
             death.0 += delta_time;
             return;
@@ -203,20 +212,49 @@ impl Player {
                 self.facing_left = input.x.is_sign_negative();
             }
 
-            if self.on_ground && is_key_pressed(KeyCode::Space) {
-                self.jump_time = delta_time;
-                self.velocity.y = -JUMP_FORCE;
+            if is_key_pressed(KeyCode::Space) {
+                if let Some(horse) = self.riding {
+                    self.riding = None;
+                    self.jump_time = delta_time;
+                    self.velocity.y = -JUMP_FORCE;
+                    self.velocity.x = horses[horse].velocity.x;
+                    horses[horse].player_riding = false;
+                } else {
+                    // check if by horse
+                    let mut horses: Vec<(usize, &mut Horse)> = horses
+                        .iter_mut()
+                        .enumerate()
+                        .filter(|f| f.1.pos.distance(self.pos) < 16.0)
+                        .collect();
+                    if !horses.is_empty() {
+                        horses.sort_by(|a, b| {
+                            a.1.pos
+                                .distance(self.pos)
+                                .total_cmp(&b.1.pos.distance(self.pos))
+                        });
+                        self.riding = Some(horses[0].0);
+                        horses[0].1.running = true;
+                        horses[0].1.player_riding = true;
+                    } else if self.on_ground {
+                        self.jump_time = delta_time;
+                        self.velocity.y = -JUMP_FORCE;
+                    }
+                }
             }
         }
         let old_velocity = self.velocity;
         let touched_death_tile;
-        (self.pos, self.on_ground, touched_death_tile) =
-            update_physicsbody(self.pos, &mut self.velocity, delta_time, world, true);
 
-        if let Some(tile) = touched_death_tile
-            && self.death.is_none()
-        {
-            self.death = Some((0.0, DEATH_TILES.iter().position(|f| *f == tile).unwrap()));
+        if let Some(horse) = &self.riding {
+            self.pos = horses[*horse].pos - vec2(0.0, 16.0);
+        } else {
+            (self.pos, self.on_ground, touched_death_tile) =
+                update_physicsbody(self.pos, &mut self.velocity, delta_time, world, true);
+            if let Some(tile) = touched_death_tile
+                && self.death.is_none()
+            {
+                self.death = Some((0.0, DEATH_TILES.iter().position(|f| *f == tile).unwrap()));
+            }
         }
 
         if old_velocity.length() > self.velocity.length()
@@ -241,6 +279,9 @@ impl Player {
         }
     }
     pub fn draw(&mut self, assets: &Assets) {
+        if self.riding.is_some() {
+            return;
+        }
         if let Some(death) = self.death {
             let time =
                 ((death.0 * 1000.0) as u32).min(assets.die.animations[death.1].total_length - 1);
