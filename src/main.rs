@@ -200,8 +200,17 @@ impl<'a> Game<'a> {
             let old_velocity = horse.velocity;
             (horse.pos, _, _) =
                 update_physicsbody(horse.pos, &mut horse.velocity, delta_time, level, false);
-            if old_velocity.length() > horse.velocity.length() || horse.velocity.length() == 0.0 {
+            if horse.running && old_velocity.length() > horse.velocity.length()
+                || horse.velocity.length() == 0.0
+            {
                 horse.running = false;
+            }
+            if horse.running {
+                let tile_pos = (horse.pos / 8.0).trunc() * 8.0;
+                if level.horse_stops.contains(&tile_pos) {
+                    horse.running = false;
+                    horse.velocity = Vec2::ZERO;
+                }
             }
         }
 

@@ -134,6 +134,7 @@ pub struct Level {
     pub width: usize,
     pub enemies: Vec<(Vec2, &'static EnemyType)>,
     pub horses: Vec<Horse>,
+    pub horse_stops: Vec<Vec2>,
     pub data: Vec<[u16; 3]>,
     pub camera: Camera2D,
     pub min_pos: Vec2,
@@ -187,6 +188,7 @@ impl Level {
         let mut data = vec![[0, 0, 0]; (width * height) as usize];
         let mut enemies = Vec::new();
         let mut horses = Vec::new();
+        let mut horse_stops = Vec::new();
         let mut lasso_targets = Vec::new();
         let mut animated_tiles = Vec::new();
 
@@ -228,6 +230,11 @@ impl Level {
                                     (y * 8) as f32 + (min_y * 8) as f32,
                                 ),
                                 *tile == 417 + 1,
+                            ));
+                        } else if *tile == 418 + 1 {
+                            horse_stops.push(vec2(
+                                (x * 8) as f32 + (min_x * 8) as f32,
+                                (y * 8) as f32 + (min_y * 8) as f32,
                             ));
                         }
                     } else if *tile == 320 + 1 {
@@ -297,6 +304,7 @@ impl Level {
             min_pos,
             lasso_targets,
             horses,
+            horse_stops,
             enemies,
             animated_tiles,
             camera,
