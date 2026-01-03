@@ -17,6 +17,7 @@ pub struct Assets {
     pub blood: Animation,
     pub die: Animation,
     pub target: Animation,
+    pub animated_tiles: Vec<Animation>,
 }
 impl Assets {
     pub fn load() -> Self {
@@ -41,6 +42,7 @@ impl Assets {
             blood: Animation::from_file(include_bytes!("../assets/blood.ase")),
             die: Animation::from_file(include_bytes!("../assets/die.ase")),
             target: Animation::from_file(include_bytes!("../assets/target.ase")),
+            animated_tiles: vec![Animation::from_file(include_bytes!("../assets/lava.ase"))],
             tileset,
         }
     }
@@ -98,6 +100,7 @@ pub struct Level {
     pub max_pos: Vec2,
     pub player_spawn: Vec2,
     pub lasso_targets: Vec<Vec2>,
+    pub animated_tiles: Vec<(Vec2, usize)>,
 }
 impl Level {
     pub fn get_tile(&self, x: i16, y: i16) -> [u16; 3] {
@@ -144,6 +147,7 @@ impl Level {
         let mut data = vec![[0, 0, 0]; (width * height) as usize];
         let mut enemies = Vec::new();
         let mut lasso_targets = Vec::new();
+        let mut animated_tiles = Vec::new();
 
         for (index, chunks) in layers_chunks.iter().enumerate() {
             for ((cx, cy), chunk) in chunks.iter() {
@@ -166,6 +170,14 @@ impl Level {
                                 &ENEMIES[(*tile - 2) as usize],
                             ));
                         }
+                    } else if *tile == 320 + 1 {
+                        animated_tiles.push((
+                            vec2(
+                                (x * 8) as f32 + (min_x * 8) as f32,
+                                (y * 8) as f32 + (min_y * 8) as f32,
+                            ),
+                            0,
+                        ));
                     } else {
                         data[x + y * width as usize][index] = *tile;
                     }
@@ -215,6 +227,7 @@ impl Level {
             min_pos,
             lasso_targets,
             enemies,
+            animated_tiles,
             camera,
             data,
         }

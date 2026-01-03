@@ -131,6 +131,7 @@ struct Game<'a> {
     level: usize,
     fade_timer: f32,
     level_complete: Option<f32>,
+    time: f32,
 }
 impl<'a> Game<'a> {
     fn new(assets: &'a Assets, level: usize) -> Self {
@@ -143,6 +144,7 @@ impl<'a> Game<'a> {
             projectiles: Vec::new(),
             fade_timer: 0.0,
             level_complete: None,
+            time: 0.0,
         }
     }
     fn load_level(&mut self, level: usize) {
@@ -156,6 +158,7 @@ impl<'a> Game<'a> {
     fn update(&mut self) {
         // cap delta time to a minimum of 60 fps.
         let delta_time = get_frame_time().min(1.0 / 60.0);
+        self.time += delta_time;
         let (actual_screen_width, actual_screen_height) = screen_size();
         let scale_factor =
             (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
@@ -406,6 +409,17 @@ impl<'a> Game<'a> {
                 enemy.death_frames * 1000.0 <= self.assets.blood.total_length as f32
             }
         });
+        // draw animated tiles
+        for (pos, index) in level.animated_tiles.iter() {
+            let time = self.time + pos.x.powi(2) + pos.y.powi(2) * 100.0;
+            draw_texture(
+                self.assets.animated_tiles[*index].get_at_time((time * 1000.0) as u32),
+                pos.x,
+                pos.y,
+                WHITE,
+            );
+        }
+
         // draw level beginning elevator
         if self.level > 0 {
             draw_texture(
