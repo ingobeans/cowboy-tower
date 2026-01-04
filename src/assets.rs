@@ -141,12 +141,10 @@ impl Horse {
 }
 
 pub struct Level {
+    pub data: Vec<[u16; 4]>,
     pub width: usize,
     pub enemies: Vec<(Vec2, &'static EnemyType)>,
     pub horses: Vec<Horse>,
-    pub horse_stops: Vec<Vec2>,
-    pub no_return_markers: Vec<Vec2>,
-    pub data: Vec<[u16; 3]>,
     pub camera: Camera2D,
     pub min_pos: Vec2,
     pub max_pos: Vec2,
@@ -155,17 +153,17 @@ pub struct Level {
     pub animated_tiles: Vec<(Vec2, usize)>,
 }
 impl Level {
-    pub fn get_tile(&self, x: i16, y: i16) -> [u16; 3] {
+    pub fn get_tile(&self, x: i16, y: i16) -> [u16; 4] {
         if (x as f32 * 8.0) < self.min_pos.x || ((x - 16) as f32 * 8.0) >= self.max_pos.x {
-            return [0, 1, 0];
+            return [0, 1, 0, 0];
         }
         if (y as f32 * 8.0) < self.min_pos.y {
-            return [0; 3];
+            return [0; 4];
         }
         let x = (x - (self.min_pos.x / 8.0) as i16) as usize;
         let y = (y - (self.min_pos.y / 8.0) as i16) as usize;
         if x >= self.width || y >= self.data.len() / self.width {
-            return [0; 3];
+            return [0; 4];
         }
         self.data[x + y * self.width]
     }
@@ -196,14 +194,12 @@ impl Level {
         let width = max_x - min_x + 16;
         let height = max_y - min_y + 16;
 
-        let mut data = vec![[0, 0, 0]; (width * height) as usize];
+        let mut data = vec![[0; 4]; (width * height) as usize];
         let mut enemies = Vec::new();
         let mut horses = Vec::new();
-        let mut horse_stops = Vec::new();
         let mut lasso_targets = Vec::new();
         let mut animated_tiles = Vec::new();
 
-        let mut no_return_markers = Vec::new();
         let mut horse_arrows = Vec::new();
 
         for (index, chunks) in layers_chunks.iter().enumerate() {
@@ -211,6 +207,7 @@ impl Level {
                 for (i, tile) in chunk.tiles.iter().enumerate() {
                     let x = (i % 16) + (*cx - min_x) as usize;
                     let y = (i / 16) + (*cy - min_y) as usize;
+                    data[x + y * width as usize][index] = *tile;
                     if index == layers_chunks.len() - 1 {
                         if *tile == 1 {
                             data[x + y * width as usize][index - 1] = *tile;
@@ -243,16 +240,6 @@ impl Level {
                                 ),
                                 *tile == 417 + 1,
                             ));
-                        } else if *tile == 418 + 1 {
-                            horse_stops.push(vec2(
-                                (x * 8) as f32 + (min_x * 8) as f32,
-                                (y * 8) as f32 + (min_y * 8) as f32,
-                            ));
-                        } else if *tile == 419 + 1 {
-                            no_return_markers.push(vec2(
-                                (x * 8) as f32 + (min_x * 8) as f32,
-                                (y * 8) as f32 + (min_y * 8) as f32,
-                            ));
                         }
                     } else if *tile == 320 + 1 {
                         animated_tiles.push((
@@ -262,8 +249,6 @@ impl Level {
                             ),
                             0,
                         ));
-                    } else {
-                        data[x + y * width as usize][index] = *tile;
                     }
                 }
             }
@@ -294,7 +279,7 @@ impl Level {
                     player_spawn.1 = y;
                 }
             }
-            for t in tile {
+            for t in &tile[..3] {
                 if *t == 0 {
                     continue;
                 }
@@ -321,8 +306,6 @@ impl Level {
             min_pos,
             lasso_targets,
             horses,
-            horse_stops,
-            no_return_markers,
             enemies,
             animated_tiles,
             camera,

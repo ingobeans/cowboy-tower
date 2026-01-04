@@ -241,8 +241,9 @@ impl<'a> Game<'a> {
                 horse.running = false;
             }
             if horse.running {
-                let tile_pos = (horse.pos / 8.0).trunc() * 8.0;
-                if level.horse_stops.contains(&tile_pos) {
+                if level.get_tile((horse.pos.x / 8.0) as i16, (horse.pos.y / 8.0) as i16)[3]
+                    == 418 + 1
+                {
                     horse.running = false;
                     horse.velocity = Vec2::ZERO;
                 }
@@ -251,9 +252,10 @@ impl<'a> Game<'a> {
                 && !horse.running
                 && !horse.player_riding
                 && horse.pos.distance(horse.home_pos) > 1.0
-                && !level
-                    .no_return_markers
-                    .contains(&((self.player.pos / 8.0).trunc() * 8.0))
+                && level.get_tile(
+                    (self.player.pos.x / 8.0) as i16,
+                    (self.player.pos.y / 8.0) as i16,
+                )[3] != 419 + 1
             {
                 horse.returning_home = true;
             }
