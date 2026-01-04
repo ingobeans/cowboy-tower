@@ -152,6 +152,7 @@ struct Game<'a> {
     fade_timer: f32,
     level_complete: Option<f32>,
     time: f32,
+    level_transition_time: f32,
 }
 impl<'a> Game<'a> {
     fn new(assets: &'a Assets, level: usize) -> Self {
@@ -166,6 +167,7 @@ impl<'a> Game<'a> {
             fade_timer: 0.0,
             level_complete: None,
             time: 0.0,
+            level_transition_time: 0.0,
         }
     }
     fn load_level(&mut self, level: usize) {
@@ -177,7 +179,6 @@ impl<'a> Game<'a> {
         self.projectiles.clear();
         self.enemies = load_enemies(self.assets.levels[level].enemies.clone());
         self.horses = self.assets.levels[level].horses.clone();
-        self.fade_timer = 0.5;
         self.player = Player::new(get_player_spawn(self.assets, level));
         self.player.facing_left = self.level % 2 != 0;
     }
@@ -189,12 +190,25 @@ impl<'a> Game<'a> {
         let scale_factor =
             (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
 
+        let elevator_doors_animation = &self.assets.elevator.animations[1];
+        if let Some(time) = self.level_complete
+            && time * 1000.0 >= elevator_doors_animation.total_length as f32
+        {
+            self.level_complete = None;
+            self.load_level(self.level + 1);
+            self.level_transition_time = LEVEL_TRANSITION_LENGTH;
+            self.player.update(
+                delta_time,
+                &self.assets.levels[self.level],
+                &mut self.projectiles,
+                &mut self.horses,
+            );
+        }
         let level = &self.assets.levels[self.level];
 
         let left_level_end = self.level % 2 != 0;
 
         let elevator_texture = self.assets.elevator.animations[0].get_at_time(0);
-        let elevator_doors_animation = &self.assets.elevator.animations[1];
         let elevator_pos = vec2(
             if left_level_end {
                 level.player_spawn.x
@@ -242,8 +256,9 @@ impl<'a> Game<'a> {
             {
                 // this if also
                 // checks that the old velocity was actually in the same direction as the horse should be moving
-                // otherwise, this is an edge case where the horse was previously moving in the wrong direction, and
+                // otherwise, there would be an edge case where the horse was previously moving in the wrong direction, and
                 // is now accelerating in the correct direction, but this makes its total velocity decrease.
+
                 horse.running = false;
             }
             if horse.running {
@@ -282,10 +297,6 @@ impl<'a> Game<'a> {
                 }
             } else {
                 *time += delta_time;
-                if *time * 1000.0 >= elevator_doors_animation.total_length as f32 {
-                    self.level_complete = None;
-                    self.load_level(self.level + 1);
-                }
             }
         } else {
             self.player.update(
@@ -296,7 +307,19 @@ impl<'a> Game<'a> {
             );
         }
 
-        self.camera.target = self.player.camera_pos.floor();
+        if self.level_transition_time > 0.0 {
+            let old = &self.assets.levels[self.level - 1];
+            let y_diff = (old.min_pos.y - (level.max_pos.y + 16.0)).abs();
+            self.level_transition_time -= delta_time;
+            self.camera.target = self.player.camera_pos.floor();
+            let x =
+                (LEVEL_TRANSITION_LENGTH - self.level_transition_time) / LEVEL_TRANSITION_LENGTH;
+            let amt = (1.0 - (x - 1.0).powi(2)).sqrt();
+            self.camera.target.y =
+                (old.player_spawn.y + y_diff - 22.0).lerp(self.player.camera_pos.y.floor(), amt);
+        } else {
+            self.camera.target = self.player.camera_pos.floor();
+        }
         self.camera.zoom = vec2(
             1.0 / actual_screen_width * 2.0 * scale_factor,
             1.0 / actual_screen_height * 2.0 * scale_factor,
@@ -332,11 +355,47 @@ impl<'a> Game<'a> {
         let t = &level.camera.render_target.as_ref().unwrap().texture;
         draw_texture(t, level.min_pos.x, level.min_pos.y, WHITE);
 
+        if self.level_transition_time > 0.0 {
+            // draw previous level if during transition
+            let old = &self.assets.levels[self.level - 1];
+            let t = &old.camera.render_target.as_ref().unwrap().texture;
+            let x = if left_level_end {
+                level.max_pos.x - (old.max_pos.x - old.min_pos.x).abs()
+            } else {
+                level.min_pos.x
+            };
+            draw_texture(t, x, level.max_pos.y + 16.0, WHITE);
+            let elevator_pos = vec2(
+                if !left_level_end {
+                    old.player_spawn.x
+                } else {
+                    old.max_pos.x + 16.0 * 8.0 - elevator_texture.width()
+                } + x
+                    - old.min_pos.x,
+                old.player_spawn.y - elevator_texture.height()
+                    + 8.0
+                    + (old.min_pos.y - (level.max_pos.y + 16.0)).abs(),
+            );
+            draw_rectangle(
+                elevator_pos.x,
+                old.roof_height + (old.min_pos.y - (level.max_pos.y + 16.0)).abs(),
+                elevator_texture.width(),
+                old.player_spawn.y - elevator_texture.height() + 8.0 - old.roof_height,
+                Color::from_hex(0x3e2004),
+            );
+            draw_texture(
+                &elevator_doors_animation.frames.last().unwrap().0,
+                elevator_pos.x,
+                elevator_pos.y,
+                WHITE,
+            );
+        }
+
         draw_rectangle(
             elevator_pos.x,
-            max_y,
+            level.roof_height,
             elevator_texture.width(),
-            elevator_pos.y - max_y,
+            elevator_pos.y - level.roof_height,
             Color::from_hex(0x3e2004),
         );
         // draw animated tiles
@@ -517,9 +576,14 @@ impl<'a> Game<'a> {
 
         // draw level beginning elevator
         if self.level > 0 {
+            let time =
+                (LEVEL_TRANSITION_LENGTH - self.level_transition_time) / LEVEL_TRANSITION_LENGTH;
             draw_texture(
-                self.assets.elevator.animations[2]
-                    .get_at_time(((0.5 - self.fade_timer) * 1000.0) as u32),
+                self.assets.elevator.animations[2].get_at_time(
+                    ((time) * 1000.0)
+                        .min((self.assets.elevator.animations[2].total_length - 1) as f32)
+                        as u32,
+                ),
                 get_player_spawn(self.assets, self.level).x
                     + if left_level_end {
                         3.0 * 8.0 - elevator_texture.width()
@@ -680,6 +744,7 @@ impl<'a> Game<'a> {
             if delta > 0.0 {
                 if delta > 0.5 {
                     self.load_level(self.level);
+                    self.fade_timer = 0.5;
                 }
                 fade_amt = delta * 2.0;
             }

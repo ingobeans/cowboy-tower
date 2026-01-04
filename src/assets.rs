@@ -153,6 +153,8 @@ pub struct Level {
     pub min_pos: Vec2,
     pub max_pos: Vec2,
     pub player_spawn: Vec2,
+    // The Y coordinate of the highest point/placed tile (lowest value)
+    pub roof_height: f32,
     pub lasso_targets: Vec<Vec2>,
     pub animated_tiles: Vec<(Vec2, usize)>,
 }
@@ -244,6 +246,7 @@ impl Level {
             println!("warn: no horse arrow found for horse at {:?}", horse.pos);
         }
         let mut player_spawn = (usize::MAX, usize::MAX);
+        let mut roof_height = usize::MAX;
         let mut camera = create_camera((width * 8) as f32, (height * 8) as f32);
         camera.target = vec2((width * 8) as f32 / 2.0, (height * 8) as f32 / 2.0);
         set_camera(&camera);
@@ -258,6 +261,9 @@ impl Level {
                 if y < player_spawn.1 && x <= player_spawn.0 {
                     player_spawn.1 = y;
                 }
+            }
+            if tile[0] + tile[1] + tile[2] != 0 && y < roof_height {
+                roof_height = y
             }
             for t in &tile[..3] {
                 if *t == 0 {
@@ -364,6 +370,7 @@ impl Level {
         );
         Self {
             player_spawn,
+            roof_height: (roof_height * 8) as f32 + min_pos.y,
             width: width as usize,
             max_pos: vec2((max_x * 8) as f32, (max_y * 8) as f32),
             min_pos,

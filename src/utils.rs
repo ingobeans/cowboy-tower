@@ -4,6 +4,7 @@ pub const SCREEN_WIDTH: f32 = 256.0;
 pub const SCREEN_HEIGHT: f32 = 144.0;
 pub const MAX_LASSO_DISTANCE: f32 = 64.0;
 pub const GRAVITY: f32 = 9.8 * 75.0;
+pub const LEVEL_TRANSITION_LENGTH: f32 = 0.5;
 pub const DEATH_TILES: &[u16] = &[128, 352];
 
 pub fn create_camera(w: f32, h: f32) -> Camera2D {
