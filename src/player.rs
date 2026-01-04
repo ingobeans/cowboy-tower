@@ -72,6 +72,10 @@ impl Player {
     ) {
         if let Some(death) = &mut self.death {
             death.0 += delta_time;
+            if let Some(horse) = self.riding {
+                self.riding = None;
+                horses[horse].player_riding = false;
+            }
             return;
         }
         const MOVE_SPEED: f32 = 101.0;
