@@ -40,7 +40,7 @@ pub struct Player {
     pub riding: Option<usize>,
     active_lasso: Option<ActiveLasso>,
     pub lasso_target: Option<Vec2>,
-    pub death: Option<(f32, usize)>,
+    pub death: Option<(f32, usize, bool)>,
     /// If player isnt actively shooting a projectile, this is 0.
     /// Otherwise it will be the time for the shoot animation.
     pub shooting: f32,
@@ -75,6 +75,12 @@ impl Player {
             if let Some(horse) = self.riding {
                 self.riding = None;
                 horses[horse].player_riding = false;
+            }
+            if death.2 {
+                self.velocity.x = 0.0;
+                self.velocity.y += GRAVITY * delta_time;
+                (self.pos, self.on_ground, _) =
+                    update_physicsbody(self.pos, &mut self.velocity, delta_time, world, true);
             }
             return;
         }
@@ -260,7 +266,11 @@ impl Player {
             if let Some(tile) = touched_death_tile
                 && self.death.is_none()
             {
-                self.death = Some((0.0, DEATH_TILES.iter().position(|f| *f == tile).unwrap()));
+                self.death = Some((
+                    0.0,
+                    DEATH_TILES.iter().position(|f| *f == tile).unwrap(),
+                    false,
+                ));
             }
         }
 

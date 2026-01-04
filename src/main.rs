@@ -649,7 +649,7 @@ impl<'a> Game<'a> {
                     player_hit = true;
                 }
                 if player_hit {
-                    self.player.death = Some((0.0, projectile.player_death_animation()));
+                    self.player.death = Some((0.0, projectile.player_death_animation(), true));
                     projectile.dead |= projectile.should_die_on_kill();
                 }
             }
