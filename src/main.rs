@@ -163,6 +163,10 @@ impl<'a> Game<'a> {
         }
     }
     fn load_level(&mut self, level: usize) {
+        // Ensure consistent RNG whenever a level is loaded.
+        // Otherwise, loading a level directly with command line arguments
+        // would yield other RNG than playing through the game until the level
+        rand::srand(level as u64);
         self.level = level;
         self.projectiles.clear();
         self.enemies = load_enemies(self.assets.levels[level].enemies.clone());
