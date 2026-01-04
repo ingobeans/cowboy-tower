@@ -193,9 +193,20 @@ impl<'a> Game<'a> {
             const HORSE_SPEED: f32 = 128.0;
             horse.time += delta_time;
             if horse.running {
+                horse.returning_home = false;
                 horse.velocity = horse
                     .velocity
                     .lerp(HORSE_SPEED * horse.direction, 1.0 * delta_time);
+            } else if horse.returning_home {
+                if horse.pos.distance(horse.home_pos) <= 1.0 {
+                    horse.pos = horse.home_pos;
+                    horse.returning_home = false;
+                    horse.velocity = Vec2::ZERO;
+                } else if !horse.player_riding {
+                    horse.velocity = horse
+                        .velocity
+                        .lerp(HORSE_SPEED * -horse.direction, 1.0 * delta_time);
+                }
             }
             let old_velocity = horse.velocity;
             (horse.pos, _, _) =
@@ -211,6 +222,16 @@ impl<'a> Game<'a> {
                     horse.running = false;
                     horse.velocity = Vec2::ZERO;
                 }
+            }
+            if !horse.returning_home
+                && !horse.running
+                && !horse.player_riding
+                && horse.pos.distance(horse.home_pos) > 1.0
+                && !level
+                    .no_return_markers
+                    .contains(&((self.player.pos / 8.0).trunc() * 8.0))
+            {
+                horse.returning_home = true;
             }
         }
 
@@ -472,20 +493,26 @@ impl<'a> Game<'a> {
         // draw horses
         for horse in self.horses.iter() {
             let flip = horse.is_flipped();
+            let actual_flip = if horse.returning_home { !flip } else { flip };
             let normal = horse.get_normal();
             draw_texture_ex(
-                self.assets.horse.animations
-                    [if horse.running { 2 } else { 0 } + if horse.player_riding { 1 } else { 0 }]
+                self.assets.horse.animations[if horse.running || horse.returning_home {
+                    2
+                } else {
+                    0
+                } + if horse.player_riding { 1 } else { 0 }]
                 .get_at_time((horse.time * 1000.0) as u32),
                 horse.pos.x.floor() - 12.0 + normal.x * 12.0,
                 horse.pos.y.floor() - 12.0 + normal.y * 12.0,
                 WHITE,
                 DrawTextureParams {
-                    flip_x: flip,
+                    flip_x: actual_flip,
                     rotation: horse.direction.to_angle() - if flip { PI } else { 0.0 },
                     ..Default::default()
                 },
-            ); /* debug: draw horse collision and horse normal
+            );
+
+            /* debug: draw horse collision and horse normal
             draw_rectangle(horse.pos.x.floor(), horse.pos.y.floor(), 8.0, 8.0, RED);
             draw_line(
             horse.pos.x,

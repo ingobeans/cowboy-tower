@@ -96,12 +96,14 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
 #[derive(Clone, Copy)]
 pub struct Horse {
     pub pos: Vec2,
+    pub home_pos: Vec2,
     pub time: f32,
     pub velocity: Vec2,
     pub direction: Vec2,
     flip: bool,
     pub running: bool,
     pub player_riding: bool,
+    pub returning_home: bool,
 }
 impl Horse {
     pub fn is_flipped(&self) -> bool {
@@ -122,9 +124,11 @@ impl Horse {
             pos,
             direction,
             flip,
+            home_pos: pos,
             time: 0.0,
             velocity: Vec2::ZERO,
             running: false,
+            returning_home: false,
             player_riding: false,
         }
     }
@@ -135,6 +139,7 @@ pub struct Level {
     pub enemies: Vec<(Vec2, &'static EnemyType)>,
     pub horses: Vec<Horse>,
     pub horse_stops: Vec<Vec2>,
+    pub no_return_markers: Vec<Vec2>,
     pub data: Vec<[u16; 3]>,
     pub camera: Camera2D,
     pub min_pos: Vec2,
@@ -192,7 +197,8 @@ impl Level {
         let mut lasso_targets = Vec::new();
         let mut animated_tiles = Vec::new();
 
-        let mut horse_arrows: Vec<(Vec2, bool)> = Vec::new();
+        let mut no_return_markers = Vec::new();
+        let mut horse_arrows = Vec::new();
 
         for (index, chunks) in layers_chunks.iter().enumerate() {
             for ((cx, cy), chunk) in chunks.iter() {
@@ -233,6 +239,11 @@ impl Level {
                             ));
                         } else if *tile == 418 + 1 {
                             horse_stops.push(vec2(
+                                (x * 8) as f32 + (min_x * 8) as f32,
+                                (y * 8) as f32 + (min_y * 8) as f32,
+                            ));
+                        } else if *tile == 419 + 1 {
+                            no_return_markers.push(vec2(
                                 (x * 8) as f32 + (min_x * 8) as f32,
                                 (y * 8) as f32 + (min_y * 8) as f32,
                             ));
@@ -305,6 +316,7 @@ impl Level {
             lasso_targets,
             horses,
             horse_stops,
+            no_return_markers,
             enemies,
             animated_tiles,
             camera,
