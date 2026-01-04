@@ -211,8 +211,13 @@ impl<'a> Game<'a> {
             let old_velocity = horse.velocity;
             (horse.pos, _, _) =
                 update_physicsbody(horse.pos, &mut horse.velocity, delta_time, level, false);
-            if horse.running && old_velocity.length() > horse.velocity.length()
-                || horse.velocity.length() == 0.0
+            // if horse hits walls / stops, make horse.running = false
+            if horse.running && 
+                (old_velocity.length() > horse.velocity.length() || horse.velocity.length() == 0.0)
+                // check that the old velocity was actually in the same direction as the horse should be moving
+                // otherwise, this is an edge case where the horse was previously moving in the wrong direction, and
+                // is now accelerating in the correct direction, but this makes its total velocity decrease.
+                && (old_velocity.normalize() - horse.direction.normalize()).length() < 0.1
             {
                 horse.running = false;
             }
