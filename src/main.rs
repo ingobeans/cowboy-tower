@@ -63,10 +63,22 @@ impl Projectile {
             dead: false,
         }
     }
+    fn is_ray(&self) -> bool {
+        match self.type_index {
+            4 => true,
+            _ => false,
+        }
+    }
+    fn shoot_offset(type_index: usize) -> bool {
+        match type_index {
+            3 | 4 => false,
+            _ => true,
+        }
+    }
     fn base_speed(type_index: usize) -> f32 {
         match type_index {
             1 | 2 => 128.0 * 0.8,
-            3 => 0.0,
+            3 | 4 => 0.0,
             _ => 128.0,
         }
     }
@@ -96,7 +108,7 @@ impl Projectile {
     }
     fn should_die_on_kill(&self) -> bool {
         match &self.type_index {
-            3 => false,
+            3 | 4 => false,
             _ => true,
         }
     }
@@ -104,6 +116,7 @@ impl Projectile {
         match &self.type_index {
             2 => 1.0,
             3 => 0.5,
+            4 => 0.5,
             _ => 0.0,
         }
     }
@@ -212,13 +225,15 @@ impl<'a> Game<'a> {
             (horse.pos, _, _) =
                 update_physicsbody(horse.pos, &mut horse.velocity, delta_time, level, false);
             // if horse hits walls / stops, make horse.running = false
-            if horse.running && 
-                (old_velocity.length() > horse.velocity.length() || horse.velocity.length() == 0.0)
-                // check that the old velocity was actually in the same direction as the horse should be moving
-                // otherwise, this is an edge case where the horse was previously moving in the wrong direction, and
-                // is now accelerating in the correct direction, but this makes its total velocity decrease.
+            if horse.running
+                && (old_velocity.length() > horse.velocity.length()
+                    || horse.velocity.length() == 0.0)
                 && (old_velocity.normalize() - horse.direction.normalize()).length() < 0.1
             {
+                // this if also
+                // checks that the old velocity was actually in the same direction as the horse should be moving
+                // otherwise, this is an edge case where the horse was previously moving in the wrong direction, and
+                // is now accelerating in the correct direction, but this makes its total velocity decrease.
                 horse.running = false;
             }
             if horse.running {
@@ -355,15 +370,20 @@ impl<'a> Game<'a> {
                             }
                             AttackType::ShootAfter(_) => {}
                             AttackType::Shoot(sprite) => {
-                                self.projectiles.push(Projectile::new(
-                                    sprite,
+                                let pos = if Projectile::shoot_offset(sprite) {
                                     enemy.pos
                                         + if enemy.pos.x > self.player.pos.x {
                                             vec2(-8.0, 0.0)
                                         } else {
                                             vec2(8.0, 0.0)
                                         }
-                                        + vec2(4.0, 0.0),
+                                        + vec2(4.0, 0.0)
+                                } else {
+                                    enemy.pos
+                                };
+                                self.projectiles.push(Projectile::new(
+                                    sprite,
+                                    pos,
                                     vec2(
                                         if enemy.pos.x > self.player.pos.x {
                                             -1.0
@@ -384,15 +404,20 @@ impl<'a> Game<'a> {
                         && !enemy.has_attacked
                         && let AttackType::ShootAfter(sprite) = enemy.ty.attack_type
                     {
-                        self.projectiles.push(Projectile::new(
-                            sprite,
+                        let pos = if Projectile::shoot_offset(sprite) {
                             enemy.pos
                                 + if enemy.pos.x > self.player.pos.x {
                                     vec2(-8.0, 0.0)
                                 } else {
                                     vec2(8.0, 0.0)
                                 }
-                                + vec2(4.0, 0.0),
+                                + vec2(4.0, 0.0)
+                        } else {
+                            enemy.pos
+                        };
+                        self.projectiles.push(Projectile::new(
+                            sprite,
+                            pos,
                             vec2(
                                 if enemy.pos.x > self.player.pos.x {
                                     -1.0
@@ -561,29 +586,60 @@ impl<'a> Game<'a> {
             } else {
                 projectile.time * 10.0
             };
-            draw_texture_ex(
-                &self.assets.projectiles.animations[projectile.type_index]
-                    .get_at_time((projectile.time * 1000.0) as u32),
-                projectile.pos.x.floor() - 20.0,
-                projectile.pos.y.floor() - 20.0,
-                WHITE,
-                DrawTextureParams {
-                    flip_x: projectile.direction.x < 0.0,
-                    rotation,
-                    ..Default::default()
-                },
-            );
+            let ray_direction = vec2(0.0, 1.0);
+            let is_ray = projectile.is_ray();
+            let section_count = if is_ray {
+                let tx = (projectile.pos.x / 8.0) as i16;
+                let ty = (projectile.pos.y / 8.0) as i16;
+                let mut count = 0;
+                loop {
+                    if level.get_tile(tx, ty + count * ray_direction.y as i16)[1] != 0 {
+                        break;
+                    }
+                    count += 1;
+                }
+                count - 1
+            } else {
+                1
+            };
+            for i in 0..section_count {
+                draw_texture_ex(
+                    &self.assets.projectiles.animations[projectile.type_index]
+                        .get_at_time((projectile.time * 1000.0) as u32),
+                    projectile.pos.x.floor() - 20.0 + ray_direction.x * 8.0 * i as f32,
+                    projectile.pos.y.floor() - 20.0 + ray_direction.y * 8.0 * i as f32,
+                    WHITE,
+                    DrawTextureParams {
+                        flip_x: projectile.direction.x < 0.0,
+                        rotation,
+                        ..Default::default()
+                    },
+                );
+            }
+            //draw_rectangle(projectile.pos.x, projectile.pos.y, 2.0,2.0, GREEN);
             if projectile.dead {
                 return false;
             }
-            if !projectile.friendly
-                && projectile.can_kill()
-                && self.player.death.is_none()
-                && (self.player.pos + vec2(4.0, 4.0)).distance(projectile.pos)
+            if !projectile.friendly && projectile.can_kill() && self.player.death.is_none() {
+                let mut player_hit = false;
+                if is_ray {
+                    if (projectile.pos.x..projectile.pos.x + 8.0)
+                        .contains(&(self.player.pos.x + 4.0))
+                        && (projectile.pos.y + 8.0
+                            ..projectile.pos.y + 8.0 + 8.0 * section_count as f32)
+                            .contains(&self.player.pos.y)
+                    {
+                        player_hit = true;
+                    }
+                } else if (self.player.pos + vec2(4.0, 4.0)).distance(projectile.pos)
                     < projectile.get_collision_size()
-            {
-                self.player.death = Some((0.0, 0));
-                projectile.dead |= projectile.should_die_on_kill();
+                {
+                    player_hit = true;
+                }
+                if player_hit {
+                    self.player.death = Some((0.0, 0));
+                    projectile.dead |= projectile.should_die_on_kill();
+                }
             }
             projectile.time += delta_time;
             let lifetime = projectile.get_lifetime();

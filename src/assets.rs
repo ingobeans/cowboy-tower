@@ -90,6 +90,12 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
             attack_type: AttackType::ShootAfter(2),
             attack_delay: 2.0,
         },
+        EnemyType {
+            animation: AnimationsGroup::from_file(include_bytes!("../assets/laser.ase")),
+            movement_type: MovementType::None,
+            attack_type: AttackType::ShootAfter(4),
+            attack_delay: 2.0,
+        },
     ]
 });
 
