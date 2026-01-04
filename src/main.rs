@@ -112,6 +112,12 @@ impl Projectile {
             _ => true,
         }
     }
+    fn player_death_animation(&self) -> usize {
+        match &self.type_index {
+            4 => 2,
+            _ => 0,
+        }
+    }
     fn get_lifetime(&self) -> f32 {
         match &self.type_index {
             2 => 1.0,
@@ -643,7 +649,7 @@ impl<'a> Game<'a> {
                     player_hit = true;
                 }
                 if player_hit {
-                    self.player.death = Some((0.0, 0));
+                    self.player.death = Some((0.0, projectile.player_death_animation()));
                     projectile.dead |= projectile.should_die_on_kill();
                 }
             }
