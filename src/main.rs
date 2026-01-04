@@ -26,7 +26,7 @@ struct Enemy {
     wibble_wobble: f32,
 }
 
-fn load_enemies(input: Vec<(Vec2, &'static EnemyType)>) -> Vec<Enemy> {
+fn load_enemies(input: Vec<(Vec2, &'static EnemyType, f32)>) -> Vec<Enemy> {
     input
         .into_iter()
         .map(|f| Enemy {
@@ -36,7 +36,7 @@ fn load_enemies(input: Vec<(Vec2, &'static EnemyType)>) -> Vec<Enemy> {
             time: 0.0,
             has_attacked: false,
             death_frames: 0.0,
-            attack_time: 0.0,
+            attack_time: -f.2,
             wibble_wobble: rand::gen_range(0.0, PI * 2.0),
         })
         .collect()
@@ -116,7 +116,7 @@ impl Projectile {
         match &self.type_index {
             2 => 1.0,
             3 => 0.5,
-            4 => 0.5,
+            4 => 1.0,
             _ => 0.0,
         }
     }

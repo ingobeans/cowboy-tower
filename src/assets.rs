@@ -1,4 +1,8 @@
-use std::{collections::HashMap, f32::consts::PI, sync::LazyLock};
+use std::{
+    collections::{HashMap, HashSet},
+    f32::consts::PI,
+    sync::LazyLock,
+};
 
 use asefile::AsepriteFile;
 use image::EncodableLayout;
@@ -143,7 +147,7 @@ impl Horse {
 pub struct Level {
     pub data: Vec<[u16; 4]>,
     pub width: usize,
-    pub enemies: Vec<(Vec2, &'static EnemyType)>,
+    pub enemies: Vec<(Vec2, &'static EnemyType, f32)>,
     pub horses: Vec<Horse>,
     pub camera: Camera2D,
     pub min_pos: Vec2,
@@ -208,47 +212,23 @@ impl Level {
                     let x = (i % 16) + (*cx - min_x) as usize;
                     let y = (i / 16) + (*cy - min_y) as usize;
                     data[x + y * width as usize][index] = *tile;
+                    let pos = vec2(
+                        (x * 8) as f32 + (min_x * 8) as f32,
+                        (y * 8) as f32 + (min_y * 8) as f32,
+                    );
                     if index == layers_chunks.len() - 1 {
                         if *tile == 1 {
                             data[x + y * width as usize][index - 1] = *tile;
-                            lasso_targets.push(vec2(
-                                (x * 8) as f32 + (min_x * 8) as f32 + 4.0,
-                                (y * 8) as f32 + (min_y * 8) as f32 + 4.0,
-                            ));
+                            lasso_targets.push(pos + vec2(4.0, 4.0));
                         } else if *tile <= 32 && *tile > 1 {
-                            enemies.push((
-                                vec2(
-                                    (x * 8) as f32 + (min_x * 8) as f32,
-                                    (y * 8) as f32 + (min_y * 8) as f32,
-                                ),
-                                &ENEMIES[(*tile - 2) as usize],
-                            ));
+                            enemies.push((pos, &ENEMIES[(*tile - 2) as usize], 0.0));
                         } else if *tile == 384 + 1 {
-                            horses.push(Horse::new(
-                                vec2(
-                                    (x * 8) as f32 + (min_x * 8) as f32,
-                                    (y * 8) as f32 + (min_y * 8) as f32,
-                                ),
-                                vec2(1.0, 0.0),
-                                false,
-                            ));
+                            horses.push(Horse::new(pos, vec2(1.0, 0.0), false));
                         } else if *tile == 416 + 1 || *tile == 417 + 1 {
-                            horse_arrows.push((
-                                vec2(
-                                    (x * 8) as f32 + (min_x * 8) as f32,
-                                    (y * 8) as f32 + (min_y * 8) as f32,
-                                ),
-                                *tile == 417 + 1,
-                            ));
+                            horse_arrows.push((pos, *tile == 417 + 1));
                         }
                     } else if *tile == 320 + 1 {
-                        animated_tiles.push((
-                            vec2(
-                                (x * 8) as f32 + (min_x * 8) as f32,
-                                (y * 8) as f32 + (min_y * 8) as f32,
-                            ),
-                            0,
-                        ));
+                        animated_tiles.push((pos, 0));
                     }
                 }
             }
@@ -291,6 +271,89 @@ impl Level {
                     (t / 32) as f32,
                     None,
                 );
+            }
+        }
+        let mut visited_tiles = HashSet::new();
+
+        fn sum_number_neighbours(
+            i: usize,
+            width: usize,
+            data: &[[u16; 4]],
+            visited_tiles: &mut HashSet<usize>,
+            sum: &mut u16,
+            factor: &mut f32,
+            number_affectable_tiles: &mut Vec<usize>,
+        ) {
+            let x = i % width;
+            let y = i / width;
+            for d in [(0, 1), (0, -1)] {
+                let nx = x.saturating_add_signed(d.0);
+                let ny = y.saturating_add_signed(d.1);
+                let ni = nx + ny * width;
+                if visited_tiles.contains(&ni) {
+                    continue;
+                }
+                visited_tiles.insert(ni);
+                let tile = data[ni][3];
+                if tile == 0 {
+                    continue;
+                }
+                let tile = tile - 1;
+
+                if (tile >= 992 && tile <= 1000) || (tile >= 960 && tile <= 964) {
+                    if tile < 992 {
+                        *factor *= 0.5_f32.powi((tile - 960 + 1) as i32);
+                    } else {
+                        let value = tile - 992 + 1;
+                        *sum += value;
+                    }
+                    sum_number_neighbours(
+                        ni,
+                        width,
+                        data,
+                        visited_tiles,
+                        sum,
+                        factor,
+                        number_affectable_tiles,
+                    );
+                } else if tile > 2 && tile < 33 {
+                    number_affectable_tiles.push(ni);
+                }
+            }
+        }
+        for (i, tile) in data.iter().enumerate() {
+            if tile[3] == 0 {
+                continue;
+            }
+            if visited_tiles.contains(&i) {
+                continue;
+            }
+            let tile = tile[3] - 1;
+            if tile >= 992 && tile <= 1000 {
+                visited_tiles.insert(i);
+                let mut sum = tile - 992 + 1;
+                let mut factor = 1.0;
+                let mut number_affectable_tiles = Vec::new();
+                sum_number_neighbours(
+                    i,
+                    width as usize,
+                    &data,
+                    &mut visited_tiles,
+                    &mut sum,
+                    &mut factor,
+                    &mut number_affectable_tiles,
+                );
+                let sum = sum as f32 * factor;
+                for item in number_affectable_tiles {
+                    let x = item % width as usize;
+                    let y = item / width as usize;
+                    let pos = vec2(
+                        (x * 8) as f32 + (min_x * 8) as f32,
+                        (y * 8) as f32 + (min_y * 8) as f32,
+                    );
+                    let enemy = enemies.iter_mut().find(|f| f.0 == pos).unwrap();
+                    enemy.2 = sum;
+                }
             }
         }
         set_default_camera();
