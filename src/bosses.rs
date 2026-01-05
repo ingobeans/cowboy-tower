@@ -65,6 +65,7 @@ impl Boss for Henry {
     ) {
         let mut pole_anim_time = None;
         let pole_anim = &assets.pole;
+        let mut activate = false;
         if self.activated > 0.0 {
             if (self.activated + delta_time) * 1000.0 < pole_anim.total_length as f32 {
                 self.activated += delta_time;
@@ -73,12 +74,19 @@ impl Boss for Henry {
         } else if let Some(dialogue) = &mut player.active_dialoge {
             if dialogue.2 {
                 player.active_dialoge = None;
-                self.activated = delta_time;
-                player.in_boss_battle = true;
+                activate = true;
             }
         } else if player.pos.distance(level.find_marker(4)) <= 8.0 {
-            player.active_dialoge =
-                Some(("Hm. A puny little cowboy.\nYou will be crushed.", 0, false))
+            if player.has_restarted_level {
+                activate = true;
+            } else {
+                player.active_dialoge =
+                    Some(("Hm. A puny little cowboy.\nYou will be crushed.", 0, false))
+            }
+        }
+        if activate {
+            self.activated = delta_time;
+            player.in_boss_battle = true;
         }
         let dead = matches!(self.state, HenryState::Death);
 

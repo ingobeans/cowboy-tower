@@ -745,6 +745,7 @@ impl<'a> Game<'a> {
                 if delta > 0.5 {
                     self.load_level(self.level);
                     self.fade_timer = 0.5;
+                    self.player.has_restarted_level = true;
                 }
                 fade_amt = delta * 2.0;
             }

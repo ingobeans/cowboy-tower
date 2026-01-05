@@ -46,6 +46,9 @@ pub struct Player {
     /// Otherwise it will be the time for the shoot animation.
     pub shooting: f32,
     pub in_boss_battle: bool,
+    /// If the player isnt playing the level for the first time.
+    /// Used to skip bosses' dialogue automatically
+    pub has_restarted_level: bool,
 }
 impl Player {
     pub fn new(pos: Vec2) -> Self {
@@ -65,6 +68,7 @@ impl Player {
             death: None,
             shooting: 0.0,
             in_boss_battle: false,
+            has_restarted_level: false,
         }
     }
     pub fn update(
