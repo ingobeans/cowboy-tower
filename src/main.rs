@@ -3,13 +3,17 @@ use std::{env::args, f32::consts::PI};
 use macroquad::{miniquad::window::screen_size, prelude::*};
 
 use crate::{
-    assets::{Assets, AttackType, EnemyType, Horse, MovementType},
+    assets::{Assets, Horse},
+    enemies::*,
     player::{Player, update_physicsbody},
+    projectiles::*,
     utils::*,
 };
 
 mod assets;
+mod enemies;
 mod player;
+mod projectiles;
 mod utils;
 
 struct Enemy {
@@ -40,92 +44,6 @@ fn load_enemies(input: Vec<(Vec2, &'static EnemyType, f32)>) -> Vec<Enemy> {
             wibble_wobble: rand::gen_range(0.0, PI * 2.0),
         })
         .collect()
-}
-
-struct Projectile {
-    pos: Vec2,
-    direction: Vec2,
-    type_index: usize,
-    time: f32,
-    /// Is projectile fired by the player?
-    friendly: bool,
-    /// True when projectile hits an enemy, marker to show that it should be destroyed.
-    dead: bool,
-}
-impl Projectile {
-    fn new(type_index: usize, pos: Vec2, direction: Vec2) -> Self {
-        Self {
-            pos,
-            direction: direction * Self::base_speed(type_index),
-            type_index,
-            time: 0.0,
-            friendly: type_index == 0,
-            dead: false,
-        }
-    }
-    fn is_ray(&self) -> bool {
-        match self.type_index {
-            4 => true,
-            _ => false,
-        }
-    }
-    fn shoot_offset(type_index: usize) -> bool {
-        match type_index {
-            3 | 4 => false,
-            _ => true,
-        }
-    }
-    fn base_speed(type_index: usize) -> f32 {
-        match type_index {
-            1 | 2 => 128.0 * 0.8,
-            3 | 4 => 0.0,
-            _ => 128.0,
-        }
-    }
-    fn is_physics_based(&self) -> bool {
-        match &self.type_index {
-            2 => true,
-            _ => false,
-        }
-    }
-    fn get_payload(&self) -> Option<Projectile> {
-        match &self.type_index {
-            2 => Some(Projectile::new(3, self.pos, Vec2::ZERO)),
-            _ => None,
-        }
-    }
-    fn get_collision_size(&self) -> f32 {
-        match &self.type_index {
-            3 => 17.0,
-            _ => 8.0,
-        }
-    }
-    fn can_kill(&self) -> bool {
-        match &self.type_index {
-            2 => false,
-            _ => true,
-        }
-    }
-    fn should_die_on_kill(&self) -> bool {
-        match &self.type_index {
-            3 | 4 => false,
-            _ => true,
-        }
-    }
-    fn player_death_animation(&self) -> usize {
-        match &self.type_index {
-            4 => 2,
-            _ => 0,
-        }
-    }
-    fn get_lifetime(&self) -> f32 {
-        match &self.type_index {
-            2 => 1.0,
-            3 => 0.5,
-            4 => 1.0,
-            _ => 0.0,
-        }
-    }
 }
 
 fn get_player_spawn(assets: &Assets, level: usize) -> Vec2 {

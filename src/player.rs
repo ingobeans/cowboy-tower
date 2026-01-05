@@ -3,8 +3,8 @@ use std::f32::consts::PI;
 use macroquad::prelude::*;
 
 use crate::{
-    Projectile,
     assets::{Assets, Horse, Level},
+    projectiles::*,
     utils::*,
 };
 
