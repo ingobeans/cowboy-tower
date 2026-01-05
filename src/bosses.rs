@@ -193,13 +193,15 @@ impl Boss for Henry {
                     self.time - assets.henry.animations[animation].total_length as f32 / 1000.0;
                 if time_delta >= -0.300 {
                     self.time = 0.0;
-                    let pos = self.pos + vec2(16.0, 0.0) * if *left_side { 1.0 } else { -1.0 };
+                    let pos = self.pos + vec2(24.0, 0.0) * if *left_side { 1.0 } else { -1.0 }
+                        - vec2(0.0, 8.0);
                     let dir = if *left_side {
                         vec2(1.0, 0.0)
                     } else {
                         vec2(-1.0, 0.0)
                     };
-                    let projectile = Projectile::new(5, pos, dir);
+                    let mut projectile = Projectile::new(5, pos, dir);
+                    projectile.direction.y -= 40.0;
                     projectiles.push(projectile);
                     *amt += 1;
                     if *amt >= BARRELS_TO_THROW {
