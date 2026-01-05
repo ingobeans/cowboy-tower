@@ -10,6 +10,7 @@ pub struct Projectile {
     /// True when projectile hits an enemy, marker to show that it should be destroyed.
     pub dead: bool,
 }
+#[allow(clippy::match_like_matches_macro)]
 impl Projectile {
     pub fn new(type_index: usize, pos: Vec2, direction: Vec2) -> Self {
         Self {

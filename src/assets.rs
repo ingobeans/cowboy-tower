@@ -9,7 +9,6 @@ use include_dir::{Dir, include_dir};
 use macroquad::prelude::*;
 
 use crate::{
-    bosses::{Boss, new_boss},
     enemies::{ENEMIES, EnemyType},
     utils::create_camera,
 };
@@ -82,10 +81,10 @@ impl Horse {
         flip
     }
     pub fn get_normal(&self) -> Vec2 {
-        let normal = Vec2::from_angle(
+        
+        Vec2::from_angle(
             self.direction.to_angle() - PI / 2.0 - if self.is_flipped() { PI } else { 0.0 },
-        );
-        normal
+        )
     }
     pub fn new(pos: Vec2, direction: Vec2, flip: bool) -> Self {
         Self {
@@ -204,7 +203,7 @@ impl Level {
                             horses.push(Horse::new(pos, vec2(1.0, 0.0), false));
                         } else if *tile == 416 + 1 || *tile == 417 + 1 {
                             horse_arrows.push((pos, *tile == 417 + 1));
-                        } else if *tile >= 928 + 1 && *tile < 960 + 1 {
+                        } else if *tile > 928 && *tile < 960 + 1 {
                             boss = Some(((*tile - 1 - 928) as usize, pos));
                         }
                     } else if *tile == 320 + 1 {
@@ -284,7 +283,7 @@ impl Level {
                 }
                 let tile = tile - 1;
 
-                if (tile >= 992 && tile <= 1000) || (tile >= 960 && tile <= 964) {
+                if (992..=1000).contains(&tile) || (960..=964).contains(&tile) {
                     if tile < 992 {
                         *factor *= 0.5_f32.powi((tile - 960 + 1) as i32);
                     } else {
@@ -313,7 +312,7 @@ impl Level {
                 continue;
             }
             let tile = tile[3] - 1;
-            if tile >= 992 && tile <= 1000 {
+            if (992..=1000).contains(&tile) {
                 visited_tiles.insert(i);
                 let mut sum = tile - 992 + 1;
                 let mut factor = 1.0;

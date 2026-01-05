@@ -68,7 +68,7 @@ impl Player {
         delta_time: f32,
         world: &Level,
         projectiles: &mut Vec<Projectile>,
-        horses: &mut Vec<Horse>,
+        horses: &mut [Horse],
     ) {
         if let Some(death) = &mut self.death {
             death.0 += delta_time;
@@ -196,7 +196,7 @@ impl Player {
                         .sqrt()
                         .total_cmp(&(b.x.powi(2) + b.y.powi(2)).sqrt())
                 });
-                let closest = targets[0].clone();
+                let closest = *targets[0];
                 self.lasso_target = Some(closest);
             }
             if is_mouse_button_pressed(MouseButton::Right)
@@ -318,7 +318,7 @@ impl Player {
 
         if let Some(target) = &self.lasso_target {
             draw_texture_ex(
-                &assets.target.get_at_time((self.time * 1000.0) as u32),
+                assets.target.get_at_time((self.time * 1000.0) as u32),
                 target.x - 8.0,
                 target.y - 8.0,
                 WHITE,

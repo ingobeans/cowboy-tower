@@ -49,16 +49,16 @@ fn load_enemies(input: Vec<(Vec2, &'static EnemyType, f32)>) -> Vec<Enemy> {
 }
 
 fn get_player_spawn(assets: &Assets, level: usize) -> Vec2 {
-    let left_level_end = level % 2 != 0;
-    let player_spawn = if left_level_end {
+    let left_level_end = !level.is_multiple_of(2);
+    
+    if left_level_end {
         vec2(
             assets.levels[level].max_pos.x + 16.0 * 8.0 - 3.0 * 8.0,
             assets.levels[level].player_spawn.y,
         )
     } else {
         assets.levels[level].player_spawn + vec2(16.0, 0.0)
-    };
-    player_spawn
+    }
 }
 
 fn load_boss(level: &Level) -> Option<Box<dyn Boss>> {
@@ -107,7 +107,7 @@ impl<'a> Game<'a> {
         self.boss = load_boss(&self.assets.levels[level]);
         self.horses = self.assets.levels[level].horses.clone();
         self.player = Player::new(get_player_spawn(self.assets, level));
-        self.player.facing_left = self.level % 2 != 0;
+        self.player.facing_left = !self.level.is_multiple_of(2);
     }
     fn update(&mut self) {
         // cap delta time to a minimum of 60 fps.
@@ -133,7 +133,7 @@ impl<'a> Game<'a> {
         }
         let level = &self.assets.levels[self.level];
 
-        let left_level_end = self.level % 2 != 0;
+        let left_level_end = !self.level.is_multiple_of(2);
 
         let elevator_texture = self.assets.elevator.animations[0].get_at_time(0);
         let elevator_pos = vec2(
@@ -188,14 +188,13 @@ impl<'a> Game<'a> {
 
                 horse.running = false;
             }
-            if horse.running {
-                if level.get_tile((horse.pos.x / 8.0) as i16, (horse.pos.y / 8.0) as i16)[3]
+            if horse.running
+                && level.get_tile((horse.pos.x / 8.0) as i16, (horse.pos.y / 8.0) as i16)[3]
                     == 418 + 1
                 {
                     horse.running = false;
                     horse.velocity = Vec2::ZERO;
                 }
-            }
             if !horse.returning_home
                 && !horse.running
                 && !horse.player_riding
@@ -618,7 +617,7 @@ impl<'a> Game<'a> {
             };
             for i in 0..section_count {
                 draw_texture_ex(
-                    &self.assets.projectiles.animations[projectile.type_index]
+                    self.assets.projectiles.animations[projectile.type_index]
                         .get_at_time((projectile.time * 1000.0) as u32),
                     projectile.pos.x.floor() - 20.0 + ray_direction.x * 8.0 * i as f32,
                     projectile.pos.y.floor() - 20.0 + ray_direction.y * 8.0 * i as f32,

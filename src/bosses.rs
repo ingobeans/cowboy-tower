@@ -178,7 +178,7 @@ impl Boss for Henry {
                 }
             }
         }
-        if !dead && self.health <= 0 && (self.pos.y - self.spawn.y).abs() < 0.1 {
+        if !dead && self.health == 0 && (self.pos.y - self.spawn.y).abs() < 0.1 {
             self.time = 0.0;
             self.state = HenryState::Death;
         }
