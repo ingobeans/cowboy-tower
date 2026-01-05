@@ -725,11 +725,20 @@ impl<'a> Game<'a> {
             }
             !died
                 && if !physics_based && projectile.should_die_on_kill() {
-                    let tx = (projectile.pos.x / 8.0) as i16;
-                    let ty = (projectile.pos.y / 8.0) as i16;
-                    let hit_wall = level.get_tile(tx, ty)[1] != 0;
+                    // check two points for tile collision,
+                    // only kill projectile if both are colliding.
 
-                    !hit_wall
+                    let mut didnt_hit_wall = false;
+                    let tx = (projectile.pos.x / 8.0).floor() as i16;
+                    for offset in [0.0, -2.0] {
+                        let ty = ((projectile.pos.y + offset) / 8.0).floor() as i16;
+                        let hit_wall = level.get_tile(tx, ty)[1] != 0;
+                        if !hit_wall {
+                            didnt_hit_wall = true;
+                        }
+                    }
+
+                    didnt_hit_wall
                 } else {
                     true
                 }
