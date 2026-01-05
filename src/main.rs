@@ -50,7 +50,7 @@ fn load_enemies(input: Vec<(Vec2, &'static EnemyType, f32)>) -> Vec<Enemy> {
 
 fn get_player_spawn(assets: &Assets, level: usize) -> Vec2 {
     let left_level_end = !level.is_multiple_of(2);
-    
+
     if left_level_end {
         vec2(
             assets.levels[level].max_pos.x + 16.0 * 8.0 - 3.0 * 8.0,
@@ -191,10 +191,10 @@ impl<'a> Game<'a> {
             if horse.running
                 && level.get_tile((horse.pos.x / 8.0) as i16, (horse.pos.y / 8.0) as i16)[3]
                     == 418 + 1
-                {
-                    horse.running = false;
-                    horse.velocity = Vec2::ZERO;
-                }
+            {
+                horse.running = false;
+                horse.velocity = Vec2::ZERO;
+            }
             if !horse.returning_home
                 && !horse.running
                 && !horse.player_riding
@@ -597,7 +597,13 @@ impl<'a> Game<'a> {
             let rotation = if physics.is_none() {
                 0.0
             } else {
-                projectile.time * 10.0
+                projectile.time
+                    * 10.0
+                    * if projectile.direction.x < 0.0 {
+                        -1.0
+                    } else {
+                        1.0
+                    }
             };
             let ray_direction = vec2(0.0, 1.0);
             let is_ray = projectile.is_ray();
