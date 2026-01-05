@@ -173,8 +173,14 @@ impl<'a> Game<'a> {
                 }
             }
             let old_velocity = horse.velocity;
-            (horse.pos, _, _) =
-                update_physicsbody(horse.pos, &mut horse.velocity, delta_time, level, false);
+            (horse.pos, _, _) = update_physicsbody(
+                horse.pos,
+                &mut horse.velocity,
+                delta_time,
+                level,
+                false,
+                false,
+            );
             // if horse hits walls / stops, make horse.running = false
             if horse.running
                 && (old_velocity.length() > horse.velocity.length()
@@ -431,8 +437,14 @@ impl<'a> Game<'a> {
                         enemy.has_attacked = false;
                     }
                 }
-                (enemy.pos, _, _) =
-                    update_physicsbody(enemy.pos, &mut enemy.velocity, delta_time, level, true);
+                (enemy.pos, _, _) = update_physicsbody(
+                    enemy.pos,
+                    &mut enemy.velocity,
+                    delta_time,
+                    level,
+                    true,
+                    false,
+                );
             }
             let rotation = if enemy.death_frames <= 0.0 {
                 0.0
@@ -584,6 +596,7 @@ impl<'a> Game<'a> {
                     &mut projectile.direction,
                     delta_time,
                     level,
+                    false,
                     false,
                 );
                 projectile.pos = new_pos + OFFSET;

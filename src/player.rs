@@ -44,6 +44,7 @@ pub struct Player {
     /// If player isnt actively shooting a projectile, this is 0.
     /// Otherwise it will be the time for the shoot animation.
     pub shooting: f32,
+    pub in_boss_battle: bool,
 }
 impl Player {
     pub fn new(pos: Vec2) -> Self {
@@ -61,6 +62,7 @@ impl Player {
             time: 0.0,
             death: None,
             shooting: 0.0,
+            in_boss_battle: false,
         }
     }
     pub fn update(
@@ -79,8 +81,14 @@ impl Player {
             if death.2 {
                 self.velocity.x = 0.0;
                 self.velocity.y += GRAVITY * delta_time;
-                (self.pos, self.on_ground, _) =
-                    update_physicsbody(self.pos, &mut self.velocity, delta_time, world, true);
+                (self.pos, self.on_ground, _) = update_physicsbody(
+                    self.pos,
+                    &mut self.velocity,
+                    delta_time,
+                    world,
+                    true,
+                    false,
+                );
             }
             return;
         }
@@ -261,8 +269,14 @@ impl Player {
         if let Some(horse) = &self.riding {
             self.pos = horses[*horse].pos + horses[*horse].get_normal() * 16.0;
         } else {
-            (self.pos, self.on_ground, touched_death_tile) =
-                update_physicsbody(self.pos, &mut self.velocity, delta_time, world, true);
+            (self.pos, self.on_ground, touched_death_tile) = update_physicsbody(
+                self.pos,
+                &mut self.velocity,
+                delta_time,
+                world,
+                true,
+                self.in_boss_battle,
+            );
             if let Some(tile) = touched_death_tile
                 && self.death.is_none()
             {
@@ -402,6 +416,7 @@ pub fn update_physicsbody(
     delta_time: f32,
     world: &Level,
     tall: bool,
+    enable_special_collisions: bool,
 ) -> (Vec2, bool, Option<u16>) {
     let mut grounded = false;
     let mut touched_death_tile = None;
@@ -422,10 +437,15 @@ pub fn update_physicsbody(
     }
 
     for (tx, ty) in tiles_y {
-        let tile = world.get_tile((tx) as i16, (ty) as i16)[1];
+        let mut tile = world.get_tile((tx) as i16, (ty) as i16)[1];
         if !grounded && tile > 0 && DEATH_TILES.contains(&(tile - 1)) {
             touched_death_tile = Some(tile - 1);
             continue;
+        }
+        if enable_special_collisions && tile == 0 {
+            if world.get_tile(tx as i16, ty as i16)[3] == 864 + 1 {
+                tile = 1;
+            }
         }
         if tile != 0 {
             let c = if velocity.y < 0.0 {
@@ -452,9 +472,14 @@ pub fn update_physicsbody(
     }
 
     for (tx, ty) in tiles_x {
-        let tile = world.get_tile((tx) as i16, (ty) as i16)[1];
+        let mut tile = world.get_tile((tx) as i16, (ty) as i16)[1];
         if tile > 0 && DEATH_TILES.contains(&(tile - 1)) {
             continue;
+        }
+        if enable_special_collisions && tile == 0 {
+            if world.get_tile(tx as i16, ty as i16)[3] == 864 + 1 {
+                tile = 1;
+            }
         }
         if tile != 0 {
             let c = if velocity.x < 0.0 {

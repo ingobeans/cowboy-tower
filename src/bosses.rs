@@ -24,9 +24,10 @@ pub fn new_boss(index: usize, pos: Vec2) -> Box<dyn Boss> {
         0 => Box::new(Henry {
             pos,
             spawn: pos,
-            health: 10,
+            health: 12,
             state: HenryState::Idle,
             time: 0.0,
+            activated: 0.0,
             blood_effects: Vec::new(),
         }),
         _ => panic!(),
@@ -51,6 +52,7 @@ pub struct Henry {
     state: HenryState,
     time: f32,
     blood_effects: Vec<(Vec2, f32, bool)>,
+    activated: f32,
 }
 impl Boss for Henry {
     fn update(
@@ -61,7 +63,39 @@ impl Boss for Henry {
         projectiles: &mut Vec<Projectile>,
         player: &mut Player,
     ) {
+        let mut pole_anim_time = None;
+        let pole_anim = &assets.pole;
+        if self.activated > 0.0 {
+            if (self.activated + delta_time) * 1000.0 < pole_anim.total_length as f32 {
+                self.activated += delta_time;
+            }
+            pole_anim_time = Some(self.activated);
+        } else if player.pos.distance(level.find_marker(4)) <= 8.0 {
+            self.activated = delta_time;
+            player.in_boss_battle = true;
+        }
         let dead = matches!(self.state, HenryState::Death);
+
+        if dead {
+            if self.time > 1.5 {
+                let time = self.time - 1.5;
+                let max = (pole_anim.total_length - 1) as f32 / 1000.0;
+                if time >= max {
+                    player.in_boss_battle = false;
+                    pole_anim_time = None;
+                } else {
+                    pole_anim_time = Some(max - time);
+                }
+            }
+        }
+
+        if let Some(time) = pole_anim_time {
+            for pos in [level.find_marker(2), level.find_marker(3)] {
+                let t = pole_anim.get_at_time((time * 1000.0) as u32);
+                draw_texture(t, pos.x, pos.y - t.height() + 4.0, WHITE);
+            }
+        }
+
         self.time += delta_time;
 
         // get general state info
@@ -84,7 +118,10 @@ impl Boss for Henry {
             HenryState::Death => {}
             HenryState::Idle => {
                 if self.time >= 2.0 {
-                    self.state = HenryState::Jumping(0, self.pos, vec2(player.pos.x, self.spawn.y));
+                    if self.activated > 0.0 {
+                        self.state =
+                            HenryState::Jumping(0, self.pos, vec2(player.pos.x, self.spawn.y));
+                    }
                     self.time = 0.0;
                 }
             }
@@ -164,7 +201,7 @@ impl Boss for Henry {
             player.death = Some((0.0, 0, true));
         }
 
-        if !dead {
+        if !dead && self.activated > 0.0 {
             for projectile in projectiles {
                 if projectile.friendly && self.pos.distance(projectile.pos) <= 16.0 {
                     self.health = self.health.saturating_sub(1);

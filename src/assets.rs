@@ -27,6 +27,7 @@ pub struct Assets {
     pub animated_tiles: Vec<Animation>,
     pub henry: AnimationsGroup,
     pub henry_target: Texture2D,
+    pub pole: Animation,
 }
 impl Assets {
     pub fn load() -> Self {
@@ -55,6 +56,7 @@ impl Assets {
             target: Animation::from_file(include_bytes!("../assets/target.ase")),
             animated_tiles: vec![Animation::from_file(include_bytes!("../assets/lava.ase"))],
             henry_target: load_ase_texture(include_bytes!("../assets/henry_target.ase"), None),
+            pole: Animation::from_file(include_bytes!("../assets/pole.ase")),
             tileset,
         }
     }
@@ -81,7 +83,6 @@ impl Horse {
         flip
     }
     pub fn get_normal(&self) -> Vec2 {
-        
         Vec2::from_angle(
             self.direction.to_angle() - PI / 2.0 - if self.is_flipped() { PI } else { 0.0 },
         )
