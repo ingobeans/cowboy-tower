@@ -19,6 +19,7 @@ pub struct Assets {
     pub elevator: AnimationsGroup,
     pub levels: Vec<Level>,
     pub tileset: Spritesheet,
+    pub portraits: Spritesheet,
     pub projectiles: AnimationsGroup,
     pub horse: AnimationsGroup,
     pub blood: Animation,
@@ -27,7 +28,9 @@ pub struct Assets {
     pub animated_tiles: Vec<Animation>,
     pub henry: AnimationsGroup,
     pub henry_target: Texture2D,
+    pub dialogue: Texture2D,
     pub pole: Animation,
+    pub font: Font,
 }
 impl Assets {
     pub fn load() -> Self {
@@ -45,6 +48,11 @@ impl Assets {
         println!("loaded {} levels", levels.len());
         Self {
             levels,
+            portraits: Spritesheet::new(
+                load_ase_texture(include_bytes!("../assets/portraits.ase"), None),
+                22.0,
+            ),
+            font: load_ttf_font_from_bytes(include_bytes!("../assets/font.ttf")).unwrap(),
             henry: AnimationsGroup::from_file(include_bytes!("../assets/henry.ase")),
             torso: AnimationsGroup::from_file(include_bytes!("../assets/torso.ase")),
             legs: AnimationsGroup::from_file(include_bytes!("../assets/legs.ase")),
@@ -56,6 +64,7 @@ impl Assets {
             target: Animation::from_file(include_bytes!("../assets/target.ase")),
             animated_tiles: vec![Animation::from_file(include_bytes!("../assets/lava.ase"))],
             henry_target: load_ase_texture(include_bytes!("../assets/henry_target.ase"), None),
+            dialogue: load_ase_texture(include_bytes!("../assets/dialogue.ase"), None),
             pole: Animation::from_file(include_bytes!("../assets/pole.ase")),
             tileset,
         }

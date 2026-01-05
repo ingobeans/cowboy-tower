@@ -700,6 +700,41 @@ impl<'a> Game<'a> {
                 }
         });
         self.projectiles.append(&mut new_projectiles);
+
+        // draw dialogue
+        if let Some((text, portrait, _)) = &self.player.active_dialoge {
+            let t = &self.assets.dialogue;
+            let pos = vec2(
+                self.camera.target.x - actual_screen_width / scale_factor / 2.0 + 2.0,
+                self.camera.target.y - actual_screen_height / scale_factor / 2.0
+                    + actual_screen_height / scale_factor
+                    - t.height()
+                    - 2.0,
+            )
+            .floor();
+            draw_texture(t, pos.x, pos.y, WHITE);
+            self.assets
+                .portraits
+                .draw_tile(pos.x + 3.0, pos.y + 3.0, *portrait as f32, 0.0, None);
+
+            let font_size = 64;
+            let font_scale = 0.25 * 0.5;
+            draw_multiline_text_ex(
+                text,
+                pos.x + 28.0,
+                pos.y + font_size as f32 * font_scale,
+                None,
+                TextParams {
+                    font: Some(&self.assets.font),
+                    font_size,
+                    font_scale,
+                    color: BLACK,
+                    ..Default::default()
+                },
+            );
+        }
+
+        // handle fading out
         if self.fade_timer > 0.0 {
             self.fade_timer -= delta_time;
         }

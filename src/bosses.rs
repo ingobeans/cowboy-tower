@@ -70,9 +70,15 @@ impl Boss for Henry {
                 self.activated += delta_time;
             }
             pole_anim_time = Some(self.activated);
+        } else if let Some(dialogue) = &mut player.active_dialoge {
+            if dialogue.2 {
+                player.active_dialoge = None;
+                self.activated = delta_time;
+                player.in_boss_battle = true;
+            }
         } else if player.pos.distance(level.find_marker(4)) <= 8.0 {
-            self.activated = delta_time;
-            player.in_boss_battle = true;
+            player.active_dialoge =
+                Some(("Hm. A puny little cowboy.\nYou will be crushed.", 0, false))
         }
         let dead = matches!(self.state, HenryState::Death);
 

@@ -36,6 +36,7 @@ pub struct Player {
     pub moving: bool,
     pub time: f32,
     pub jump_time: f32,
+    pub active_dialoge: Option<(&'static str, usize, bool)>,
     /// Index of horse being ridden
     pub riding: Option<usize>,
     active_lasso: Option<ActiveLasso>,
@@ -54,6 +55,7 @@ impl Player {
             active_lasso: None,
             lasso_target: None,
             riding: None,
+            active_dialoge: None,
             velocity: Vec2::ZERO,
             on_ground: false,
             jump_time: 0.0,
@@ -89,6 +91,12 @@ impl Player {
                     true,
                     false,
                 );
+            }
+            return;
+        }
+        if let Some(dialogue) = &mut self.active_dialoge {
+            if is_key_pressed(KeyCode::E) {
+                dialogue.2 = true;
             }
             return;
         }
