@@ -81,7 +81,7 @@ impl Boss for Henry {
 
         // update states
         match &mut self.state {
-            HenryState::Death(_) => {}
+            HenryState::Death => {}
             HenryState::Idle => {
                 if self.time >= 2.0 {
                     self.state = HenryState::Jumping(0, self.pos, vec2(player.pos.x, self.spawn.y));
