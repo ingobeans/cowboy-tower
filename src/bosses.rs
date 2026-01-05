@@ -42,8 +42,7 @@ enum HenryState {
     /// - amount of barrels thrown,
     /// - whether he is on left or right side of arena (true = left).
     ThrowingBarrels(u8, bool),
-    /// - time
-    Death(f32),
+    Death,
 }
 pub struct Henry {
     pos: Vec2,
@@ -62,7 +61,7 @@ impl Boss for Henry {
         projectiles: &mut Vec<Projectile>,
         player: &mut Player,
     ) {
-        let dead = matches!(self.state, HenryState::Death(_));
+        let dead = matches!(self.state, HenryState::Death);
         self.time += delta_time;
 
         // get general state info
@@ -70,13 +69,13 @@ impl Boss for Henry {
             HenryState::Idle => 0,
             HenryState::Jumping(..) => 1,
             HenryState::ThrowingBarrels(_, _) => 2,
-            HenryState::Death(_) => 3,
+            HenryState::Death => 3,
         };
         let flipped = match &self.state {
             HenryState::Idle => self.pos.x < player.pos.x,
             HenryState::Jumping(.., src, dest) => dest.x < src.x,
             HenryState::ThrowingBarrels(_, side) => *side,
-            HenryState::Death(_) => false,
+            HenryState::Death => false,
         };
         let loop_animation = matches!(self.state, HenryState::Idle);
 
@@ -181,7 +180,7 @@ impl Boss for Henry {
         }
         if !dead && self.health <= 0 && (self.pos.y - self.spawn.y).abs() < 0.1 {
             self.time = 0.0;
-            self.state = HenryState::Death(0.0);
+            self.state = HenryState::Death;
         }
 
         let animation_time = if loop_animation {
