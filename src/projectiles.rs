@@ -40,10 +40,11 @@ impl Projectile {
             _ => 128.0,
         }
     }
-    pub fn is_physics_based(&self) -> bool {
+    pub fn get_physics(&self) -> Option<f32> {
         match &self.type_index {
-            2 => true,
-            _ => false,
+            2 => Some(2.0),
+            5 => Some(0.1),
+            _ => None,
         }
     }
     pub fn get_payload(&self) -> Option<Projectile> {

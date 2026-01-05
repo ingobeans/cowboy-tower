@@ -9,6 +9,7 @@ use include_dir::{Dir, include_dir};
 use macroquad::prelude::*;
 
 use crate::{
+    bosses::{Boss, new_boss},
     enemies::{ENEMIES, EnemyType},
     utils::create_camera,
 };
@@ -25,6 +26,8 @@ pub struct Assets {
     pub die: AnimationsGroup,
     pub target: Animation,
     pub animated_tiles: Vec<Animation>,
+    pub henry: AnimationsGroup,
+    pub henry_target: Texture2D,
 }
 impl Assets {
     pub fn load() -> Self {
@@ -42,6 +45,7 @@ impl Assets {
         println!("loaded {} levels", levels.len());
         Self {
             levels,
+            henry: AnimationsGroup::from_file(include_bytes!("../assets/henry.ase")),
             torso: AnimationsGroup::from_file(include_bytes!("../assets/torso.ase")),
             legs: AnimationsGroup::from_file(include_bytes!("../assets/legs.ase")),
             elevator: AnimationsGroup::from_file(include_bytes!("../assets/elevator.ase")),
@@ -51,6 +55,7 @@ impl Assets {
             die: AnimationsGroup::from_file(include_bytes!("../assets/die.ase")),
             target: Animation::from_file(include_bytes!("../assets/target.ase")),
             animated_tiles: vec![Animation::from_file(include_bytes!("../assets/lava.ase"))],
+            henry_target: load_ase_texture(include_bytes!("../assets/henry_target.ase"), None),
             tileset,
         }
     }
@@ -102,6 +107,7 @@ pub struct Level {
     pub width: usize,
     pub enemies: Vec<(Vec2, &'static EnemyType, f32)>,
     pub horses: Vec<Horse>,
+    pub boss: Option<(usize, Vec2)>,
     pub camera: Camera2D,
     pub min_pos: Vec2,
     pub max_pos: Vec2,
@@ -112,6 +118,22 @@ pub struct Level {
     pub animated_tiles: Vec<(Vec2, usize)>,
 }
 impl Level {
+    pub fn find_marker(&self, marker_index: u16) -> Vec2 {
+        for (index, tile) in self.data.iter().enumerate() {
+            if tile[3] == 0 {
+                continue;
+            }
+            let tile = tile[3] - 1;
+            if tile == 896 + marker_index {
+                let pos = vec2(
+                    ((index % self.width) * 8) as f32 + self.min_pos.x,
+                    ((index / self.width) * 8) as f32 + self.min_pos.y,
+                );
+                return pos;
+            }
+        }
+        panic!()
+    }
     pub fn get_tile(&self, x: i16, y: i16) -> [u16; 4] {
         if (x as f32 * 8.0) < self.min_pos.x || ((x - 16) as f32 * 8.0) >= self.max_pos.x {
             return [0, 1, 0, 0];
@@ -158,6 +180,7 @@ impl Level {
         let mut horses = Vec::new();
         let mut lasso_targets = Vec::new();
         let mut animated_tiles = Vec::new();
+        let mut boss = None;
 
         let mut horse_arrows = Vec::new();
 
@@ -181,6 +204,8 @@ impl Level {
                             horses.push(Horse::new(pos, vec2(1.0, 0.0), false));
                         } else if *tile == 416 + 1 || *tile == 417 + 1 {
                             horse_arrows.push((pos, *tile == 417 + 1));
+                        } else if *tile >= 928 + 1 && *tile < 960 + 1 {
+                            boss = Some(((*tile - 1 - 928) as usize, pos));
                         }
                     } else if *tile == 320 + 1 {
                         animated_tiles.push((pos, 0));
@@ -327,6 +352,7 @@ impl Level {
             width: width as usize,
             max_pos: vec2((max_x * 8) as f32, (max_y * 8) as f32),
             min_pos,
+            boss,
             lasso_targets,
             horses,
             enemies,

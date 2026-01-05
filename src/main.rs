@@ -3,7 +3,8 @@ use std::{env::args, f32::consts::PI};
 use macroquad::{miniquad::window::screen_size, prelude::*};
 
 use crate::{
-    assets::{Assets, Horse},
+    assets::{Assets, Horse, Level},
+    bosses::{Boss, new_boss},
     enemies::*,
     player::{Player, update_physicsbody},
     projectiles::*,
@@ -11,6 +12,7 @@ use crate::{
 };
 
 mod assets;
+mod bosses;
 mod enemies;
 mod player;
 mod projectiles;
@@ -59,6 +61,10 @@ fn get_player_spawn(assets: &Assets, level: usize) -> Vec2 {
     player_spawn
 }
 
+fn load_boss(level: &Level) -> Option<Box<dyn Boss>> {
+    level.boss.map(|(i, p)| new_boss(i, p))
+}
+
 struct Game<'a> {
     assets: &'a Assets,
     camera: Camera2D,
@@ -66,6 +72,7 @@ struct Game<'a> {
     enemies: Vec<Enemy>,
     horses: Vec<Horse>,
     projectiles: Vec<Projectile>,
+    boss: Option<Box<dyn Boss>>,
     level: usize,
     fade_timer: f32,
     level_complete: Option<f32>,
@@ -80,6 +87,7 @@ impl<'a> Game<'a> {
             player: Player::new(get_player_spawn(assets, level)),
             camera: Camera2D::default(),
             enemies: load_enemies(assets.levels[level].enemies.clone()),
+            boss: load_boss(&assets.levels[level]),
             horses: assets.levels[level].horses.clone(),
             projectiles: Vec::new(),
             fade_timer: 0.0,
@@ -96,6 +104,7 @@ impl<'a> Game<'a> {
         self.level = level;
         self.projectiles.clear();
         self.enemies = load_enemies(self.assets.levels[level].enemies.clone());
+        self.boss = load_boss(&self.assets.levels[level]);
         self.horses = self.assets.levels[level].horses.clone();
         self.player = Player::new(get_player_spawn(self.assets, level));
         self.player.facing_left = self.level % 2 != 0;
@@ -547,6 +556,16 @@ impl<'a> Game<'a> {
             YELLOW,
             );*/
         }
+
+        if let Some(boss) = &mut self.boss {
+            boss.update(
+                self.assets,
+                delta_time,
+                level,
+                &mut self.projectiles,
+                &mut self.player,
+            );
+        }
         self.player.draw(self.assets);
         if let Some(time) = &self.level_complete {
             // draw level end elevator door animation if level complete
@@ -555,9 +574,9 @@ impl<'a> Game<'a> {
         }
         let mut new_projectiles = Vec::new();
         self.projectiles.retain_mut(|projectile| {
-            let physics_based = projectile.is_physics_based();
+            let physics = projectile.get_physics();
 
-            if physics_based {
+            if let Some(friction) = physics {
                 const OFFSET: Vec2 = vec2(4.0, 4.0);
                 projectile.direction.y += GRAVITY * delta_time;
 
@@ -570,12 +589,13 @@ impl<'a> Game<'a> {
                 );
                 projectile.pos = new_pos + OFFSET;
                 if on_ground {
-                    projectile.direction.x = projectile.direction.x.lerp(0.0, delta_time * 2.0);
+                    projectile.direction.x =
+                        projectile.direction.x.lerp(0.0, delta_time * friction);
                 }
             } else {
                 projectile.pos += projectile.direction * delta_time;
             }
-            let rotation = if !physics_based {
+            let rotation = if physics.is_none() {
                 0.0
             } else {
                 projectile.time * 10.0
@@ -642,7 +662,7 @@ impl<'a> Game<'a> {
                 new_projectiles.push(payload);
             }
             !died
-                && if !physics_based && projectile.should_die_on_kill() {
+                && if physics.is_none() && projectile.should_die_on_kill() {
                     // check two points for tile collision,
                     // only kill projectile if both are colliding.
 
