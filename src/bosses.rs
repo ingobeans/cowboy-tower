@@ -226,6 +226,11 @@ impl Boss for Henry {
                         0.0,
                         projectile.direction.x > 0.0,
                     ));
+                    if matches!(self.state, HenryState::Idle) {
+                        self.time = 0.0;
+                        self.state =
+                            HenryState::Jumping(0, self.pos, vec2(player.pos.x, self.spawn.y));
+                    }
                     break;
                 }
             }
