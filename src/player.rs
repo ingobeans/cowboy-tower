@@ -388,10 +388,19 @@ impl Player {
                     self.pos.x + if self.facing_left { 8.0 } else { 0.0 },
                     self.pos.y,
                     moved.x,
-                    moved.y,
+                    moved.y + 3.0,
                     1.0,
                     Color::from_hex(0x773421),
                 );
+                if amt >= 1.0 {
+                    assets.tileset.draw_tile(
+                        lasso.hook_pos.x - 4.0,
+                        lasso.hook_pos.y - 4.0,
+                        1.0,
+                        4.0,
+                        None,
+                    );
+                }
             }
         }
 
