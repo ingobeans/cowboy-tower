@@ -9,6 +9,9 @@ pub const GRAVITY: f32 = 9.8 * 75.0;
 pub const LEVEL_TRANSITION_LENGTH: f32 = 0.5;
 pub const DEATH_TILES: &[u16] = &[128, 352];
 
+pub const DIALOGUE_SLIDE_IN_TIME: f32 = 0.5;
+pub const TEXT_FADE_IN_TIME: f32 = 0.2;
+
 pub fn create_camera(w: f32, h: f32) -> Camera2D {
     let rt = render_target(w as u32, h as u32);
     rt.texture.set_filter(FilterMode::Nearest);

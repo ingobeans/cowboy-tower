@@ -696,9 +696,9 @@ impl<'a> Game<'a> {
         self.projectiles.append(&mut new_projectiles);
 
         // draw dialogue
-        if let Some(dialogue) = &self.player.active_dialoge {
-            const DIALOGUE_SLIDE_IN_TIME: f32 = 0.5;
-            const TEXT_FADE_IN_TIME: f32 = 0.2;
+        if !self.player.has_restarted_level
+            && let Some(dialogue) = &self.player.active_dialogue
+        {
             let t = &self.assets.dialogue;
             let max_slide_offset = t.width() + 4.0;
             let slide_amt = if dialogue.time < DIALOGUE_SLIDE_IN_TIME {

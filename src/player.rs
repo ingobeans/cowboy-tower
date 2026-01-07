@@ -43,7 +43,7 @@ pub struct Player {
     pub moving: bool,
     pub time: f32,
     pub jump_time: f32,
-    pub active_dialoge: Option<ActiveDialogue>,
+    pub active_dialogue: Option<ActiveDialogue>,
     /// Index of horse being ridden
     pub riding: Option<usize>,
     active_lasso: Option<ActiveLasso>,
@@ -65,7 +65,7 @@ impl Player {
             active_lasso: None,
             lasso_target: None,
             riding: None,
-            active_dialoge: None,
+            active_dialogue: None,
             velocity: Vec2::ZERO,
             on_ground: false,
             jump_time: 0.0,
@@ -79,11 +79,15 @@ impl Player {
         }
     }
     pub fn show_dialogue(&mut self, text: &'static str, portrait_id: usize) {
-        self.active_dialoge = Some(ActiveDialogue {
+        self.active_dialogue = Some(ActiveDialogue {
             text,
             portrait_id,
-            closed: false,
-            time: 0.0,
+            closed: self.has_restarted_level,
+            time: if self.active_dialogue.is_some() {
+                TEXT_FADE_IN_TIME + DIALOGUE_SLIDE_IN_TIME + 1.0
+            } else {
+                0.0
+            },
         })
     }
     pub fn update(
@@ -113,7 +117,7 @@ impl Player {
             }
             return;
         }
-        if let Some(dialogue) = &mut self.active_dialoge {
+        if let Some(dialogue) = &mut self.active_dialogue {
             dialogue.time += delta_time;
             if is_key_pressed(KeyCode::E) {
                 dialogue.closed = true;
