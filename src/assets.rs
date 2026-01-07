@@ -53,7 +53,7 @@ impl Assets {
             let level = Level::load(file.contents_utf8().unwrap(), &tileset, name);
             levels.push(level);
         }
-        println!("loaded {} levels", levels.len());
+        info!("loaded {} levels", levels.len());
         Self {
             levels,
             portraits: Spritesheet::new(
@@ -240,7 +240,7 @@ impl Level {
                     continue 'horseloop;
                 }
             }
-            println!("warn: no horse arrow found for horse at {:?}", horse.pos);
+            warn!("no horse arrow found for horse at {:?}", horse.pos);
         }
         let mut player_spawn = (usize::MAX, usize::MAX);
         let mut roof_height = usize::MAX;
