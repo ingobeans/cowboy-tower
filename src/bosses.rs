@@ -80,7 +80,11 @@ impl Boss for Henry {
                 player.in_boss_battle = true;
             }
         } else if player.pos.distance(level.find_marker(4)) <= 8.0 {
-            player.show_dialogue("Hm. A puny little cowboy.\nYou will be crushed.", 0);
+            player.show_dialogue(
+                "Hm. A puny little cowboy.\nYou will be crushed.",
+                "Henry the Cooper",
+                0,
+            );
         }
         let dead = matches!(self.state, HenryState::Death);
 

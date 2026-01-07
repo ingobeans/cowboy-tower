@@ -773,13 +773,26 @@ impl<'a> Game<'a> {
             };
             let fade_amt = fade_amt.powi(3);
 
-            let font_size = 64;
+            let font_size = 48;
             let font_scale = 0.25 * 0.5;
             draw_multiline_text_ex(
                 dialogue.text,
                 pos.x + 28.0,
-                pos.y + font_size as f32 * font_scale,
+                pos.y + font_size as f32 * font_scale + 4.0,
                 None,
+                TextParams {
+                    font: Some(&self.assets.font),
+                    font_size,
+                    font_scale,
+                    color: BLACK.with_alpha(fade_amt),
+                    ..Default::default()
+                },
+            );
+            let font_scale = 0.25 * 0.5 * 0.5;
+            draw_text_ex(
+                dialogue.name,
+                pos.x + 28.0,
+                pos.y + font_size as f32 * font_scale + 1.0,
                 TextParams {
                     font: Some(&self.assets.font),
                     font_size,

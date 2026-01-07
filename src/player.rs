@@ -29,6 +29,7 @@ struct ActiveLasso {
 
 pub struct ActiveDialogue {
     pub text: &'static str,
+    pub name: &'static str,
     pub portrait_id: usize,
     pub closed: bool,
     pub time: f32,
@@ -91,9 +92,10 @@ impl Player {
     pub fn hide_cinematic_bars(&mut self) {
         self.cinematic_bars = Some(CinematicBars::Retracting(0.0));
     }
-    pub fn show_dialogue(&mut self, text: &'static str, portrait_id: usize) {
+    pub fn show_dialogue(&mut self, text: &'static str, name: &'static str, portrait_id: usize) {
         self.active_dialogue = Some(ActiveDialogue {
             text,
+            name,
             portrait_id,
             closed: self.has_restarted_level,
             time: if self.active_dialogue.is_some() {
