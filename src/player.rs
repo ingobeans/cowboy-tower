@@ -219,6 +219,9 @@ impl Player {
                     lasso.lerp_source = self.pos;
                     target_pos = new_target_pos;
                 }
+                if self.jump_time <= 0.0 {
+                    self.jump_time = delta_time;
+                }
 
                 let delta = target_pos - self.pos;
                 let normalized = delta.normalize();
