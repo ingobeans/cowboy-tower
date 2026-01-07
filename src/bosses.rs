@@ -29,6 +29,7 @@ pub fn new_boss(index: usize, pos: Vec2) -> Box<dyn Boss> {
             time: 0.0,
             activated: 0.0,
             blood_effects: Vec::new(),
+            dust_particles: Vec::new(),
         }),
         _ => panic!(),
     }
@@ -52,6 +53,7 @@ pub struct Henry {
     state: HenryState,
     time: f32,
     blood_effects: Vec<(Vec2, f32, bool)>,
+    dust_particles: Vec<(Vec2, f32)>,
     activated: f32,
 }
 impl Boss for Henry {
@@ -147,6 +149,7 @@ impl Boss for Henry {
                     self.pos.y = self.spawn.y;
                     src.x = self.pos.x;
                     dest.x = player.pos.x;
+                    self.dust_particles.push((self.pos, 0.0));
                     if *amt >= JUMP_AMT - 1 {
                         let left_marker = level.find_marker(0);
                         let right_marker = level.find_marker(1);
@@ -266,6 +269,17 @@ impl Boss for Henry {
                     flip_x: *facing_right,
                     ..Default::default()
                 },
+            );
+            *time * 1000.0 < anim.total_length as f32
+        });
+        self.dust_particles.retain_mut(|(pos, time)| {
+            let anim = &assets.henry_dust;
+            *time += delta_time;
+            draw_texture(
+                anim.get_at_time((*time * 1000.0) as u32),
+                pos.x - 29.0,
+                pos.y - 3.0,
+                WHITE,
             );
             *time * 1000.0 < anim.total_length as f32
         });
