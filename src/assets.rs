@@ -42,7 +42,14 @@ impl Assets {
         let mut levels = Vec::new();
         static LEVELS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/assets/levels");
         for file in LEVELS_DIR.files() {
-            let level = Level::load(file.contents_utf8().unwrap(), &tileset);
+            let name = file
+                .path()
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
+
+            let level = Level::load(file.contents_utf8().unwrap(), &tileset, name);
             levels.push(level);
         }
         println!("loaded {} levels", levels.len());
@@ -112,6 +119,7 @@ impl Horse {
 }
 
 pub struct Level {
+    pub name: String,
     pub data: Vec<[u16; 4]>,
     pub width: usize,
     pub enemies: Vec<(Vec2, &'static EnemyType, f32)>,
@@ -157,7 +165,7 @@ impl Level {
         }
         self.data[x + y * self.width]
     }
-    pub fn load(data: &str, tileset: &Spritesheet) -> Self {
+    pub fn load(data: &str, tileset: &Spritesheet, name: String) -> Self {
         let mut layers = data.split("<layer");
         layers.next();
         let layers_chunks: Vec<HashMap<(i16, i16), Chunk>> = layers.map(get_all_chunks).collect();
@@ -356,6 +364,7 @@ impl Level {
             (player_spawn.1 * 8) as f32 + min_pos.y - 8.0,
         );
         Self {
+            name,
             player_spawn,
             roof_height: (roof_height * 8) as f32 + min_pos.y,
             width: width as usize,

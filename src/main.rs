@@ -823,10 +823,24 @@ async fn main() {
     //miniquad::window::set_window_size(SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32);
     let assets = Assets::load();
     let mut level = 0;
-    for arg in args() {
-        if let Ok(index) = arg.parse::<usize>() {
-            level = index;
+
+    // load level from command line argument
+    'outer: for arg in args().skip(1) {
+        // check for direct match
+        for (i, l) in assets.levels.iter().enumerate() {
+            if l.name == arg {
+                level = i;
+                break 'outer;
+            }
         }
+        // check for start of name match
+        for (i, l) in assets.levels.iter().enumerate() {
+            if l.name.starts_with(&arg) {
+                level = i;
+                break 'outer;
+            }
+        }
+        println!("no level by name '{arg}' found. (trying to load from command line argument)");
     }
     let mut game = Game::new(&assets, level);
 
