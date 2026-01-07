@@ -114,8 +114,9 @@ impl<'a> Game<'a> {
         let delta_time = get_frame_time().min(1.0 / 60.0);
         self.time += delta_time;
         let (actual_screen_width, actual_screen_height) = screen_size();
-        let scale_factor =
-            (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
+        let scale_factor = (actual_screen_width / SCREEN_WIDTH)
+            .min(actual_screen_height / SCREEN_HEIGHT)
+            .floor();
 
         let elevator_doors_animation = &self.assets.elevator.animations[1];
         if let Some(time) = self.level_complete
@@ -260,10 +261,15 @@ impl<'a> Game<'a> {
         clear_background(Color::from_hex(0x1CB7FF));
 
         let min_y = self.camera.target.y + actual_screen_height / scale_factor / 2.0;
-        let min_y_tile = (min_y / 8.0).ceil();
 
         let max_y = self.camera.target.y - actual_screen_height / scale_factor / 2.0;
-        let max_y_tile = (max_y / 8.0).floor();
+        draw_rectangle(
+            level.min_pos.x - 2.0,
+            min_y,
+            level.max_pos.x - level.min_pos.x + 16.0 * 8.0 + 4.0,
+            max_y - min_y,
+            Color::from_hex(0x5c320b),
+        );
         draw_rectangle(
             level.min_pos.x,
             min_y,
@@ -271,18 +277,6 @@ impl<'a> Game<'a> {
             max_y - min_y,
             Color::from_hex(0x300f0a),
         );
-        for y in max_y_tile as i16..min_y_tile as i16 {
-            self.assets
-                .tileset
-                .draw_tile(level.min_pos.x - 8.0, (y * 8) as f32, 1.0, 3.0, None);
-            self.assets.tileset.draw_tile(
-                level.max_pos.x + 16.0 * 8.0,
-                (y * 8) as f32,
-                3.0,
-                3.0,
-                None,
-            );
-        }
 
         let t = &level.camera.render_target.as_ref().unwrap().texture;
         draw_texture(t, level.min_pos.x, level.min_pos.y, WHITE);

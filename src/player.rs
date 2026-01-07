@@ -416,11 +416,12 @@ impl Player {
             assets.legs.animations[if self.moving { 1 } else { 0 }]
                 .get_at_time((self.time * 1000.0) as u32)
         };
+        let draw_pos = vec2(self.pos.x.floor() - 8.0, self.pos.y.floor() - 8.0);
         for texture in [legs, torso] {
             draw_texture_ex(
                 texture,
-                self.pos.x.floor() - texture.width() / 2.0 + 4.0,
-                self.pos.y.floor() - 8.0,
+                draw_pos.x,
+                draw_pos.y,
                 WHITE,
                 DrawTextureParams {
                     flip_x: self.facing_left,
