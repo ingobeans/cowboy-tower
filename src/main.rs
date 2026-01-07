@@ -696,10 +696,21 @@ impl<'a> Game<'a> {
         self.projectiles.append(&mut new_projectiles);
 
         // draw dialogue
-        if let Some((text, portrait, _)) = &self.player.active_dialoge {
+        if let Some(dialogue) = &self.player.active_dialoge {
+            const DIALOGUE_SLIDE_IN_TIME: f32 = 0.5;
+            const TEXT_FADE_IN_TIME: f32 = 0.2;
             let t = &self.assets.dialogue;
+            let max_slide_offset = t.width() + 4.0;
+            let slide_amt = if dialogue.time < DIALOGUE_SLIDE_IN_TIME {
+                dialogue.time / DIALOGUE_SLIDE_IN_TIME
+            } else {
+                1.0
+            };
+            let slide_amt = slide_amt.powi(2);
             let pos = vec2(
-                self.camera.target.x - actual_screen_width / scale_factor / 2.0 + 2.0,
+                self.camera.target.x - actual_screen_width / scale_factor / 2.0 + 2.0
+                    - max_slide_offset
+                    + max_slide_offset * slide_amt,
                 self.camera.target.y - actual_screen_height / scale_factor / 2.0
                     + actual_screen_height / scale_factor
                     - t.height()
@@ -707,14 +718,25 @@ impl<'a> Game<'a> {
             )
             .floor();
             draw_texture(t, pos.x, pos.y, WHITE);
-            self.assets
-                .portraits
-                .draw_tile(pos.x + 3.0, pos.y + 3.0, *portrait as f32, 0.0, None);
+            self.assets.portraits.draw_tile(
+                pos.x + 3.0,
+                pos.y + 3.0,
+                dialogue.portrait_id as f32,
+                0.0,
+                None,
+            );
+
+            let fade_amt = if dialogue.time > DIALOGUE_SLIDE_IN_TIME + TEXT_FADE_IN_TIME {
+                1.0
+            } else {
+                (dialogue.time - DIALOGUE_SLIDE_IN_TIME).max(0.0) / TEXT_FADE_IN_TIME
+            };
+            let fade_amt = fade_amt.powi(3);
 
             let font_size = 64;
             let font_scale = 0.25 * 0.5;
             draw_multiline_text_ex(
-                text,
+                dialogue.text,
                 pos.x + 28.0,
                 pos.y + font_size as f32 * font_scale,
                 None,
@@ -722,7 +744,7 @@ impl<'a> Game<'a> {
                     font: Some(&self.assets.font),
                     font_size,
                     font_scale,
-                    color: BLACK,
+                    color: BLACK.with_alpha(fade_amt),
                     ..Default::default()
                 },
             );

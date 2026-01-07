@@ -72,7 +72,7 @@ impl Boss for Henry {
             }
             pole_anim_time = Some(self.activated);
         } else if let Some(dialogue) = &mut player.active_dialoge {
-            if dialogue.2 {
+            if dialogue.closed {
                 player.active_dialoge = None;
                 activate = true;
             }
@@ -80,8 +80,7 @@ impl Boss for Henry {
             if player.has_restarted_level {
                 activate = true;
             } else {
-                player.active_dialoge =
-                    Some(("Hm. A puny little cowboy.\nYou will be crushed.", 0, false))
+                player.show_dialogue("Hm. A puny little cowboy.\nYou will be crushed.", 0);
             }
         }
         if activate {

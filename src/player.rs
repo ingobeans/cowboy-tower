@@ -27,6 +27,13 @@ struct ActiveLasso {
     lerp_source: Vec2,
 }
 
+pub struct ActiveDialogue {
+    pub text: &'static str,
+    pub portrait_id: usize,
+    pub closed: bool,
+    pub time: f32,
+}
+
 pub struct Player {
     pub pos: Vec2,
     pub camera_pos: Vec2,
@@ -36,7 +43,7 @@ pub struct Player {
     pub moving: bool,
     pub time: f32,
     pub jump_time: f32,
-    pub active_dialoge: Option<(&'static str, usize, bool)>,
+    pub active_dialoge: Option<ActiveDialogue>,
     /// Index of horse being ridden
     pub riding: Option<usize>,
     active_lasso: Option<ActiveLasso>,
@@ -71,6 +78,14 @@ impl Player {
             has_restarted_level: false,
         }
     }
+    pub fn show_dialogue(&mut self, text: &'static str, portrait_id: usize) {
+        self.active_dialoge = Some(ActiveDialogue {
+            text,
+            portrait_id,
+            closed: false,
+            time: 0.0,
+        })
+    }
     pub fn update(
         &mut self,
         delta_time: f32,
@@ -99,8 +114,9 @@ impl Player {
             return;
         }
         if let Some(dialogue) = &mut self.active_dialoge {
+            dialogue.time += delta_time;
             if is_key_pressed(KeyCode::E) {
-                dialogue.2 = true;
+                dialogue.closed = true;
             }
             return;
         }
