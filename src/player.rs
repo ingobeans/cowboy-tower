@@ -34,6 +34,11 @@ pub struct ActiveDialogue {
     pub time: f32,
 }
 
+pub enum CinematicBars {
+    Extending(f32),
+    Retracting(f32),
+}
+
 pub struct Player {
     pub pos: Vec2,
     pub camera_pos: Vec2,
@@ -42,6 +47,7 @@ pub struct Player {
     pub facing_left: bool,
     pub moving: bool,
     pub time: f32,
+    pub cinematic_bars: Option<CinematicBars>,
     pub jump_time: f32,
     pub active_dialogue: Option<ActiveDialogue>,
     /// Index of horse being ridden
@@ -66,6 +72,7 @@ impl Player {
             lasso_target: None,
             riding: None,
             active_dialogue: None,
+            cinematic_bars: None,
             velocity: Vec2::ZERO,
             on_ground: false,
             jump_time: 0.0,
@@ -77,6 +84,12 @@ impl Player {
             in_boss_battle: false,
             has_restarted_level: false,
         }
+    }
+    pub fn show_cinematic_bars(&mut self) {
+        self.cinematic_bars = Some(CinematicBars::Extending(0.0));
+    }
+    pub fn hide_cinematic_bars(&mut self) {
+        self.cinematic_bars = Some(CinematicBars::Retracting(0.0));
     }
     pub fn show_dialogue(&mut self, text: &'static str, portrait_id: usize) {
         self.active_dialogue = Some(ActiveDialogue {

@@ -72,6 +72,7 @@ impl Boss for Henry {
             pole_anim_time = Some(self.activated);
         } else if let Some(dialogue) = &mut player.active_dialogue {
             if dialogue.closed {
+                player.show_cinematic_bars();
                 self.activated = delta_time;
                 player.active_dialogue = None;
                 player.in_boss_battle = true;
@@ -86,7 +87,10 @@ impl Boss for Henry {
                 let time = self.time - 1.5;
                 let max = (pole_anim.total_length - 1) as f32 / 1000.0;
                 if time >= max {
-                    player.in_boss_battle = false;
+                    if player.in_boss_battle {
+                        player.in_boss_battle = false;
+                        player.hide_cinematic_bars();
+                    }
                     pole_anim_time = None;
                 } else {
                     pole_anim_time = Some(max - time);

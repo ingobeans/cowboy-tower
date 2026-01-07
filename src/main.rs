@@ -6,7 +6,7 @@ use crate::{
     assets::{Assets, Horse, Level},
     bosses::{Boss, new_boss},
     enemies::*,
-    player::{Player, update_physicsbody},
+    player::{CinematicBars, Player, update_physicsbody},
     projectiles::*,
     utils::*,
 };
@@ -694,6 +694,46 @@ impl<'a> Game<'a> {
                 }
         });
         self.projectiles.append(&mut new_projectiles);
+
+        // draw cinematic bars
+        if let Some(bars) = &mut self.player.cinematic_bars {
+            let amt = match bars {
+                CinematicBars::Extending(time) => {
+                    *time += delta_time;
+                    *time
+                }
+                CinematicBars::Retracting(time) => {
+                    *time += delta_time;
+                    CINEMATIC_BAR_FADE_TIME - *time
+                }
+            }
+            .clamp(0.0, 1.0);
+            const CINEMATIC_BAR_HEIGHT: f32 = 12.0;
+            let screen_zero_coordinate = vec2(
+                self.camera.target.x - actual_screen_width / scale_factor / 2.0,
+                self.camera.target.y - actual_screen_height / scale_factor / 2.0,
+            );
+            draw_rectangle(
+                screen_zero_coordinate.x,
+                screen_zero_coordinate.y,
+                actual_screen_width,
+                CINEMATIC_BAR_HEIGHT * amt,
+                BLACK,
+            );
+            draw_rectangle(
+                screen_zero_coordinate.x,
+                screen_zero_coordinate.y + actual_screen_height / scale_factor
+                    - CINEMATIC_BAR_HEIGHT * amt,
+                actual_screen_width,
+                CINEMATIC_BAR_HEIGHT * amt,
+                BLACK,
+            );
+            if let CinematicBars::Retracting(time) = bars {
+                if *time >= 1.0 {
+                    self.player.cinematic_bars = None;
+                }
+            }
+        }
 
         // draw dialogue
         if !self.player.has_restarted_level

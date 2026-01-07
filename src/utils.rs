@@ -11,6 +11,7 @@ pub const DEATH_TILES: &[u16] = &[128, 352];
 
 pub const DIALOGUE_SLIDE_IN_TIME: f32 = 0.5;
 pub const TEXT_FADE_IN_TIME: f32 = 0.2;
+pub const CINEMATIC_BAR_FADE_TIME: f32 = 1.0;
 
 pub fn create_camera(w: f32, h: f32) -> Camera2D {
     let rt = render_target(w as u32, h as u32);
