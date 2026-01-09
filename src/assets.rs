@@ -135,6 +135,9 @@ pub struct Level {
     pub roof_height: f32,
     pub lasso_targets: Vec<Vec2>,
     pub animated_tiles: Vec<(Vec2, usize)>,
+
+    pub forced_player_spawn: Option<Vec2>,
+    pub forced_level_end: Option<Vec2>,
 }
 impl Level {
     pub fn find_marker(&self, marker_index: u16) -> Vec2 {
@@ -201,6 +204,9 @@ impl Level {
         let mut animated_tiles = Vec::new();
         let mut boss = None;
 
+        let mut forced_player_spawn = None;
+        let mut forced_level_end = None;
+
         let mut horse_arrows = Vec::new();
 
         for (index, chunks) in layers_chunks.iter().enumerate() {
@@ -225,6 +231,10 @@ impl Level {
                             horse_arrows.push((pos, *tile == 417 + 1));
                         } else if *tile > 928 && *tile < 960 + 1 {
                             boss = Some(((*tile - 1 - 928) as usize, pos));
+                        } else if *tile == 448 + 1 {
+                            forced_player_spawn = Some(pos)
+                        } else if *tile == 449 + 1 {
+                            forced_level_end = Some(pos)
                         }
                     } else if *tile == 320 + 1 {
                         animated_tiles.push((pos, 0));
@@ -371,6 +381,8 @@ impl Level {
             roof_height: (roof_height * 8) as f32 + min_pos.y,
             width: width as usize,
             max_pos: vec2((max_x * 8) as f32, (max_y * 8) as f32),
+            forced_player_spawn,
+            forced_level_end,
             min_pos,
             boss,
             lasso_targets,

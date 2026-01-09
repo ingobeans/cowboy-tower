@@ -48,16 +48,43 @@ fn load_enemies(input: Vec<(Vec2, &'static EnemyType, f32)>) -> Vec<Enemy> {
         .collect()
 }
 
-fn get_player_spawn(assets: &Assets, level: usize) -> Vec2 {
-    let left_level_end = !level.is_multiple_of(2);
+fn get_elevator_pos(assets: &Assets, level_index: usize) -> Vec2 {
+    let level = &assets.levels[level_index];
+    let elevator_texture = assets.elevator.animations[0].get_at_time(0);
+    if let Some(pos) = level.forced_level_end {
+        return vec2(
+            if level_index % 2 != 0 {
+                pos.x
+            } else {
+                pos.x - elevator_texture.width()
+            },
+            pos.y - elevator_texture.height() + 8.0,
+        );
+    }
+    vec2(
+        if level_index % 2 != 0 {
+            level.player_spawn.x
+        } else {
+            level.max_pos.x + 16.0 * 8.0 - elevator_texture.width()
+        },
+        level.player_spawn.y - elevator_texture.height() + 8.0,
+    )
+}
+
+fn get_player_spawn(assets: &Assets, level_index: usize) -> Vec2 {
+    let level = &assets.levels[level_index];
+    if let Some(pos) = level.forced_player_spawn {
+        return pos;
+    }
+    let left_level_end = !level_index.is_multiple_of(2);
 
     if left_level_end {
         vec2(
-            assets.levels[level].max_pos.x + 16.0 * 8.0 - 3.0 * 8.0,
-            assets.levels[level].player_spawn.y,
+            level.max_pos.x + 16.0 * 8.0 - 3.0 * 8.0,
+            level.player_spawn.y,
         )
     } else {
-        assets.levels[level].player_spawn + vec2(16.0, 0.0)
+        level.player_spawn + vec2(16.0, 0.0)
     }
 }
 
@@ -137,14 +164,7 @@ impl<'a> Game<'a> {
         let left_level_end = !self.level.is_multiple_of(2);
 
         let elevator_texture = self.assets.elevator.animations[0].get_at_time(0);
-        let elevator_pos = vec2(
-            if left_level_end {
-                level.player_spawn.x
-            } else {
-                level.max_pos.x + 16.0 * 8.0 - elevator_texture.width()
-            },
-            level.player_spawn.y - elevator_texture.height() + 8.0,
-        );
+        let elevator_pos = get_elevator_pos(self.assets, self.level);
 
         if self.level_complete.is_none()
             && (self.player.pos.x - (elevator_pos.x + elevator_texture.width() / 2.0)).abs() <= 6.0
@@ -242,14 +262,16 @@ impl<'a> Game<'a> {
 
         if self.level_transition_time > 0.0 {
             let old = &self.assets.levels[self.level - 1];
+            let elevator_pos = get_elevator_pos(self.assets, self.level - 1);
             let y_diff = (old.min_pos.y - (level.max_pos.y + 16.0)).abs();
             self.level_transition_time -= delta_time;
             self.camera.target = self.player.camera_pos.floor();
             let x =
                 (LEVEL_TRANSITION_LENGTH - self.level_transition_time) / LEVEL_TRANSITION_LENGTH;
             let amt = (1.0 - (x - 1.0).powi(2)).sqrt();
-            self.camera.target.y =
-                (old.player_spawn.y + y_diff - 22.0).lerp(self.player.camera_pos.y.floor(), amt);
+            self.camera.target.y = (elevator_pos.y + y_diff - 22.0 + elevator_texture.height()
+                - 8.0)
+                .lerp(self.player.camera_pos.y.floor(), amt);
         } else {
             self.camera.target = self.player.camera_pos.floor();
         }
@@ -291,17 +313,7 @@ impl<'a> Game<'a> {
                 level.min_pos.x
             };
             draw_texture(t, x, level.max_pos.y + 16.0, WHITE);
-            let elevator_pos = vec2(
-                if !left_level_end {
-                    old.player_spawn.x
-                } else {
-                    old.max_pos.x + 16.0 * 8.0 - elevator_texture.width()
-                } + x
-                    - old.min_pos.x,
-                old.player_spawn.y - elevator_texture.height()
-                    + 8.0
-                    + (old.min_pos.y - (level.max_pos.y + 16.0)).abs(),
-            );
+            let elevator_pos = get_elevator_pos(self.assets, self.level - 1);
             draw_rectangle(
                 elevator_pos.x,
                 old.roof_height + (old.min_pos.y - (level.max_pos.y + 16.0)).abs(),
@@ -510,19 +522,20 @@ impl<'a> Game<'a> {
         if self.level > 0 {
             let time =
                 (LEVEL_TRANSITION_LENGTH - self.level_transition_time) / LEVEL_TRANSITION_LENGTH;
+            let pos = get_player_spawn(self.assets, self.level);
             draw_texture(
                 self.assets.elevator.animations[2].get_at_time(
                     ((time) * 1000.0)
                         .min((self.assets.elevator.animations[2].total_length - 1) as f32)
                         as u32,
                 ),
-                get_player_spawn(self.assets, self.level).x
+                pos.x
                     + if left_level_end {
                         3.0 * 8.0 - elevator_texture.width()
                     } else {
                         -2.0 * 8.0
                     },
-                elevator_pos.y,
+                pos.y - elevator_texture.height() + 8.0,
                 WHITE,
             );
         }
