@@ -40,6 +40,12 @@ pub enum CinematicBars {
     Retracting(f32),
 }
 
+struct ActiveRiding {
+    horse_index: usize,
+    camera_lerp_time: f32,
+    camera_lerp_src: Vec2,
+}
+
 pub struct Player {
     pub pos: Vec2,
     pub camera_pos: Vec2,
@@ -51,8 +57,7 @@ pub struct Player {
     pub cinematic_bars: Option<CinematicBars>,
     pub jump_time: f32,
     pub active_dialogue: Option<ActiveDialogue>,
-    /// Index of horse being ridden
-    pub riding: Option<usize>,
+    riding: Option<ActiveRiding>,
     active_lasso: Option<ActiveLasso>,
     pub lasso_target: Option<Vec2>,
     pub death: Option<(f32, usize, bool)>,
@@ -114,9 +119,8 @@ impl Player {
     ) {
         if let Some(death) = &mut self.death {
             death.0 += delta_time;
-            if let Some(horse) = self.riding {
-                self.riding = None;
-                horses[horse].player_riding = false;
+            if let Some(riding) = self.riding.take() {
+                horses[riding.horse_index].player_riding = false;
             }
             if death.2 {
                 self.velocity.x = 0.0;
@@ -282,14 +286,13 @@ impl Player {
             }
 
             if is_key_pressed(KeyCode::Space) {
-                if let Some(horse) = self.riding {
-                    self.riding = None;
+                if let Some(riding) = self.riding.take() {
                     self.jump_time = delta_time;
-                    self.velocity = horses[horse].velocity;
+                    self.velocity = horses[riding.horse_index].velocity;
 
-                    let normal = horses[horse].get_normal();
+                    let normal = horses[riding.horse_index].get_normal();
                     self.velocity += normal * JUMP_FORCE;
-                    horses[horse].player_riding = false;
+                    horses[riding.horse_index].player_riding = false;
                 } else {
                     // check if by horse
                     let mut horses: Vec<(usize, &mut Horse)> = horses
@@ -311,7 +314,11 @@ impl Player {
                                 .distance(self.pos)
                                 .total_cmp(&b.1.pos.distance(self.pos))
                         });
-                        self.riding = Some(horses[0].0);
+                        self.riding = Some(ActiveRiding {
+                            horse_index: horses[0].0,
+                            camera_lerp_time: delta_time,
+                            camera_lerp_src: self.camera_pos,
+                        });
                         horses[0].1.running = true;
                         horses[0].1.player_riding = true;
                     } else if self.on_ground {
@@ -324,8 +331,9 @@ impl Player {
         let old_velocity = self.velocity;
         let touched_death_tile;
 
-        if let Some(horse) = &self.riding {
-            self.pos = horses[*horse].pos + horses[*horse].get_normal() * 16.0;
+        if let Some(riding) = &self.riding {
+            self.pos =
+                horses[riding.horse_index].pos + horses[riding.horse_index].get_normal() * 16.0;
         } else {
             (self.pos, self.on_ground, touched_death_tile) = update_physicsbody(
                 self.pos,
@@ -351,20 +359,37 @@ impl Player {
         {
             lasso.speed = 0.0;
         }
-        self.camera_pos.x = self
+
+        let mut target_camera_pos = self.camera_pos;
+        target_camera_pos.x = self
             .pos
             .x
             .max(world.min_pos.x + SCREEN_WIDTH / 2.0 - 64.0)
             .min(world.max_pos.x + 16.0 * 8.0 - (SCREEN_WIDTH / 2.0 - 64.0));
         let target = self.pos.y - 22.0;
-        if self.camera_pos.y < target {
-            self.camera_pos.y = target;
+        if target_camera_pos.y < target {
+            target_camera_pos.y = target;
         } else {
-            let delta = self.camera_pos.y - target;
+            let delta = target_camera_pos.y - target;
             let max_delta = 3.5 * 8.0;
             if delta.abs() > max_delta {
-                self.camera_pos.y = max_delta * if delta < 0.0 { -1.0 } else { 1.0 } + target;
+                target_camera_pos.y = max_delta * if delta < 0.0 { -1.0 } else { 1.0 } + target;
             }
+        }
+
+        if let Some(riding) = &mut self.riding
+            && riding.camera_lerp_time > 0.0
+        {
+            const LERP_TIME: f32 = 0.25;
+            self.camera_pos = riding
+                .camera_lerp_src
+                .lerp(target_camera_pos, riding.camera_lerp_time / LERP_TIME);
+            riding.camera_lerp_time += delta_time;
+            if riding.camera_lerp_time >= LERP_TIME {
+                riding.camera_lerp_time = 0.0;
+            }
+        } else {
+            self.camera_pos = target_camera_pos;
         }
     }
     pub fn draw(&mut self, assets: &Assets) {
