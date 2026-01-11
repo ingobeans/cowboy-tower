@@ -26,12 +26,20 @@ pub struct Assets {
     pub die: AnimationsGroup,
     pub target: Animation,
     pub animated_tiles: Vec<Animation>,
-    pub henry: AnimationsGroup,
-    pub henry_target: Texture2D,
-    pub henry_dust: Animation,
     pub dialogue: Texture2D,
     pub pole: Animation,
     pub font: Font,
+
+    pub fireking: AnimationsGroup,
+    pub fire_crown: Animation,
+    pub lavafall: Animation,
+    pub fireking_target: Animation,
+    pub fireball: AnimationsGroup,
+    pub fireking_pipe: Texture2D,
+
+    pub henry: AnimationsGroup,
+    pub henry_target: Texture2D,
+    pub henry_dust: Animation,
 }
 impl Assets {
     pub fn load() -> Self {
@@ -61,7 +69,6 @@ impl Assets {
                 22.0,
             ),
             font: load_ttf_font_from_bytes(include_bytes!("../assets/font.ttf")).unwrap(),
-            henry: AnimationsGroup::from_file(include_bytes!("../assets/henry.ase")),
             torso: AnimationsGroup::from_file(include_bytes!("../assets/torso.ase")),
             legs: AnimationsGroup::from_file(include_bytes!("../assets/legs.ase")),
             elevator: AnimationsGroup::from_file(include_bytes!("../assets/elevator.ase")),
@@ -71,10 +78,19 @@ impl Assets {
             die: AnimationsGroup::from_file(include_bytes!("../assets/die.ase")),
             target: Animation::from_file(include_bytes!("../assets/target.ase")),
             animated_tiles: vec![Animation::from_file(include_bytes!("../assets/lava.ase"))],
-            henry_target: load_ase_texture(include_bytes!("../assets/henry_target.ase"), None),
-            henry_dust: Animation::from_file(include_bytes!("../assets/henry_dust.ase")),
             dialogue: load_ase_texture(include_bytes!("../assets/dialogue.ase"), None),
             pole: Animation::from_file(include_bytes!("../assets/pole.ase")),
+
+            fireking: AnimationsGroup::from_file(include_bytes!("../assets/fireking.ase")),
+            fireball: AnimationsGroup::from_file(include_bytes!("../assets/fireball.ase")),
+            fire_crown: Animation::from_file(include_bytes!("../assets/fire_crown.ase")),
+            lavafall: Animation::from_file(include_bytes!("../assets/lavafall.ase")),
+            fireking_target: Animation::from_file(include_bytes!("../assets/fireking_target.ase")),
+            fireking_pipe: load_ase_texture(include_bytes!("../assets/fireking_pipe.ase"), None),
+
+            henry: AnimationsGroup::from_file(include_bytes!("../assets/henry.ase")),
+            henry_target: load_ase_texture(include_bytes!("../assets/henry_target.ase"), None),
+            henry_dust: Animation::from_file(include_bytes!("../assets/henry_dust.ase")),
             tileset,
         }
     }
