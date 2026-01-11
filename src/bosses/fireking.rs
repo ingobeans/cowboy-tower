@@ -46,7 +46,7 @@ impl Boss for Fireking {
         projectiles: &mut Vec<Projectile>,
         player: &mut Player,
     ) {
-        let dialogue_messages = &["I see you have defeated\nHenry.", "But now you shall burn."];
+        let dialogue_messages = &["I see you have defeated Henry.", "But now you shall burn."];
         const FIREBALL_FALL_TIME: f32 = 1.0;
         const FIREBALL_AMT: u8 = 10;
 
