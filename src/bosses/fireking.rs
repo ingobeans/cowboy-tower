@@ -45,6 +45,8 @@ enum State {
     /// - Jump target
     Jump(u8, usize, Vec2, Vec2),
     LandOnPipe,
+    /// - Pipe position on death
+    Death(f32),
 }
 pub struct Fireking {
     pos: Vec2,
@@ -91,6 +93,8 @@ impl Boss for Fireking {
         let mut flipped = false;
         let mut animation;
 
+        let dead = matches!(self.state, State::Death(_));
+
         let left_target = level.find_marker(0);
         let right_target = level.find_marker(1);
 
@@ -121,6 +125,14 @@ impl Boss for Fireking {
             }
 
             match &mut self.state {
+                State::Death(pos) => {
+                    animation = 5;
+                    loop_animation = false;
+                    pipe_pos = pos.lerp(self.spawn.y, (self.time / 0.5).min(1.0));
+                    if pipe_pos <= self.spawn.y + 1.0 {
+                        player.in_boss_battle = false;
+                    }
+                }
                 State::Idle(wait) => {
                     animation = 0;
                     loop_animation = true;
@@ -286,15 +298,17 @@ impl Boss for Fireking {
         }
 
         let draw_pos = self.pos - vec2(30.0, 52.0);
-        for projectile in projectiles {
-            if projectile.friendly
-                && (draw_pos.y + 23.0..draw_pos.y + 60.0).contains(&projectile.pos.y)
-                && (self.pos.x - 8.0..self.pos.x + 8.0).contains(&projectile.pos.x)
-            {
-                projectile.dead = true;
-                self.health = self.health.saturating_sub(1);
-                self.blood_effects
-                    .push((projectile.pos, 0.0, projectile.direction.x > 0.0));
+        if !dead {
+            for projectile in projectiles {
+                if projectile.friendly
+                    && (draw_pos.y + 23.0..draw_pos.y + 60.0).contains(&projectile.pos.y)
+                    && (self.pos.x - 8.0..self.pos.x + 8.0).contains(&projectile.pos.x)
+                {
+                    projectile.dead = true;
+                    self.health = self.health.saturating_sub(1);
+                    self.blood_effects
+                        .push((projectile.pos, 0.0, projectile.direction.x > 0.0));
+                }
             }
         }
 
@@ -318,10 +332,12 @@ impl Boss for Fireking {
             self.time
                 .min((assets.fireking.animations[animation].total_length - 1) as f32 / 1000.0)
         };
-        let textures = [
+        let mut textures = vec![
             assets.fireking.animations[animation].get_at_time((animation_time * 1000.0) as u32),
-            assets.fire_crown.get_at_time((self.time * 1000.0) as u32),
         ];
+        if !dead {
+            textures.push(assets.fire_crown.get_at_time((self.time * 1000.0) as u32));
+        }
         for t in textures {
             draw_texture_ex(
                 t,
@@ -333,6 +349,10 @@ impl Boss for Fireking {
                     ..Default::default()
                 },
             );
+        }
+        if self.health <= 0 && !dead && self.pos.y <= self.spawn.y + 1.0 {
+            self.state = State::Death(pipe_pos);
+            self.time = 0.0;
         }
 
         if self.activated > 0.0 {
