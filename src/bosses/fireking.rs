@@ -88,6 +88,7 @@ impl Boss for Fireking {
         let mut pipe_pos = self.pos.y;
 
         let loop_animation;
+        let mut flipped = false;
         let mut animation;
 
         let left_target = level.find_marker(0);
@@ -154,6 +155,7 @@ impl Boss for Fireking {
                     loop_animation = false;
                     pipe_pos = self.spawn.y - 4.0 * 8.0;
                     animation = 2 + *phase;
+                    flipped = src.x > target.x;
 
                     let delta = self.time
                         - assets.fireking.animations[animation].total_length as f32 / 1000.0;
@@ -323,7 +325,7 @@ impl Boss for Fireking {
                 draw_pos.y,
                 WHITE,
                 DrawTextureParams {
-                    flip_x: false,
+                    flip_x: flipped,
                     ..Default::default()
                 },
             );
@@ -331,15 +333,11 @@ impl Boss for Fireking {
 
         if self.activated > 0.0 {
             let lavafall_pos = level.find_marker(3);
-            draw_texture_ex(
+            draw_texture(
                 assets.lavafall.get_at_time((self.time * 1000.0) as u32),
                 lavafall_pos.x + 2.0,
                 lavafall_pos.y - 3.0,
                 WHITE,
-                DrawTextureParams {
-                    flip_x: false,
-                    ..Default::default()
-                },
             );
         }
         self.blood_effects.retain_mut(|(pos, time, facing_right)| {
