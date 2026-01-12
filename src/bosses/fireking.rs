@@ -108,6 +108,7 @@ impl Boss for Fireking {
                     if self.dialogue_id + 1 >= dialogue_messages.len() {
                         player.show_cinematic_bars();
                         self.activated = delta_time;
+                        projectiles.clear();
                         self.time = 0.0;
                         player.active_dialogue = None;
                         player.in_boss_battle = true;
@@ -298,7 +299,7 @@ impl Boss for Fireking {
         }
 
         let draw_pos = self.pos - vec2(30.0, 52.0);
-        if !dead {
+        if !dead && self.activated > 0.0 {
             for projectile in projectiles {
                 if projectile.friendly
                     && (draw_pos.y + 23.0..draw_pos.y + 60.0).contains(&projectile.pos.y)
