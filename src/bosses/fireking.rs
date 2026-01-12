@@ -134,8 +134,11 @@ impl Boss for Fireking {
                     animation = 5;
                     loop_animation = false;
                     pipe_pos = pos.lerp(self.spawn.y, (self.time / 0.5).min(1.0));
-                    if pipe_pos + 1.0 >= self.spawn.y {
+                    if player.in_boss_battle && pipe_pos + 1.0 >= self.spawn.y {
                         player.in_boss_battle = false;
+                        player.hide_cinematic_bars();
+                        player.defeated_bosses = 2;
+                        player.time_since_last_boss_defeated = 0.0;
                     }
                 }
                 State::Idle(wait) => {

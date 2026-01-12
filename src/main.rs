@@ -8,6 +8,7 @@ use crate::{
     enemies::*,
     player::{CinematicBars, Player, update_physicsbody},
     projectiles::*,
+    ui::draw_boss_badges,
     utils::*,
 };
 
@@ -16,6 +17,7 @@ mod bosses;
 mod enemies;
 mod player;
 mod projectiles;
+mod ui;
 mod utils;
 
 struct Enemy {
@@ -836,15 +838,27 @@ impl<'a> Game<'a> {
                 fade_amt = delta * 2.0;
             }
         }
+        let screen_offset = vec2(
+            self.camera.target.x - actual_screen_width / scale_factor / 2.0,
+            self.camera.target.y - actual_screen_height / scale_factor / 2.0,
+        );
         if fade_amt > 0.0 {
             draw_rectangle(
-                self.camera.target.x - actual_screen_width / scale_factor / 2.0,
-                self.camera.target.y - actual_screen_height / scale_factor / 2.0,
+                screen_offset.x,
+                screen_offset.y,
                 actual_screen_width,
                 actual_screen_height,
                 BLACK.with_alpha(fade_amt),
             );
         }
+        self.player.time_since_last_boss_defeated += delta_time;
+        draw_boss_badges(
+            self.assets,
+            self.player.time_since_last_boss_defeated,
+            self.player.defeated_bosses,
+            screen_offset,
+            actual_screen_width / scale_factor,
+        );
     }
 }
 

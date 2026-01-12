@@ -61,6 +61,9 @@ pub struct Player {
     active_lasso: Option<ActiveLasso>,
     pub lasso_target: Option<Vec2>,
     pub death: Option<(f32, usize, bool)>,
+    /// Count
+    pub defeated_bosses: u8,
+    pub time_since_last_boss_defeated: f32,
     /// If player isnt actively shooting a projectile, this is 0.
     /// Otherwise it will be the time for the shoot animation.
     pub shooting: f32,
@@ -82,6 +85,8 @@ impl Player {
             velocity: Vec2::ZERO,
             on_ground: false,
             jump_time: 0.0,
+            time_since_last_boss_defeated: 10.0,
+            defeated_bosses: 0,
             facing_left: false,
             moving: false,
             time: 0.0,

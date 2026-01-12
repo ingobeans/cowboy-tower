@@ -14,12 +14,15 @@ use crate::{
 };
 
 pub struct Assets {
+    pub tileset: Spritesheet,
+    pub portraits: Spritesheet,
+    pub boss_badges: Spritesheet,
+    pub get_badge: Animation,
+
     pub torso: AnimationsGroup,
     pub legs: AnimationsGroup,
     pub elevator: AnimationsGroup,
     pub levels: Vec<Level>,
-    pub tileset: Spritesheet,
-    pub portraits: Spritesheet,
     pub projectiles: AnimationsGroup,
     pub horse: AnimationsGroup,
     pub blood: Animation,
@@ -68,6 +71,11 @@ impl Assets {
                 load_ase_texture(include_bytes!("../assets/portraits.ase"), None),
                 22.0,
             ),
+            boss_badges: Spritesheet::new(
+                load_ase_texture(include_bytes!("../assets/boss_badges.ase"), None),
+                10.0,
+            ),
+            get_badge: Animation::from_file(include_bytes!("../assets/get_badge.ase")),
             font: load_ttf_font_from_bytes(include_bytes!("../assets/font.ttf")).unwrap(),
             torso: AnimationsGroup::from_file(include_bytes!("../assets/torso.ase")),
             legs: AnimationsGroup::from_file(include_bytes!("../assets/legs.ase")),
@@ -598,7 +606,7 @@ impl Spritesheet {
         screen_y: f32,
         tile_x: f32,
         tile_y: f32,
-        params: Option<&DrawTextureParams>,
+        params: Option<(DrawTextureParams, Color)>,
     ) {
         self.draw_tile(
             screen_x - self.sprite_size / 2.0,
@@ -615,9 +623,9 @@ impl Spritesheet {
         screen_y: f32,
         tile_x: f32,
         tile_y: f32,
-        params: Option<&DrawTextureParams>,
+        params: Option<(DrawTextureParams, Color)>,
     ) {
-        let mut p = params.cloned().unwrap_or(DrawTextureParams::default());
+        let (mut p, color) = params.unwrap_or((DrawTextureParams::default(), WHITE));
         p.dest_size = p
             .dest_size
             .or(Some(Vec2::new(self.sprite_size, self.sprite_size)));
@@ -627,6 +635,6 @@ impl Spritesheet {
             w: self.sprite_size,
             h: self.sprite_size,
         }));
-        draw_texture_ex(&self.texture, screen_x, screen_y, WHITE, p);
+        draw_texture_ex(&self.texture, screen_x, screen_y, color, p);
     }
 }

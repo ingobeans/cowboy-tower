@@ -81,6 +81,8 @@ impl Boss for Henry {
                 if time >= max {
                     if player.in_boss_battle {
                         player.in_boss_battle = false;
+                        player.defeated_bosses = 1;
+                        player.time_since_last_boss_defeated = 0.0;
                         player.hide_cinematic_bars();
                     }
                     pole_anim_time = None;
