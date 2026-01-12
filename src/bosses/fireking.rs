@@ -34,10 +34,17 @@ fn populate_fireball_positions(
 }
 
 enum State {
-    Idle,
+    /// - Wait time
+    Idle(f32),
     /// - Count of waves
     /// - Current target positions
     Fireballs(u8, Vec<f32>),
+    /// - Jump count
+    /// - Jump animation phase
+    /// - Jump src
+    /// - Jump target
+    Jump(u8, usize, Vec2, Vec2),
+    LandOnPipe,
 }
 pub struct Fireking {
     pos: Vec2,
@@ -55,7 +62,7 @@ impl Fireking {
             pos,
             spawn: pos,
             health: 12,
-            state: State::Idle,
+            state: State::Idle(1.0),
             time: 0.0,
             activated: 0.0,
             blood_effects: Vec::new(),
@@ -75,9 +82,13 @@ impl Boss for Fireking {
         let dialogue_messages = &["I see you have defeated Henry.", "But now you shall burn."];
         const FIREBALL_FALL_TIME: f32 = 1.0;
         const FIREBALL_AMT: usize = 10;
+        const FIREBALL_WAVE_AMT: u8 = 3;
+        const PIPE_MOVE_TIME: f32 = 1.0;
+
+        let mut pipe_pos = self.pos.y;
 
         let loop_animation;
-        let animation;
+        let mut animation;
 
         let left_target = level.find_marker(0);
         let right_target = level.find_marker(1);
@@ -109,10 +120,10 @@ impl Boss for Fireking {
             }
 
             match &mut self.state {
-                State::Idle => {
+                State::Idle(wait) => {
                     animation = 0;
                     loop_animation = true;
-                    if self.time >= 1.0 {
+                    if self.time >= *wait {
                         let mut positions = vec![0.0; FIREBALL_AMT];
                         populate_fireball_positions(
                             &mut positions,
@@ -124,12 +135,81 @@ impl Boss for Fireking {
                         self.time = 0.0;
                     }
                 }
+                State::LandOnPipe => {
+                    animation = 0;
+                    loop_animation = true;
+                    self.pos.y =
+                        (self.spawn.y - 4.0 * 8.0).lerp(self.spawn.y, self.time / PIPE_MOVE_TIME);
+                    if (self.pos.y - self.spawn.y).abs() < 0.1 {
+                        self.pos.y = self.spawn.y;
+                        self.state = State::Idle(2.0);
+                        self.time = 0.0;
+                    }
+                    pipe_pos = self.pos.y;
+                }
+                State::Jump(amt, phase, src, target) => {
+                    const JUMP_AIR_TIME: f32 = 1.0;
+                    const JUMP_HEIGHT: f32 = 68.0;
+                    const JUMP_AMT: u8 = 5;
+                    loop_animation = false;
+                    pipe_pos = self.spawn.y - 4.0 * 8.0;
+                    animation = 2 + *phase;
+
+                    let delta = self.time
+                        - assets.fireking.animations[animation].total_length as f32 / 1000.0;
+                    let animation_finished = delta >= 0.0;
+
+                    if animation_finished {
+                        if *phase == 0 {
+                            *phase += 1;
+                            self.time = 0.0;
+                        } else if *phase == 1 {
+                            let jump = delta / JUMP_AIR_TIME;
+                            let y_amt = -4.0 * jump.powi(2) + 4.0 * jump;
+                            let y = src.y - y_amt * JUMP_HEIGHT + (target.y - src.y) * jump;
+
+                            let x_amt = (jump.powi(2) + jump) * 0.5;
+                            let x = src.x.lerp(target.x, x_amt);
+
+                            self.pos = vec2(x, y);
+                            if jump >= 1.0 {
+                                if *amt < JUMP_AMT - 1 {
+                                    let directions = [vec2(1.0, 0.0), vec2(-1.0, 0.0)];
+                                    for direction in directions {
+                                        projectiles.push(Projectile::new(6, self.pos, direction));
+                                    }
+                                }
+                                *phase += 1;
+                                self.time = 0.0;
+                            }
+                        } else {
+                            self.time = 0.0;
+                            *phase = 1;
+                            *amt += 1;
+                            *src = vec2(self.pos.x, self.spawn.y);
+                            *target = vec2(player.pos.x, self.spawn.y);
+                            if *amt >= JUMP_AMT - 1 {
+                                *target = vec2(self.spawn.x, pipe_pos);
+                            }
+                        }
+                    }
+
+                    if *amt < JUMP_AMT - 1 {
+                        let pos = *target - vec2(26.0, 0.0);
+                        draw_texture(&assets.henry_target, pos.x, pos.y, WHITE);
+                    }
+
+                    animation = 2 + *phase;
+                    if *amt >= JUMP_AMT {
+                        self.time = 0.0;
+                        self.state = State::LandOnPipe;
+                    }
+                }
                 State::Fireballs(amt, positions) => {
                     animation = 1;
                     loop_animation = false;
 
                     const WAIT_TIME: f32 = 1.0;
-                    const PIPE_MOVE_TIME: f32 = 1.0;
 
                     if self.time <= PIPE_MOVE_TIME {
                         let amt = self.time;
@@ -185,13 +265,24 @@ impl Boss for Fireking {
                         );
                         draw_texture(texture, *position - 26.0, fireball_pos - 38.0, WHITE);
                     }
+                    if *amt >= FIREBALL_WAVE_AMT {
+                        self.state = State::Jump(
+                            0,
+                            0,
+                            vec2(self.pos.x, self.spawn.y - 4.0 * 8.0),
+                            vec2(player.pos.x, self.spawn.y),
+                        );
+                        animation = 2;
+                        self.time = 0.0;
+                    }
                 }
             }
         }
 
         let draw_pos = self.pos - vec2(30.0, 52.0);
         for projectile in projectiles {
-            if (draw_pos.y + 23.0..draw_pos.y + 60.0).contains(&projectile.pos.y)
+            if projectile.friendly
+                && (draw_pos.y + 23.0..draw_pos.y + 60.0).contains(&projectile.pos.y)
                 && projectile.pos.x < self.pos.x + 8.0
             {
                 projectile.dead = true;
@@ -205,7 +296,7 @@ impl Boss for Fireking {
         draw_texture_ex(
             &assets.fireking_pipe,
             self.spawn.x - 18.0,
-            self.pos.y + 6.0,
+            pipe_pos + 6.0,
             WHITE,
             DrawTextureParams {
                 flip_x: false,
