@@ -105,7 +105,7 @@ impl Boss for Henry {
         let animation = match &self.state {
             State::Idle => 0,
             State::Jumping(..) => 1,
-            State::ThrowingBarrels(_, _) => 2,
+            State::ThrowingBarrels(..) => 2,
             State::Death => 3,
         };
         let flipped = match &self.state {
