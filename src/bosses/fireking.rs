@@ -303,8 +303,11 @@ impl Boss for Fireking {
         }
 
         let draw_pos = self.pos - vec2(30.0, 52.0);
-        if !dead && self.activated > 0.0 {
-            for projectile in projectiles {
+
+        for projectile in projectiles {
+            if (pipe_pos - self.spawn.y).abs() > 8.0 && projectile.pos.x < left_target.x {
+                projectile.dead = true;
+            } else if !dead && self.activated > 0.0 {
                 if projectile.friendly
                     && (draw_pos.y + 23.0..draw_pos.y + 60.0).contains(&projectile.pos.y)
                     && (self.pos.x - 8.0..self.pos.x + 8.0).contains(&projectile.pos.x)
