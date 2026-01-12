@@ -63,7 +63,7 @@ impl Fireking {
         Fireking {
             pos,
             spawn: pos,
-            health: 12,
+            health: 10,
             state: State::Idle(1.0),
             time: 0.0,
             activated: 0.0,
@@ -129,7 +129,7 @@ impl Boss for Fireking {
                     animation = 5;
                     loop_animation = false;
                     pipe_pos = pos.lerp(self.spawn.y, (self.time / 0.5).min(1.0));
-                    if pipe_pos <= self.spawn.y + 1.0 {
+                    if pipe_pos + 1.0 >= self.spawn.y {
                         player.in_boss_battle = false;
                     }
                 }
@@ -350,7 +350,7 @@ impl Boss for Fireking {
                 },
             );
         }
-        if self.health <= 0 && !dead && self.pos.y <= self.spawn.y + 1.0 {
+        if self.health <= 0 && !dead && self.pos.y + 1.0 >= self.spawn.y {
             self.state = State::Death(pipe_pos);
             self.time = 0.0;
         }
