@@ -13,20 +13,20 @@ fn populate_fireball_positions(
     left_target: Vec2,
     right_target: Vec2,
 ) {
-    'outer: loop {
+    loop {
         for item in positions.iter_mut() {
             *item = rand::gen_range(left_target.x, right_target.x);
         }
         // force last position to be directly on player
         *positions.last_mut().unwrap() = player_pos.x;
 
-        // check that there is at least one space between two fireballs greater than 32 pixels
+        // check that there is at least one space between two fireballs greater than 64 pixels
         positions.sort_by(|a, b| a.total_cmp(&b));
         let mut last = positions[0];
         for pos in positions.iter().skip(1) {
             let delta = *pos - last;
-            if delta >= 32.0 {
-                break 'outer;
+            if delta >= 64.0 {
+                return;
             }
             last = *pos;
         }
