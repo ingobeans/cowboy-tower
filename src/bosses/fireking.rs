@@ -98,6 +98,10 @@ impl Boss for Fireking {
         let left_target = level.find_marker(0);
         let right_target = level.find_marker(1);
 
+        if player.pos.x <= right_target.x {
+            player.camera_pos.y = player.camera_pos.y.min(-80.0);
+        }
+
         self.time += delta_time;
         if self.activated <= 0.0 {
             loop_animation = true;
