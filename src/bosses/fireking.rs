@@ -7,6 +7,32 @@ use crate::{
     projectiles::Projectile,
 };
 
+fn populate_fireball_positions(
+    positions: &mut Vec<f32>,
+    player_pos: Vec2,
+    left_target: Vec2,
+    right_target: Vec2,
+) {
+    'outer: loop {
+        for item in positions.iter_mut() {
+            *item = rand::gen_range(left_target.x, right_target.x);
+        }
+        // force last position to be directly on player
+        *positions.last_mut().unwrap() = player_pos.x;
+
+        // check that there is at least one space between two fireballs greater than 32 pixels
+        positions.sort_by(|a, b| a.total_cmp(&b));
+        let mut last = positions[0];
+        for pos in positions.iter().skip(1) {
+            let delta = *pos - last;
+            if delta >= 32.0 {
+                break 'outer;
+            }
+            last = *pos;
+        }
+    }
+}
+
 enum State {
     Idle,
     /// - Count of waves
@@ -48,7 +74,7 @@ impl Boss for Fireking {
     ) {
         let dialogue_messages = &["I see you have defeated Henry.", "But now you shall burn."];
         const FIREBALL_FALL_TIME: f32 = 1.0;
-        const FIREBALL_AMT: u8 = 10;
+        const FIREBALL_AMT: usize = 10;
 
         let loop_animation;
         let animation;
@@ -87,11 +113,13 @@ impl Boss for Fireking {
                     animation = 0;
                     loop_animation = true;
                     if self.time >= 1.0 {
-                        let mut positions = Vec::new();
-                        for _ in 0..FIREBALL_AMT {
-                            positions.push(rand::gen_range(left_target.x, right_target.x));
-                        }
-                        *positions.last_mut().unwrap() = player.pos.x;
+                        let mut positions = vec![0.0; FIREBALL_AMT];
+                        populate_fireball_positions(
+                            &mut positions,
+                            player.pos,
+                            left_target,
+                            right_target,
+                        );
                         self.state = State::Fireballs(0, positions);
                         self.time = 0.0;
                     }
@@ -134,10 +162,12 @@ impl Boss for Fireking {
                             fireball_time = fireball_finish_time;
                             self.time = PIPE_MOVE_TIME;
                             *amt += 1;
-                            for item in positions.iter_mut() {
-                                *item = rand::gen_range(left_target.x, right_target.x);
-                            }
-                            *positions.last_mut().unwrap() = player.pos.x;
+                            populate_fireball_positions(
+                                positions,
+                                player.pos,
+                                left_target,
+                                right_target,
+                            );
                         }
                     }
 
