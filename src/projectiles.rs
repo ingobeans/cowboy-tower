@@ -38,6 +38,7 @@ impl Projectile {
         match type_index {
             1 | 2 => 128.0 * 0.8,
             3 | 4 => 0.0,
+            6 => 85.0,
             _ => 128.0,
         }
     }
