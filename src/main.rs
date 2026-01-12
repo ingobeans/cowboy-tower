@@ -313,7 +313,11 @@ impl<'a> Game<'a> {
                 level.min_pos.x
             };
             draw_texture(t, x, level.max_pos.y + 16.0, WHITE);
-            let elevator_pos = get_elevator_pos(self.assets, self.level - 1);
+            let elevator_pos = get_elevator_pos(self.assets, self.level - 1)
+                + vec2(
+                    x - old.min_pos.x,
+                    (old.min_pos.y - (level.max_pos.y + 16.0)).abs(),
+                );
             draw_rectangle(
                 elevator_pos.x,
                 old.roof_height + (old.min_pos.y - (level.max_pos.y + 16.0)).abs(),
