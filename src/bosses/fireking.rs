@@ -283,7 +283,7 @@ impl Boss for Fireking {
         for projectile in projectiles {
             if projectile.friendly
                 && (draw_pos.y + 23.0..draw_pos.y + 60.0).contains(&projectile.pos.y)
-                && projectile.pos.x < self.pos.x + 8.0
+                && (self.pos.x - 8.0..self.pos.x + 8.0).contains(&projectile.pos.x)
             {
                 projectile.dead = true;
                 self.health = self.health.saturating_sub(1);
