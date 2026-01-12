@@ -139,9 +139,10 @@ impl Boss for Fireking {
                 State::LandOnPipe => {
                     animation = 0;
                     loop_animation = true;
-                    self.pos.y =
-                        (self.spawn.y - 4.0 * 8.0).lerp(self.spawn.y, self.time / PIPE_MOVE_TIME);
-                    if (self.pos.y - self.spawn.y).abs() < 0.1 {
+                    const PIPE_MOVE_DOWN_TIME: f32 = 0.25;
+                    self.pos.y = (self.spawn.y - 4.0 * 8.0)
+                        .lerp(self.spawn.y, (self.time / PIPE_MOVE_DOWN_TIME).min(1.0));
+                    if self.time / PIPE_MOVE_DOWN_TIME >= 1.0 {
                         self.pos.y = self.spawn.y;
                         self.state = State::Idle(2.0);
                         self.time = 0.0;
@@ -180,6 +181,9 @@ impl Boss for Fireking {
                                     for direction in directions {
                                         projectiles.push(Projectile::new(6, self.pos, direction));
                                     }
+                                }
+                                if *amt >= JUMP_AMT - 1 {
+                                    *amt += 1;
                                 }
                                 *phase += 1;
                                 self.time = 0.0;
