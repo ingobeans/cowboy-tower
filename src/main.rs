@@ -94,6 +94,20 @@ fn load_boss(level: &Level) -> Option<Box<dyn Boss>> {
     level.boss.map(|(i, p)| new_boss(i, p))
 }
 
+fn calculate_world_heights(assets: &Assets) -> Vec<f32> {
+    let mut worlds = vec![0.0];
+    let mut last_world = 0;
+    for level in assets.levels.iter() {
+        let world = level.name.chars().next().unwrap() as u32 - '0' as u32;
+        if world != last_world {
+            last_world = world;
+            worlds.push(0.0);
+        }
+        *worlds.last_mut().unwrap() += level.get_height();
+    }
+    worlds
+}
+
 struct Game<'a> {
     assets: &'a Assets,
     camera: Camera2D,
@@ -107,12 +121,20 @@ struct Game<'a> {
     level_complete: Option<f32>,
     time: f32,
     level_transition_time: f32,
+    world_heights: Vec<f32>,
+    height: f32,
 }
 impl<'a> Game<'a> {
     fn new(assets: &'a Assets, level: usize) -> Self {
+        let mut y = 0.0;
+        for l in &assets.levels[..level] {
+            y += l.get_height();
+        }
         Self {
             assets,
             level,
+            height: y,
+            world_heights: calculate_world_heights(assets),
             player: Player::new(get_player_spawn(assets, level)),
             camera: Camera2D::default(),
             enemies: load_enemies(assets.levels[level].enemies.clone()),
@@ -152,6 +174,8 @@ impl<'a> Game<'a> {
             && time * 1000.0 >= elevator_doors_animation.total_length as f32
         {
             self.level_complete = None;
+            self.height += self.assets.levels[self.level].get_height() + FLOOR_PADDING + 16.0;
+            dbg!(self.height);
             self.load_level(self.level + 1);
             self.level_transition_time = LEVEL_TRANSITION_LENGTH;
             self.player.update(
@@ -265,7 +289,7 @@ impl<'a> Game<'a> {
         if self.level_transition_time > 0.0 {
             let old = &self.assets.levels[self.level - 1];
             let elevator_pos = get_elevator_pos(self.assets, self.level - 1);
-            let y_diff = (old.min_pos.y - (level.max_pos.y + 16.0)).abs();
+            let y_diff = (old.min_pos.y - (level.max_pos.y + FLOOR_PADDING)).abs();
             self.level_transition_time -= delta_time;
             self.camera.target = self.player.camera_pos.floor();
             let x =

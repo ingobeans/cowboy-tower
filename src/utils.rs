@@ -9,6 +9,8 @@ pub const GRAVITY: f32 = 9.8 * 75.0;
 pub const LEVEL_TRANSITION_LENGTH: f32 = 0.5;
 pub const DEATH_TILES: &[u16] = &[128, 352];
 
+pub const FLOOR_PADDING: f32 = 16.0;
+
 pub const DIALOGUE_SLIDE_IN_TIME: f32 = 0.5;
 pub const TEXT_FADE_IN_TIME: f32 = 0.2;
 pub const CINEMATIC_BAR_FADE_TIME: f32 = 1.0;

@@ -157,6 +157,8 @@ pub struct Level {
     pub player_spawn: Vec2,
     // The Y coordinate of the highest point/placed tile (lowest value)
     pub roof_height: f32,
+    // The Y coordinate of the lowest point/placed tile (highest value)
+    pub floor_height: f32,
     pub lasso_targets: Vec<Vec2>,
     pub animated_tiles: Vec<(Vec2, usize)>,
 
@@ -179,6 +181,9 @@ impl Level {
             }
         }
         panic!()
+    }
+    pub fn get_height(&self) -> f32 {
+        self.floor_height - self.roof_height + 8.0
     }
     pub fn get_tile(&self, x: i16, y: i16) -> [u16; 4] {
         if (x as f32 * 8.0) < self.min_pos.x || ((x - 16) as f32 * 8.0) >= self.max_pos.x {
@@ -278,6 +283,7 @@ impl Level {
         }
         let mut player_spawn = (usize::MAX, usize::MAX);
         let mut roof_height = usize::MAX;
+        let mut floor_height = 0;
         let mut camera = create_camera((width * 8) as f32, (height * 8) as f32);
         camera.target = vec2((width * 8) as f32 / 2.0, (height * 8) as f32 / 2.0);
         set_camera(&camera);
@@ -293,8 +299,13 @@ impl Level {
                     player_spawn.1 = y;
                 }
             }
-            if tile[0] + tile[1] + tile[2] != 0 && y < roof_height {
-                roof_height = y
+            if tile[0] + tile[1] + tile[2] != 0 {
+                if y < roof_height {
+                    roof_height = y
+                }
+                if y > floor_height {
+                    floor_height = y;
+                }
             }
             for t in &tile[..3] {
                 if *t == 0 {
@@ -402,6 +413,7 @@ impl Level {
         Self {
             name,
             player_spawn,
+            floor_height: (floor_height * 8) as f32 + min_pos.y,
             roof_height: (roof_height * 8) as f32 + min_pos.y,
             width: width as usize,
             max_pos: vec2((max_x * 8) as f32, (max_y * 8) as f32),
