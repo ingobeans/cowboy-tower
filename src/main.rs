@@ -94,18 +94,60 @@ fn load_boss(level: &Level) -> Option<Box<dyn Boss>> {
     level.boss.map(|(i, p)| new_boss(i, p))
 }
 
-fn calculate_world_heights(assets: &Assets) -> Vec<f32> {
-    let mut worlds = vec![0.0];
+fn calculate_world_heights(assets: &Assets) -> Vec<(f32, f32)> {
+    let mut total = -3.0 * 8.0;
+    let mut worlds = vec![(0.0, total)];
     let mut last_world = 0;
     for level in assets.levels.iter() {
         let world = level.name.chars().next().unwrap() as u32 - '0' as u32;
         if world != last_world {
             last_world = world;
-            worlds.push(0.0);
+            worlds.push((2.0 * FLOOR_PADDING, total - 2.0 * FLOOR_PADDING));
         }
-        *worlds.last_mut().unwrap() += level.get_height();
+        let height = level.get_height();
+        total += height + FLOOR_PADDING + 16.0;
+        worlds.last_mut().unwrap().0 += height + FLOOR_PADDING + 8.0;
     }
+    worlds.last_mut().unwrap().0 -= 2.0 * FLOOR_PADDING + 8.0;
     worlds
+}
+
+struct WorldManager {
+    world_heights: Vec<(f32, f32)>,
+}
+impl WorldManager {
+    fn new(assets: &Assets) -> Self {
+        Self {
+            world_heights: calculate_world_heights(assets),
+        }
+    }
+    fn draw_tower(&self, y: f32, assets: &Assets, level_index: usize) {
+        let level = &assets.levels[level_index];
+
+        for world_index in 0..=2 {
+            let (wall_color, border_color) = match world_index {
+                0 => (Color::from_hex(0x300f0a), Color::from_hex(0x5c320b)),
+                1 => (Color::from_hex(0x2a1d0d), Color::from_hex(0x0)),
+                2 => (BLACK, Color::from_hex(0x0)),
+                _ => panic!(),
+            };
+
+            draw_rectangle(
+                level.min_pos.x - 2.0,
+                -self.world_heights[world_index].1 + y,
+                level.max_pos.x - level.min_pos.x + 16.0 * 8.0 + 4.0,
+                -(self.world_heights[world_index].0 + FLOOR_PADDING),
+                border_color,
+            );
+            draw_rectangle(
+                level.min_pos.x,
+                -self.world_heights[world_index].1 + y,
+                level.max_pos.x - level.min_pos.x + 16.0 * 8.0,
+                -(self.world_heights[world_index].0 + FLOOR_PADDING),
+                wall_color,
+            );
+        }
+    }
 }
 
 struct Game<'a> {
@@ -121,20 +163,20 @@ struct Game<'a> {
     level_complete: Option<f32>,
     time: f32,
     level_transition_time: f32,
-    world_heights: Vec<f32>,
     height: f32,
+    world_manager: WorldManager,
 }
 impl<'a> Game<'a> {
     fn new(assets: &'a Assets, level: usize) -> Self {
         let mut y = 0.0;
         for l in &assets.levels[..level] {
-            y += l.get_height();
+            y += l.get_height() + FLOOR_PADDING + 16.0;
         }
         Self {
             assets,
             level,
             height: y,
-            world_heights: calculate_world_heights(assets),
+            world_manager: WorldManager::new(assets),
             player: Player::new(get_player_spawn(assets, level)),
             camera: Camera2D::default(),
             enemies: load_enemies(assets.levels[level].enemies.clone()),
@@ -170,6 +212,10 @@ impl<'a> Game<'a> {
             .floor();
 
         let elevator_doors_animation = &self.assets.elevator.animations[1];
+        if is_key_pressed(KeyCode::G) {
+            self.level_complete = Some(delta_time);
+        }
+
         if let Some(time) = self.level_complete
             && time * 1000.0 >= elevator_doors_animation.total_length as f32
         {
@@ -308,23 +354,8 @@ impl<'a> Game<'a> {
         set_camera(&self.camera);
         clear_background(Color::from_hex(0x1CB7FF));
 
-        let min_y = self.camera.target.y + actual_screen_height / scale_factor / 2.0;
-
-        let max_y = self.camera.target.y - actual_screen_height / scale_factor / 2.0;
-        draw_rectangle(
-            level.min_pos.x - 2.0,
-            min_y,
-            level.max_pos.x - level.min_pos.x + 16.0 * 8.0 + 4.0,
-            max_y - min_y,
-            Color::from_hex(0x5c320b),
-        );
-        draw_rectangle(
-            level.min_pos.x,
-            min_y,
-            level.max_pos.x - level.min_pos.x + 16.0 * 8.0,
-            max_y - min_y,
-            Color::from_hex(0x300f0a),
-        );
+        self.world_manager
+            .draw_tower(self.height, self.assets, self.level);
 
         let t = &level.camera.render_target.as_ref().unwrap().texture;
         draw_texture(t, level.min_pos.x, level.min_pos.y, WHITE);
