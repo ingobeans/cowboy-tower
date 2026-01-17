@@ -131,7 +131,7 @@ impl WorldManager {
                     Color::from_hex(0x927e6a),
                     Color::from_hex(0x392a1c),
                 ),
-                (BLACK, Color::from_hex(0x392a1c), Color::from_hex(0x3e2004)),
+                (BLACK, Color::from_hex(0x392a1c), Color::from_hex(0x36170c)),
             ],
         }
     }
