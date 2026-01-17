@@ -221,8 +221,12 @@ impl<'a> Game<'a> {
             .floor();
 
         let elevator_doors_animation = &self.assets.doors.animations[0];
-        if is_key_pressed(KeyCode::G) {
-            self.level_complete = Some(delta_time);
+
+        #[cfg(debug_assertions)]
+        {
+            if is_key_pressed(KeyCode::G) {
+                self.level_complete = Some(delta_time);
+            }
         }
 
         if let Some(time) = self.level_complete
