@@ -22,6 +22,7 @@ pub struct Assets {
     pub torso: AnimationsGroup,
     pub legs: AnimationsGroup,
     pub elevator: AnimationsGroup,
+    pub doors: AnimationsGroup,
     pub levels: Vec<Level>,
     pub projectiles: AnimationsGroup,
     pub horse: AnimationsGroup,
@@ -80,6 +81,7 @@ impl Assets {
             torso: AnimationsGroup::from_file(include_bytes!("../assets/torso.ase")),
             legs: AnimationsGroup::from_file(include_bytes!("../assets/legs.ase")),
             elevator: AnimationsGroup::from_file(include_bytes!("../assets/elevator.ase")),
+            doors: AnimationsGroup::from_file(include_bytes!("../assets/doors.ase")),
             projectiles: AnimationsGroup::from_file(include_bytes!("../assets/projectiles.ase")),
             horse: AnimationsGroup::from_file(include_bytes!("../assets/horse.ase")),
             blood: Animation::from_file(include_bytes!("../assets/blood.ase")),
@@ -166,6 +168,9 @@ pub struct Level {
     pub forced_level_end: Option<Vec2>,
 }
 impl Level {
+    pub fn get_world_index(&self) -> u32 {
+        self.name.chars().next().unwrap() as u32 - '0' as u32
+    }
     pub fn find_marker(&self, marker_index: u16) -> Vec2 {
         for (index, tile) in self.data.iter().enumerate() {
             if tile[3] == 0 {
