@@ -127,8 +127,8 @@ impl WorldManager {
         for world_index in 0..=2 {
             let (wall_color, border_color) = match world_index {
                 0 => (Color::from_hex(0x300f0a), Color::from_hex(0x5c320b)),
-                1 => (Color::from_hex(0x2a1d0d), Color::from_hex(0x0)),
-                2 => (BLACK, Color::from_hex(0x0)),
+                1 => (Color::from_hex(0x16100b), Color::from_hex(0x927e6a)),
+                2 => (BLACK, Color::from_hex(0x392a1c)),
                 _ => panic!(),
             };
 
