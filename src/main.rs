@@ -416,7 +416,7 @@ impl<'a> Game<'a> {
         );
         // draw animated tiles
         for (pos, index) in level.animated_tiles.iter() {
-            let time = self.time + pos.x.powi(2) + pos.y.powi(2) * 100.0;
+            let time = self.time + pos.x.powi(2) + pos.y.powi(2) * 4.2;
             draw_texture(
                 self.assets.animated_tiles[*index].get_at_time((time * 1000.0) as u32),
                 pos.x,
