@@ -164,6 +164,7 @@ impl Player {
                 if HORSE_MOUNT_LEEWAY - self.failed_horse_mount_time < JUMP_LAND_LEEWAY {
                     self.jump_time = delta_time;
                     self.velocity.y = -JUMP_FORCE;
+                    self.on_ground = false;
                 }
                 self.failed_horse_mount_time = 0.0;
             } else if let Some(horse) = self.find_mountable_horse(horses) {
