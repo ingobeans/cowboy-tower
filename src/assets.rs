@@ -87,7 +87,10 @@ impl Assets {
             blood: Animation::from_file(include_bytes!("../assets/blood.ase")),
             die: AnimationsGroup::from_file(include_bytes!("../assets/die.ase")),
             target: Animation::from_file(include_bytes!("../assets/target.ase")),
-            animated_tiles: vec![Animation::from_file(include_bytes!("../assets/lava.ase"))],
+            animated_tiles: vec![
+                Animation::from_file(include_bytes!("../assets/lava.ase")),
+                Animation::from_file(include_bytes!("../assets/blood_tile.ase")),
+            ],
             dialogue: load_ase_texture(include_bytes!("../assets/dialogue.ase"), None),
             pole: Animation::from_file(include_bytes!("../assets/pole.ase")),
 
@@ -280,6 +283,8 @@ impl Level {
                         }
                     } else if *tile == 320 + 1 {
                         animated_tiles.push((pos, 0));
+                    } else if *tile == 256 + 1 {
+                        animated_tiles.push((pos, 1));
                     }
                 }
             }
