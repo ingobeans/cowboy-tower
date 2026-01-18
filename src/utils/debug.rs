@@ -37,11 +37,14 @@ impl Display for DebugFlags {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let debug = format!("{:?}", self);
         let split = debug.split(", ");
-        for (i, item) in split.enumerate() {
+        let mut first = true;
+        for item in split {
             let (key, value) = item.split_once(":").unwrap();
             let key = key.split(" ").last().unwrap();
             if value.contains("true") {
-                if i > 0 {
+                if first {
+                    first = false;
+                } else {
                     write!(f, "\n")?;
                 }
                 write!(f, "✓ {key}")?;
