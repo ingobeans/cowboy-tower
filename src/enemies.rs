@@ -1,5 +1,14 @@
 use crate::assets::AnimationsGroup;
+use macroquad::prelude::*;
 use std::sync::LazyLock;
+
+#[derive(Clone, Copy)]
+pub struct LevelEnemyData {
+    pub pos: Vec2,
+    pub ty: &'static EnemyType,
+    pub attack_delay: f32,
+    pub path_index: Option<(usize, usize)>,
+}
 
 #[allow(dead_code)]
 pub enum MovementType {

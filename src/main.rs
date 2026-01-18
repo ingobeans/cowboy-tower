@@ -35,18 +35,18 @@ struct Enemy {
     wibble_wobble: f32,
 }
 
-fn load_enemies(input: Vec<(Vec2, &'static EnemyType, f32, Option<(usize, usize)>)>) -> Vec<Enemy> {
+fn load_enemies(input: Vec<LevelEnemyData>) -> Vec<Enemy> {
     input
         .into_iter()
         .map(|f| Enemy {
-            pos: f.0,
+            pos: f.pos,
             velocity: Vec2::ZERO,
-            ty: f.1,
+            ty: f.ty,
             time: 0.0,
-            path_index: f.3,
+            path_index: f.path_index,
             has_attacked: false,
             death_frames: 0.0,
-            attack_time: -f.2,
+            attack_time: -f.attack_delay,
             wibble_wobble: rand::gen_range(0.0, PI * 2.0),
         })
         .collect()
@@ -870,9 +870,10 @@ impl<'a> Game<'a> {
                 BLACK,
             );
             if let CinematicBars::Retracting(time) = bars
-                && *time >= 1.0 {
-                    self.player.cinematic_bars = None;
-                }
+                && *time >= 1.0
+            {
+                self.player.cinematic_bars = None;
+            }
         }
 
         // draw dialogue

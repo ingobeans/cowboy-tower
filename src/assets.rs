@@ -9,7 +9,7 @@ use include_dir::{Dir, include_dir};
 use macroquad::prelude::*;
 
 use crate::{
-    enemies::{ENEMIES, EnemyType},
+    enemies::{ENEMIES, LevelEnemyData},
     utils::create_camera,
 };
 
@@ -150,7 +150,7 @@ pub struct Level {
     pub name: String,
     pub data: Vec<[u16; 4]>,
     pub width: usize,
-    pub enemies: Vec<(Vec2, &'static EnemyType, f32, Option<(usize, usize)>)>,
+    pub enemies: Vec<LevelEnemyData>,
     pub horses: Vec<Horse>,
     pub boss: Option<(usize, Vec2)>,
     pub camera: Camera2D,
@@ -261,7 +261,12 @@ impl Level {
                             data[x + y * width as usize][index - 1] = *tile;
                             lasso_targets.push(pos + vec2(4.0, 4.0));
                         } else if *tile <= 32 && *tile > 1 {
-                            enemies.push((pos, &ENEMIES[(*tile - 2) as usize], 0.0, None));
+                            enemies.push(LevelEnemyData {
+                                pos,
+                                ty: &ENEMIES[(*tile - 2) as usize],
+                                attack_delay: 0.0,
+                                path_index: None,
+                            });
                         } else if *tile == 384 + 1 {
                             horses.push(Horse::new(pos, vec2(1.0, 0.0), false));
                         } else if *tile == 416 + 1 || *tile == 417 + 1 {
@@ -389,7 +394,7 @@ impl Level {
             path_index: usize,
             visited_tiles: &mut HashSet<usize>,
             path: &mut Vec<Vec2>,
-            enemies: &mut Vec<(Vec2, &EnemyType, f32, Option<(usize, usize)>)>,
+            enemies: &mut Vec<LevelEnemyData>,
         ) {
             let x = i % width;
             let y = i / width;
@@ -412,8 +417,8 @@ impl Level {
                 );
                 if tile > 0 && tile < 32 {
                     // find enemy here
-                    let enemy = enemies.iter_mut().find(|f| f.0 == pos).unwrap();
-                    enemy.3 = Some((path_index, counter));
+                    let enemy = enemies.iter_mut().find(|f| f.pos == pos).unwrap();
+                    enemy.path_index = Some((path_index, counter));
                 }
                 let tile = tile - 1;
                 if tile == 480 {
@@ -490,8 +495,8 @@ impl Level {
                         (x * 8) as f32 + (min_x * 8) as f32,
                         (y * 8) as f32 + (min_y * 8) as f32,
                     );
-                    let enemy = enemies.iter_mut().find(|f| f.0 == pos).unwrap();
-                    enemy.2 = sum;
+                    let enemy = enemies.iter_mut().find(|f| f.pos == pos).unwrap();
+                    enemy.attack_delay = sum;
                 }
             }
         }
