@@ -686,16 +686,17 @@ impl<'a> Game<'a> {
                 },
             );
 
-            /* debug: draw horse collision and horse normal
-            draw_rectangle(horse.pos.x.floor(), horse.pos.y.floor(), 8.0, 8.0, RED);
-            draw_line(
-            horse.pos.x,
-            horse.pos.y,
-            horse.pos.x + normal.x * 16.0,
-            horse.pos.y + normal.y * 16.0,
-            1.0,
-            YELLOW,
-            );*/
+            if DEBUG_FLAGS.horses {
+                draw_rectangle(horse.pos.x.floor(), horse.pos.y.floor(), 8.0, 8.0, RED);
+                draw_line(
+                    horse.pos.x,
+                    horse.pos.y,
+                    horse.pos.x + normal.x * 16.0,
+                    horse.pos.y + normal.y * 16.0,
+                    1.0,
+                    YELLOW,
+                );
+            }
         }
 
         if let Some(boss) = &mut self.boss {
