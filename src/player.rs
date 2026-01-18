@@ -47,6 +47,7 @@ struct ActiveRiding {
 }
 
 const HORSE_MOUNT_LEEWAY: f32 = 0.2;
+const JUMP_LAND_LEEWAY: f32 = 0.05;
 
 pub struct Player {
     pub pos: Vec2,
@@ -160,6 +161,10 @@ impl Player {
         if self.failed_horse_mount_time > 0.0 {
             self.failed_horse_mount_time -= delta_time;
             if self.on_ground {
+                if HORSE_MOUNT_LEEWAY - self.failed_horse_mount_time < JUMP_LAND_LEEWAY {
+                    self.jump_time = delta_time;
+                    self.velocity.y = -JUMP_FORCE;
+                }
                 self.failed_horse_mount_time = 0.0;
             } else if let Some(horse) = self.find_mountable_horse(horses) {
                 self.riding = Some(ActiveRiding {
