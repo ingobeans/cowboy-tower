@@ -593,7 +593,9 @@ impl<'a> Game<'a> {
                     ..Default::default()
                 },
             );
-            draw_cross(enemy.pos.x, enemy.pos.y, RED);
+            if DEBUG_FLAGS.centres {
+                draw_cross(enemy.pos.x, enemy.pos.y, RED);
+            }
             if enemy.death_frames <= 0.0 {
                 let mut hit_by_projectile = false;
                 for projectile in self.projectiles.iter_mut() {
