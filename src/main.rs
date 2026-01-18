@@ -57,7 +57,7 @@ fn get_elevator_pos(assets: &Assets, level_index: usize) -> Vec2 {
     let elevator_texture = assets.elevator.animations[0].get_at_time(0);
     if let Some(pos) = level.forced_level_end {
         return vec2(
-            if level_index % 2 != 0 {
+            if !level_index.is_multiple_of(2) {
                 pos.x
             } else {
                 pos.x - elevator_texture.width()
@@ -66,7 +66,7 @@ fn get_elevator_pos(assets: &Assets, level_index: usize) -> Vec2 {
         );
     }
     vec2(
-        if level_index % 2 != 0 {
+        if !level_index.is_multiple_of(2) {
             level.player_spawn.x
         } else {
             level.max_pos.x + 16.0 * 8.0 - elevator_texture.width()
@@ -869,11 +869,10 @@ impl<'a> Game<'a> {
                 CINEMATIC_BAR_HEIGHT * amt,
                 BLACK,
             );
-            if let CinematicBars::Retracting(time) = bars {
-                if *time >= 1.0 {
+            if let CinematicBars::Retracting(time) = bars
+                && *time >= 1.0 {
                     self.player.cinematic_bars = None;
                 }
-            }
         }
 
         // draw dialogue

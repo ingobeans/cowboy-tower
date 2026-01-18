@@ -378,6 +378,7 @@ impl Level {
                 }
             }
         }
+        #[expect(clippy::too_many_arguments)]
         fn follow_path(
             i: usize,
             width: usize,
@@ -413,7 +414,6 @@ impl Level {
                     // find enemy here
                     let enemy = enemies.iter_mut().find(|f| f.0 == pos).unwrap();
                     enemy.3 = Some((path_index, counter));
-                    dbg!(enemy.3);
                 }
                 let tile = tile - 1;
                 if tile == 480 {

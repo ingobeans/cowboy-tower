@@ -74,8 +74,8 @@ impl Boss for Henry {
         }
         let dead = matches!(self.state, State::Death);
 
-        if dead {
-            if self.time > 1.5 {
+        if dead
+            && self.time > 1.5 {
                 let time = self.time - 1.5;
                 let max = (pole_anim.total_length - 1) as f32 / 1000.0;
                 if time >= max {
@@ -90,7 +90,6 @@ impl Boss for Henry {
                     pole_anim_time = Some(max - time);
                 }
             }
-        }
 
         if let Some(time) = pole_anim_time {
             for pos in [level.find_marker(2), level.find_marker(3)] {

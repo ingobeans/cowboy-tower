@@ -8,7 +8,7 @@ use crate::{
 };
 
 fn populate_fireball_positions(
-    positions: &mut Vec<f32>,
+    positions: &mut [f32],
     player_pos: Vec2,
     left_target: Vec2,
     right_target: Vec2,
@@ -21,7 +21,7 @@ fn populate_fireball_positions(
         *positions.last_mut().unwrap() = player_pos.x;
 
         // check that there is at least one space between two fireballs greater than 64 pixels
-        positions.sort_by(|a, b| a.total_cmp(&b));
+        positions.sort_by(|a, b| a.total_cmp(b));
         let mut last = positions[0];
         for pos in positions.iter().skip(1) {
             let delta = *pos - last;
@@ -310,16 +310,16 @@ impl Boss for Fireking {
         for projectile in projectiles {
             if (pipe_pos - self.spawn.y).abs() > 8.0 && projectile.pos.x < left_target.x {
                 projectile.dead = true;
-            } else if !dead && self.activated > 0.0 {
-                if projectile.friendly
-                    && (draw_pos.y + 23.0..draw_pos.y + 60.0).contains(&projectile.pos.y)
-                    && (self.pos.x - 8.0..self.pos.x + 8.0).contains(&projectile.pos.x)
-                {
-                    projectile.dead = true;
-                    self.health = self.health.saturating_sub(1);
-                    self.blood_effects
-                        .push((projectile.pos, 0.0, projectile.direction.x > 0.0));
-                }
+            } else if !dead
+                && self.activated > 0.0
+                && projectile.friendly
+                && (draw_pos.y + 23.0..draw_pos.y + 60.0).contains(&projectile.pos.y)
+                && (self.pos.x - 8.0..self.pos.x + 8.0).contains(&projectile.pos.x)
+            {
+                projectile.dead = true;
+                self.health = self.health.saturating_sub(1);
+                self.blood_effects
+                    .push((projectile.pos, 0.0, projectile.direction.x > 0.0));
             }
         }
 
@@ -361,7 +361,7 @@ impl Boss for Fireking {
                 },
             );
         }
-        if self.health <= 0 && !dead && self.pos.y + 1.0 >= self.spawn.y {
+        if self.health == 0 && !dead && self.pos.y + 1.0 >= self.spawn.y {
             self.state = State::Death(pipe_pos);
             self.time = 0.0;
         }
