@@ -113,7 +113,7 @@ pub struct Horse {
     pub time: f32,
     pub velocity: Vec2,
     pub direction: Vec2,
-    flip: bool,
+    pub flip: bool,
     pub running: bool,
     pub player_riding: bool,
     pub returning_home: bool,

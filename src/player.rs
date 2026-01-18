@@ -410,7 +410,7 @@ impl Player {
             .filter(|f| {
                 // special case: if horse is upside down, move point player distance is checked from down,
                 // to make mounting easier (you dont need to tap space twice).
-                if f.1.is_flipped() && f.1.direction.x.abs() > 0.5 {
+                if f.1.flip && f.1.direction.x.abs() > 0.5 {
                     (f.1.pos + vec2(0.0, 8.0)).distance(self.pos) < 16.0
                 } else {
                     f.1.pos.distance(self.pos) < 16.0
