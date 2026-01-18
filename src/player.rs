@@ -46,6 +46,8 @@ struct ActiveRiding {
     camera_lerp_src: Vec2,
 }
 
+const HORSE_MOUNT_LEEWAY: f32 = 0.2;
+
 pub struct Player {
     pub pos: Vec2,
     pub camera_pos: Vec2,
@@ -71,6 +73,12 @@ pub struct Player {
     /// If the player isnt playing the level for the first time.
     /// Used to skip bosses' dialogue automatically
     pub has_restarted_level: bool,
+    /// When player presses space in the air, and doesn't succesfully mount a horse,
+    /// this value is set to [HORSE_MOUNT_LEEWAY]. If the player comes within range of a horse,
+    /// before this timer reaches 0.0, the player will mount that horse.
+    ///
+    /// This gives a bit of leeway when mounting horses mid-air.
+    pub failed_horse_mount_time: f32,
 }
 impl Player {
     pub fn new(pos: Vec2) -> Self {
@@ -87,6 +95,7 @@ impl Player {
             jump_time: 0.0,
             time_since_last_boss_defeated: 10.0,
             defeated_bosses: 0,
+            failed_horse_mount_time: 0.0,
             facing_left: false,
             moving: false,
             time: 0.0,
@@ -147,6 +156,18 @@ impl Player {
                 dialogue.closed = true;
             }
             return;
+        }
+        if self.failed_horse_mount_time > 0.0 {
+            self.failed_horse_mount_time -= delta_time;
+            if let Some(horse) = self.find_mountable_horse(horses) {
+                self.riding = Some(ActiveRiding {
+                    horse_index: horse.0,
+                    camera_lerp_time: delta_time,
+                    camera_lerp_src: self.camera_pos,
+                });
+                horse.1.running = true;
+                horse.1.player_riding = true;
+            }
         }
         const MOVE_SPEED: f32 = 101.0;
         const MOVE_ACCELERATION: f32 = 22.0;
@@ -300,35 +321,20 @@ impl Player {
                     horses[riding.horse_index].player_riding = false;
                 } else {
                     // check if by horse
-                    let mut horses: Vec<(usize, &mut Horse)> = horses
-                        .iter_mut()
-                        .enumerate()
-                        .filter(|f| {
-                            // special case: if horse is upside down, move point player distance is checked from down,
-                            // to make mounting easier (you dont need to tap space twice).
-                            if f.1.is_flipped() && f.1.direction.x.abs() > 0.5 {
-                                (f.1.pos + vec2(0.0, 8.0)).distance(self.pos) < 16.0
-                            } else {
-                                f.1.pos.distance(self.pos) < 16.0
-                            }
-                        })
-                        .collect();
-                    if !horses.is_empty() {
-                        horses.sort_by(|a, b| {
-                            a.1.pos
-                                .distance(self.pos)
-                                .total_cmp(&b.1.pos.distance(self.pos))
-                        });
+                    if let Some(horse) = self.find_mountable_horse(horses) {
                         self.riding = Some(ActiveRiding {
-                            horse_index: horses[0].0,
+                            horse_index: horse.0,
                             camera_lerp_time: delta_time,
                             camera_lerp_src: self.camera_pos,
                         });
-                        horses[0].1.running = true;
-                        horses[0].1.player_riding = true;
+                        horse.1.running = true;
+                        horse.1.player_riding = true;
                     } else if self.on_ground {
                         self.jump_time = delta_time;
                         self.velocity.y = -JUMP_FORCE;
+                    } else {
+                        // failed to mount horse or jump.
+                        self.failed_horse_mount_time = HORSE_MOUNT_LEEWAY;
                     }
                 }
             }
@@ -395,6 +401,32 @@ impl Player {
             }
         } else {
             self.camera_pos = target_camera_pos;
+        }
+    }
+    fn find_mountable_horse<'a>(&self, horses: &'a mut [Horse]) -> Option<(usize, &'a mut Horse)> {
+        let mut horses: Vec<(usize, &'a mut Horse)> = horses
+            .iter_mut()
+            .enumerate()
+            .filter(|f| {
+                // special case: if horse is upside down, move point player distance is checked from down,
+                // to make mounting easier (you dont need to tap space twice).
+                if f.1.is_flipped() && f.1.direction.x.abs() > 0.5 {
+                    (f.1.pos + vec2(0.0, 8.0)).distance(self.pos) < 16.0
+                } else {
+                    f.1.pos.distance(self.pos) < 16.0
+                }
+            })
+            .collect();
+        if !horses.is_empty() {
+            horses.sort_by(|a, b| {
+                a.1.pos
+                    .distance(self.pos)
+                    .total_cmp(&b.1.pos.distance(self.pos))
+            });
+            let best = horses.remove(0);
+            Some(best)
+        } else {
+            None
         }
     }
     pub fn draw(&mut self, assets: &Assets) {
