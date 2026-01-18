@@ -7,9 +7,32 @@ use std::{
 use crate::assets::Level;
 #[derive(Debug)]
 pub struct DebugFlags {
-    pub show_paths: bool,
-    pub show_boss_debug: bool,
+    pub paths: bool,
+    pub boss: bool,
+    pub centres: bool,
 }
+pub static DEBUG_FLAGS: LazyLock<DebugFlags> = LazyLock::new(|| {
+    #[cfg(debug_assertions)]
+    {
+        use std::env::args;
+        let args_owned: Vec<String> = args().collect();
+        let args: Vec<&str> = args_owned.iter().map(|f| f.as_str()).collect();
+        let flags = DebugFlags {
+            paths: args.contains(&"paths"),
+            boss: args.contains(&"boss"),
+            centres: args.contains(&"centre") || args.contains(&"center"),
+        };
+        println!("{flags}");
+        flags
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        DebugFlags {
+            show_paths: false,
+            show_boss_debug: false,
+        }
+    }
+});
 impl Display for DebugFlags {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let debug = format!("{:?}", self);
@@ -27,27 +50,24 @@ impl Display for DebugFlags {
         Ok(())
     }
 }
-pub static DEBUG_FLAGS: LazyLock<DebugFlags> = LazyLock::new(|| {
-    #[cfg(debug_assertions)]
-    {
-        use std::env::args;
-        let args_owned: Vec<String> = args().collect();
-        let args: Vec<&str> = args_owned.iter().map(|f| f.as_str()).collect();
-        let flags = DebugFlags {
-            show_paths: args.contains(&"paths"),
-            show_boss_debug: args.contains(&"boss"),
-        };
-        println!("{flags}");
-        flags
-    }
-    #[cfg(not(debug_assertions))]
-    {
-        DebugFlags {
-            show_paths: false,
-            show_boss_debug: false,
-        }
-    }
-});
+
+pub fn draw_cross(x: f32, y: f32, color: Color) {
+    const LENGTH: f32 = 3.0;
+    draw_rectangle(
+        x.floor() - (LENGTH - 1.0) / 2.0 - 0.0,
+        y.floor(),
+        LENGTH,
+        1.0,
+        color,
+    );
+    draw_rectangle(
+        x.floor(),
+        y.floor() - (LENGTH - 1.0) / 2.0 - 0.0,
+        1.0,
+        LENGTH,
+        color,
+    );
+}
 
 pub fn debug_paths(level: &Level) {
     for (i, path) in level.enemy_paths.iter().enumerate() {

@@ -391,7 +391,7 @@ impl Boss for Fireking {
             );
             *time * 1000.0 < anim.total_length as f32
         });
-        if DEBUG_FLAGS.show_boss_debug {
+        if DEBUG_FLAGS.boss {
             draw_rectangle(self.pos.x, self.pos.y, -32.0, 2.0, GREEN);
             draw_rectangle(
                 self.pos.x,

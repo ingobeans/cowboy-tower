@@ -424,7 +424,7 @@ impl<'a> Game<'a> {
                 WHITE,
             );
         }
-        if DEBUG_FLAGS.show_paths {
+        if DEBUG_FLAGS.paths {
             debug_paths(level);
         }
         self.enemies.retain_mut(|enemy| {
@@ -593,6 +593,7 @@ impl<'a> Game<'a> {
                     ..Default::default()
                 },
             );
+            draw_cross(enemy.pos.x, enemy.pos.y, RED);
             if enemy.death_frames <= 0.0 {
                 let mut hit_by_projectile = false;
                 for projectile in self.projectiles.iter_mut() {
@@ -775,7 +776,9 @@ impl<'a> Game<'a> {
                     },
                 );
             }
-            //draw_rectangle(projectile.pos.x, projectile.pos.y, 2.0,2.0, GREEN);
+            if DEBUG_FLAGS.centres {
+                draw_cross(projectile.pos.x, projectile.pos.y, WHITE);
+            }
             if projectile.dead {
                 return false;
             }

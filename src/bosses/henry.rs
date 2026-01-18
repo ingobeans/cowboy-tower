@@ -272,7 +272,7 @@ impl Boss for Henry {
             );
             *time * 1000.0 < anim.total_length as f32
         });
-        if DEBUG_FLAGS.show_boss_debug {
+        if DEBUG_FLAGS.boss {
             draw_rectangle_lines(self.pos.x.floor(), self.pos.y.floor(), 8.0, 8.0, 1.0, GREEN);
         }
     }

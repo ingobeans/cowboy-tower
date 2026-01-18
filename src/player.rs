@@ -505,6 +505,10 @@ impl Player {
                 },
             );
         }
+
+        if DEBUG_FLAGS.centres {
+            draw_cross(self.pos.x, self.pos.y, BLUE);
+        }
     }
 }
 
@@ -540,10 +544,12 @@ pub fn update_physicsbody(
             touched_death_tile = Some(tile - 1);
             continue;
         }
-        if enable_special_collisions && tile == 0
-            && world.get_tile(tx as i16, ty as i16)[3] == 864 + 1 {
-                tile = 1;
-            }
+        if enable_special_collisions
+            && tile == 0
+            && world.get_tile(tx as i16, ty as i16)[3] == 864 + 1
+        {
+            tile = 1;
+        }
         if tile != 0 {
             let c = if velocity.y < 0.0 {
                 tile_y.floor() * 8.0
@@ -573,10 +579,12 @@ pub fn update_physicsbody(
         if tile > 0 && DEATH_TILES.contains(&(tile - 1)) {
             continue;
         }
-        if enable_special_collisions && tile == 0
-            && world.get_tile(tx as i16, ty as i16)[3] == 864 + 1 {
-                tile = 1;
-            }
+        if enable_special_collisions
+            && tile == 0
+            && world.get_tile(tx as i16, ty as i16)[3] == 864 + 1
+        {
+            tile = 1;
+        }
         if tile != 0 {
             let c = if velocity.x < 0.0 {
                 tile_x.floor() * 8.0
