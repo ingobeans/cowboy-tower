@@ -5,6 +5,7 @@ use crate::{
     bosses::Boss,
     player::Player,
     projectiles::Projectile,
+    utils::DEBUG_FLAGS,
 };
 
 fn populate_fireball_positions(
@@ -390,7 +391,15 @@ impl Boss for Fireking {
             );
             *time * 1000.0 < anim.total_length as f32
         });
-        //draw_rectangle(self.pos.x, self.pos.y, -32.0, 2.0, GREEN);
-        //draw_rectangle(self.pos.x, draw_pos.y+23.0, 2.0, draw_pos.y+60.0-(draw_pos.y+23.0), BLUE);
+        if DEBUG_FLAGS.show_boss_debug {
+            draw_rectangle(self.pos.x, self.pos.y, -32.0, 2.0, GREEN);
+            draw_rectangle(
+                self.pos.x,
+                draw_pos.y + 23.0,
+                2.0,
+                draw_pos.y + 60.0 - (draw_pos.y + 23.0),
+                BLUE,
+            );
+        }
     }
 }

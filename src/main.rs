@@ -424,25 +424,8 @@ impl<'a> Game<'a> {
                 WHITE,
             );
         }
-        for (i, path) in level.enemy_paths.iter().enumerate() {
-            for (j, pos) in path.iter().enumerate() {
-                draw_rectangle_lines(
-                    pos.x,
-                    pos.y,
-                    8.0,
-                    8.0,
-                    2.0,
-                    [RED, GREEN, BLUE, WHITE, BROWN][i],
-                );
-                draw_rectangle(
-                    pos.x,
-                    pos.y,
-                    8.0,
-                    8.0,
-                    [RED, GREEN, BLUE, WHITE, BROWN][i]
-                        .with_alpha(1.0 - j as f32 / path.len() as f32),
-                );
-            }
+        if DEBUG_FLAGS.show_paths {
+            debug_paths(level);
         }
         self.enemies.retain_mut(|enemy| {
             enemy.time += delta_time;

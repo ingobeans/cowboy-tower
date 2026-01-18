@@ -5,6 +5,7 @@ use crate::{
     bosses::Boss,
     player::Player,
     projectiles::Projectile,
+    utils::DEBUG_FLAGS,
 };
 
 enum State {
@@ -74,22 +75,21 @@ impl Boss for Henry {
         }
         let dead = matches!(self.state, State::Death);
 
-        if dead
-            && self.time > 1.5 {
-                let time = self.time - 1.5;
-                let max = (pole_anim.total_length - 1) as f32 / 1000.0;
-                if time >= max {
-                    if player.in_boss_battle {
-                        player.in_boss_battle = false;
-                        player.defeated_bosses = 1;
-                        player.time_since_last_boss_defeated = 0.0;
-                        player.hide_cinematic_bars();
-                    }
-                    pole_anim_time = None;
-                } else {
-                    pole_anim_time = Some(max - time);
+        if dead && self.time > 1.5 {
+            let time = self.time - 1.5;
+            let max = (pole_anim.total_length - 1) as f32 / 1000.0;
+            if time >= max {
+                if player.in_boss_battle {
+                    player.in_boss_battle = false;
+                    player.defeated_bosses = 1;
+                    player.time_since_last_boss_defeated = 0.0;
+                    player.hide_cinematic_bars();
                 }
+                pole_anim_time = None;
+            } else {
+                pole_anim_time = Some(max - time);
             }
+        }
 
         if let Some(time) = pole_anim_time {
             for pos in [level.find_marker(2), level.find_marker(3)] {
@@ -272,6 +272,8 @@ impl Boss for Henry {
             );
             *time * 1000.0 < anim.total_length as f32
         });
-        //draw_rectangle_lines(self.pos.x.floor(), self.pos.y.floor(), 8.0, 8.0, 1.0, GREEN);
+        if DEBUG_FLAGS.show_boss_debug {
+            draw_rectangle_lines(self.pos.x.floor(), self.pos.y.floor(), 8.0, 8.0, 1.0, GREEN);
+        }
     }
 }

@@ -1,6 +1,8 @@
 use macroquad::prelude::*;
 #[cfg(test)]
 use std::f32::consts::PI;
+mod debug;
+pub use debug::*;
 
 pub const SCREEN_WIDTH: f32 = 256.0;
 pub const SCREEN_HEIGHT: f32 = 144.0;
