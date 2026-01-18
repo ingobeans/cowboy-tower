@@ -24,6 +24,7 @@ struct Enemy {
     pos: Vec2,
     velocity: Vec2,
     ty: &'static EnemyType,
+    path_index: Option<(usize, usize)>,
     time: f32,
     /// Used for attack type ShootAfter
     has_attacked: bool,
@@ -34,7 +35,7 @@ struct Enemy {
     wibble_wobble: f32,
 }
 
-fn load_enemies(input: Vec<(Vec2, &'static EnemyType, f32)>) -> Vec<Enemy> {
+fn load_enemies(input: Vec<(Vec2, &'static EnemyType, f32, Option<(usize, usize)>)>) -> Vec<Enemy> {
     input
         .into_iter()
         .map(|f| Enemy {
@@ -42,6 +43,7 @@ fn load_enemies(input: Vec<(Vec2, &'static EnemyType, f32)>) -> Vec<Enemy> {
             velocity: Vec2::ZERO,
             ty: f.1,
             time: 0.0,
+            path_index: f.3,
             has_attacked: false,
             death_frames: 0.0,
             attack_time: -f.2,
@@ -422,6 +424,26 @@ impl<'a> Game<'a> {
                 WHITE,
             );
         }
+        for (i, path) in level.enemy_paths.iter().enumerate() {
+            for (j, pos) in path.iter().enumerate() {
+                draw_rectangle_lines(
+                    pos.x,
+                    pos.y,
+                    8.0,
+                    8.0,
+                    2.0,
+                    [RED, GREEN, BLUE, WHITE, BROWN][i],
+                );
+                draw_rectangle(
+                    pos.x,
+                    pos.y,
+                    8.0,
+                    8.0,
+                    [RED, GREEN, BLUE, WHITE, BROWN][i]
+                        .with_alpha(1.0 - j as f32 / path.len() as f32),
+                );
+            }
+        }
         self.enemies.retain_mut(|enemy| {
             enemy.time += delta_time;
             if enemy.death_frames > 0.0 {
@@ -430,6 +452,21 @@ impl<'a> Game<'a> {
             } else {
                 match enemy.ty.movement_type {
                     MovementType::None => {}
+                    MovementType::FollowPath => {
+                        let (path_index, path_tile_index) = enemy.path_index.unwrap();
+                        let path = &level.enemy_paths[path_index];
+                        const TIME_PER_TILE: f32 = 0.20;
+                        let path_time = path.len() as f32 * TIME_PER_TILE;
+                        let value = (enemy.time + path_tile_index as f32 * TIME_PER_TILE)
+                            % path_time
+                            / TIME_PER_TILE;
+                        let value_index = value.floor();
+
+                        let current = path[value_index as usize];
+                        let next = path[(value_index as usize + 1) % path.len()];
+                        let amt_between = value - value_index;
+                        enemy.pos = current.lerp(next, amt_between);
+                    }
                     MovementType::Wander => {
                         let value = enemy.time + enemy.wibble_wobble;
                         // values for this formula found with `find_lowest_drift_factor`

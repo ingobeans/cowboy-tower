@@ -150,13 +150,14 @@ pub struct Level {
     pub name: String,
     pub data: Vec<[u16; 4]>,
     pub width: usize,
-    pub enemies: Vec<(Vec2, &'static EnemyType, f32)>,
+    pub enemies: Vec<(Vec2, &'static EnemyType, f32, Option<(usize, usize)>)>,
     pub horses: Vec<Horse>,
     pub boss: Option<(usize, Vec2)>,
     pub camera: Camera2D,
     pub min_pos: Vec2,
     pub max_pos: Vec2,
     pub player_spawn: Vec2,
+    pub enemy_paths: Vec<Vec<Vec2>>,
     // The Y coordinate of the highest point/placed tile (lowest value)
     pub roof_height: f32,
     // The Y coordinate of the lowest point/placed tile (highest value)
@@ -238,6 +239,8 @@ impl Level {
         let mut animated_tiles = Vec::new();
         let mut boss = None;
 
+        let mut enemy_paths = Vec::new();
+
         let mut forced_player_spawn = None;
         let mut forced_level_end = None;
 
@@ -258,7 +261,7 @@ impl Level {
                             data[x + y * width as usize][index - 1] = *tile;
                             lasso_targets.push(pos + vec2(4.0, 4.0));
                         } else if *tile <= 32 && *tile > 1 {
-                            enemies.push((pos, &ENEMIES[(*tile - 2) as usize], 0.0));
+                            enemies.push((pos, &ENEMIES[(*tile - 2) as usize], 0.0, None));
                         } else if *tile == 384 + 1 {
                             horses.push(Horse::new(pos, vec2(1.0, 0.0), false));
                         } else if *tile == 416 + 1 || *tile == 417 + 1 {
@@ -328,6 +331,7 @@ impl Level {
         }
         let mut visited_tiles = HashSet::new();
 
+        /// For summing number tiles
         fn sum_number_neighbours(
             i: usize,
             width: usize,
@@ -374,6 +378,61 @@ impl Level {
                 }
             }
         }
+        fn follow_path(
+            i: usize,
+            width: usize,
+            data: &[[u16; 4]],
+            min_x: i16,
+            min_y: i16,
+            counter: usize,
+            path_index: usize,
+            visited_tiles: &mut HashSet<usize>,
+            path: &mut Vec<Vec2>,
+            enemies: &mut Vec<(Vec2, &EnemyType, f32, Option<(usize, usize)>)>,
+        ) {
+            let x = i % width;
+            let y = i / width;
+            // [(0, 1), (-1, 0), (0, -1), (1, 0)]
+            for d in [(1, 0), (0, 1), (-1, 0), (0, -1)] {
+                let nx = x.saturating_add_signed(d.0);
+                let ny = y.saturating_add_signed(d.1);
+                let ni = nx + ny * width;
+                if visited_tiles.contains(&ni) {
+                    continue;
+                }
+                visited_tiles.insert(ni);
+                let tile = data[ni][3];
+                if tile == 0 {
+                    continue;
+                }
+                let pos = vec2(
+                    (nx * 8) as f32 + (min_x * 8) as f32,
+                    (ny * 8) as f32 + (min_y * 8) as f32,
+                );
+                if tile > 0 && tile < 32 {
+                    // find enemy here
+                    let enemy = enemies.iter_mut().find(|f| f.0 == pos).unwrap();
+                    enemy.3 = Some((path_index, counter));
+                    dbg!(enemy.3);
+                }
+                let tile = tile - 1;
+                if tile == 480 {
+                    path.push(pos);
+                    follow_path(
+                        ni,
+                        width,
+                        data,
+                        min_x,
+                        min_y,
+                        counter + 1,
+                        path_index,
+                        visited_tiles,
+                        path,
+                        enemies,
+                    );
+                }
+            }
+        }
         for (i, tile) in data.iter().enumerate() {
             if tile[3] == 0 {
                 continue;
@@ -382,6 +441,33 @@ impl Level {
                 continue;
             }
             let tile = tile[3] - 1;
+
+            // handle enemy paths
+            if tile == 480 {
+                visited_tiles.insert(i);
+                let x = i % width as usize;
+                let y = i / width as usize;
+                let pos = vec2(
+                    (x * 8) as f32 + (min_x * 8) as f32,
+                    (y * 8) as f32 + (min_y * 8) as f32,
+                );
+                let mut path = vec![pos];
+                follow_path(
+                    i,
+                    width as usize,
+                    &data,
+                    min_x,
+                    min_y,
+                    0,
+                    enemy_paths.len(),
+                    &mut visited_tiles,
+                    &mut path,
+                    &mut enemies,
+                );
+                enemy_paths.push(path);
+            }
+
+            // handle number tiles
             if (992..=1000).contains(&tile) {
                 visited_tiles.insert(i);
                 let mut sum = tile - 992 + 1;
@@ -424,6 +510,7 @@ impl Level {
             max_pos: vec2((max_x * 8) as f32, (max_y * 8) as f32),
             forced_player_spawn,
             forced_level_end,
+            enemy_paths,
             min_pos,
             boss,
             lasso_targets,

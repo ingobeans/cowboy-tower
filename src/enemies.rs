@@ -5,6 +5,7 @@ use std::sync::LazyLock;
 pub enum MovementType {
     None,
     Wander,
+    FollowPath,
 }
 
 #[allow(dead_code)]
@@ -46,6 +47,12 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
             movement_type: MovementType::None,
             attack_type: AttackType::ShootAfter(4),
             attack_delay: 2.0,
+        },
+        EnemyType {
+            animation: AnimationsGroup::from_file(include_bytes!("../assets/bat.ase")),
+            movement_type: MovementType::FollowPath,
+            attack_type: AttackType::None,
+            attack_delay: 0.0,
         },
     ]
 });
