@@ -446,6 +446,7 @@ impl<'a> Game<'a> {
         }
         self.enemies.retain_mut(|enemy| {
             enemy.time += delta_time;
+            let mut force_moving_animation = false;
             if enemy.death_frames > 0.0 {
                 enemy.death_frames += delta_time;
                 enemy.time = 0.0;
@@ -453,6 +454,7 @@ impl<'a> Game<'a> {
                 match enemy.ty.movement_type {
                     MovementType::None => {}
                     MovementType::FollowPath => {
+                        force_moving_animation = true;
                         let (path_index, path_tile_index) = enemy.path_index.unwrap();
                         let path = &level.enemy_paths[path_index];
                         const TIME_PER_TILE: f32 = 0.20;
@@ -588,7 +590,14 @@ impl<'a> Game<'a> {
             {
                 (enemy.ty.animation.tag_names["attack"], enemy.attack_time)
             } else {
-                (if enemy.velocity.x.abs() > 5.0 { 1 } else { 0 }, enemy.time)
+                (
+                    if force_moving_animation || enemy.velocity.x.abs() > 5.0 {
+                        1
+                    } else {
+                        0
+                    },
+                    enemy.time,
+                )
             };
             draw_texture_ex(
                 enemy.ty.animation.animations[animation_id].get_at_time((time * 1000.0) as u32),
