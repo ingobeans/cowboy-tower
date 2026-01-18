@@ -603,7 +603,7 @@ impl<'a> Game<'a> {
                         && projectile.can_kill()
                         && ((projectile.pos.x - 4.0)..(projectile.pos.x + 4.0))
                             .contains(&(enemy.pos.x + 4.0))
-                        && ((projectile.pos.y - 4.0)..(projectile.pos.y + 4.0))
+                        && ((projectile.pos.y - 8.0)..(projectile.pos.y + 4.0))
                             .contains(&enemy.pos.y)
                     {
                         projectile.dead |= projectile.should_die_on_kill();
