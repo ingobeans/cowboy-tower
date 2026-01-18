@@ -48,6 +48,7 @@ struct ActiveRiding {
 
 const HORSE_MOUNT_LEEWAY: f32 = 0.2;
 const JUMP_LAND_LEEWAY: f32 = 0.05;
+const COYOTE_TIME: f32 = 0.05;
 
 pub struct Player {
     pub pos: Vec2,
@@ -64,6 +65,8 @@ pub struct Player {
     active_lasso: Option<ActiveLasso>,
     pub lasso_target: Option<Vec2>,
     pub death: Option<(f32, usize, bool)>,
+    /// Timer since how long it was since player last was on_ground
+    pub last_touched_ground: f32,
     /// Count
     pub defeated_bosses: u8,
     pub time_since_last_boss_defeated: f32,
@@ -93,6 +96,7 @@ impl Player {
             cinematic_bars: None,
             velocity: Vec2::ZERO,
             on_ground: false,
+            last_touched_ground: 1.0,
             jump_time: 0.0,
             time_since_last_boss_defeated: 10.0,
             defeated_bosses: 0,
@@ -337,9 +341,12 @@ impl Player {
                         });
                         horse.1.running = true;
                         horse.1.player_riding = true;
-                    } else if self.on_ground {
+                    } else if self.on_ground
+                        || (self.last_touched_ground < COYOTE_TIME && self.jump_time <= 0.0)
+                    {
                         self.jump_time = delta_time;
                         self.velocity.y = -JUMP_FORCE;
+                        self.on_ground = false;
                     } else {
                         // failed to mount horse or jump.
                         self.failed_horse_mount_time = HORSE_MOUNT_LEEWAY;
@@ -347,6 +354,11 @@ impl Player {
                 }
             }
         }
+
+        if !self.on_ground {
+            self.last_touched_ground += delta_time;
+        }
+
         let old_velocity = self.velocity;
         let touched_death_tile;
 
@@ -362,6 +374,9 @@ impl Player {
                 true,
                 self.in_boss_battle,
             );
+            if self.on_ground {
+                self.last_touched_ground = 0.0;
+            }
             if let Some(tile) = touched_death_tile
                 && self.death.is_none()
             {
