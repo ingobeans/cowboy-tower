@@ -250,7 +250,7 @@ impl Boss for Fireking {
                         if player.death.is_none() {
                             for position in positions.iter() {
                                 if (player.pos.x - *position).abs() < 16.0 {
-                                    player.death = Some((0.0, 3, true));
+                                    player.death = Some((0.0, 4, true));
                                     break;
                                 }
                             }

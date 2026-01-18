@@ -75,7 +75,7 @@ impl Projectile {
     }
     pub fn player_death_animation(&self) -> usize {
         match &self.type_index {
-            4 => 2,
+            4 => 3,
             _ => 0,
         }
     }

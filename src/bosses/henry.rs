@@ -201,7 +201,7 @@ impl Boss for Henry {
         }
 
         if !dead && player.death.is_none() && (player.pos + 4.0).distance(self.pos) <= 16.0 {
-            player.death = Some((0.0, 3, true));
+            player.death = Some((0.0, 4, true));
         }
 
         if !dead && self.activated > 0.0 {
