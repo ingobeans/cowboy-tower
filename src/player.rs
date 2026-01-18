@@ -159,7 +159,9 @@ impl Player {
         }
         if self.failed_horse_mount_time > 0.0 {
             self.failed_horse_mount_time -= delta_time;
-            if let Some(horse) = self.find_mountable_horse(horses) {
+            if self.on_ground {
+                self.failed_horse_mount_time = 0.0;
+            } else if let Some(horse) = self.find_mountable_horse(horses) {
                 self.riding = Some(ActiveRiding {
                     horse_index: horse.0,
                     camera_lerp_time: delta_time,
