@@ -14,6 +14,7 @@ pub enum AttackType {
     Shoot(usize),
     /// Like shoot, but projectile is fired after animation is completed
     ShootAfter(usize),
+    Melee,
 }
 
 pub struct EnemyType {
@@ -51,7 +52,7 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/bat.ase")),
             movement_type: MovementType::FollowPath,
-            attack_type: AttackType::None,
+            attack_type: AttackType::Melee,
             attack_delay: 0.0,
         },
     ]

@@ -490,6 +490,12 @@ impl<'a> Game<'a> {
                             AttackType::None => {
                                 enemy.attack_time = 0.0;
                             }
+                            AttackType::Melee => {
+                                enemy.attack_time = 0.0;
+                                if (self.player.pos + 4.0).distance(enemy.pos + 4.0) < 5.0 {
+                                    self.player.death = Some((0.0, 0, true))
+                                }
+                            }
                             AttackType::ShootAfter(_) => {}
                             AttackType::Shoot(sprite) => {
                                 let pos = if Projectile::shoot_offset(sprite) {
