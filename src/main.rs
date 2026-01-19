@@ -253,6 +253,7 @@ impl<'a> Game<'a> {
         let elevator_texture =
             &self.assets.elevator.animations[level.get_world_index() as usize].frames[0].0;
         let elevator_pos = get_elevator_pos(self.assets, self.level);
+        let player_spawn = get_player_spawn(self.assets, self.level);
 
         if self.level_complete.is_none()
             && (self.player.pos.x - (elevator_pos.x + elevator_texture.width() / 2.0)).abs() <= 6.0
@@ -368,7 +369,29 @@ impl<'a> Game<'a> {
             1.0 / actual_screen_height * 2.0 * scale_factor,
         );
         set_camera(&self.camera);
-        clear_background(Color::from_hex(0x1CB7FF));
+        let camera_offset = self.camera.target.y - (player_spawn.y - 22.0);
+        SKY_MATERIAL.set_uniform(
+            "y",
+            -self.height + camera_offset + actual_screen_height / scale_factor / 2.0,
+        );
+        SKY_MATERIAL.set_uniform("height", actual_screen_height / scale_factor + 4.0);
+        let tower_height = self.world_manager.world_heights.last().unwrap().1;
+        SKY_MATERIAL.set_uniform("maxTowerHeight", tower_height);
+        gl_use_material(&SKY_MATERIAL);
+        const SKY_COLOR: Color = Color::from_hex(0x1CB7FF);
+        clear_background(SKY_COLOR);
+        let screen_offset = vec2(
+            self.camera.target.x - actual_screen_width / scale_factor / 2.0,
+            self.camera.target.y - actual_screen_height / scale_factor / 2.0,
+        );
+        draw_rectangle(
+            screen_offset.x - 2.0,
+            screen_offset.y - 2.0,
+            actual_screen_width / scale_factor + 4.0,
+            actual_screen_height / scale_factor + 4.0,
+            SKY_COLOR,
+        );
+        gl_use_default_material();
 
         self.world_manager
             .draw_tower(self.height, self.assets, self.level);
@@ -958,10 +981,6 @@ impl<'a> Game<'a> {
                 fade_amt = delta * 2.0;
             }
         }
-        let screen_offset = vec2(
-            self.camera.target.x - actual_screen_width / scale_factor / 2.0,
-            self.camera.target.y - actual_screen_height / scale_factor / 2.0,
-        );
         if fade_amt > 0.0 {
             draw_rectangle(
                 screen_offset.x,
