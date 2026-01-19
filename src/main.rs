@@ -370,6 +370,7 @@ impl<'a> Game<'a> {
         );
         set_camera(&self.camera);
         let camera_offset = self.camera.target.y - (player_spawn.y - 22.0);
+
         SKY_MATERIAL.set_uniform(
             "y",
             -self.height + camera_offset + actual_screen_height / scale_factor / 2.0,
@@ -377,9 +378,11 @@ impl<'a> Game<'a> {
         SKY_MATERIAL.set_uniform("height", actual_screen_height / scale_factor + 4.0);
         let tower_height = self.world_manager.world_heights.last().unwrap().1;
         SKY_MATERIAL.set_uniform("maxTowerHeight", tower_height);
-        gl_use_material(&SKY_MATERIAL);
+
         const SKY_COLOR: Color = Color::from_hex(0x1CB7FF);
         clear_background(SKY_COLOR);
+
+        gl_use_material(&SKY_MATERIAL);
         let screen_offset = vec2(
             self.camera.target.x - actual_screen_width / scale_factor / 2.0,
             self.camera.target.y - actual_screen_height / scale_factor / 2.0,
@@ -395,6 +398,21 @@ impl<'a> Game<'a> {
 
         self.world_manager
             .draw_tower(self.height, self.assets, self.level);
+
+        SKY_MATERIAL.set_uniform(
+            "y",
+            -self.height + camera_offset - level.floor_height + 56.0,
+        );
+        SKY_MATERIAL.set_uniform("height", level.get_height());
+        gl_use_material(&SKY_MATERIAL);
+        draw_rectangle(
+            level.min_pos.x + 2.0,
+            level.roof_height + 2.0,
+            (level.min_pos.x - level.max_pos.x).abs() + 16.0 * 8.0 - 4.0,
+            level.get_height() - 4.0,
+            SKY_COLOR,
+        );
+        gl_use_default_material();
 
         let t = &level.camera.render_target.as_ref().unwrap().texture;
         draw_texture(t, level.min_pos.x, level.min_pos.y, WHITE);
