@@ -236,7 +236,6 @@ impl<'a> Game<'a> {
         {
             self.level_complete = None;
             self.height += self.assets.levels[self.level].get_height() + FLOOR_PADDING + 16.0;
-            dbg!(self.height);
             self.load_level(self.level + 1);
             self.level_transition_time = LEVEL_TRANSITION_LENGTH;
             self.player.update(
