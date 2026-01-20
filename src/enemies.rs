@@ -227,11 +227,19 @@ impl Enemy {
                 self.time,
             )
         };
+        const FADE_OUT_DELAY: f32 = 0.15;
+        const FADE_OUT_TIME: f32 = 0.15;
+        let alpha = if self.death_frames > FADE_OUT_DELAY {
+            1.0 - (self.death_frames - FADE_OUT_DELAY) / FADE_OUT_TIME
+        } else {
+            1.0
+        };
+
         draw_texture_ex(
             self.ty.animation.animations[animation_id].get_at_time((time * 1000.0) as u32),
             self.pos.x.floor() - 8.0,
             self.pos.y.floor() - 8.0,
-            WHITE,
+            WHITE.with_alpha(alpha),
             DrawTextureParams {
                 flip_x: self.pos.x > player.pos.x,
                 rotation,
@@ -264,9 +272,9 @@ impl Enemy {
             true
         } else {
             draw_texture_ex(
-                assets
-                    .blood
-                    .get_at_time((self.death_frames * 1000.0) as u32),
+                assets.blood.get_at_time(
+                    ((self.death_frames * 1000.0) as u32).min(assets.blood.total_length - 1),
+                ),
                 self.pos.x.floor() - 4.0,
                 self.pos.y.floor() - 8.0,
                 WHITE,
@@ -275,7 +283,8 @@ impl Enemy {
                     ..Default::default()
                 },
             );
-            self.death_frames * 1000.0 <= assets.blood.total_length as f32
+            self.death_frames
+                <= (assets.blood.total_length as f32 / 1000.0).max(FADE_OUT_DELAY + FADE_OUT_TIME)
         }
     }
 }
