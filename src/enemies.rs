@@ -68,6 +68,15 @@ impl Enemy {
                     };
                     self.velocity.x = value * 16.0;
                 }
+                MovementType::Chase => {
+                    let mut direction = self.pos - player.pos;
+                    direction.y = 0.0;
+                    if direction.x.abs() < 1.0 {
+                        direction.x = 0.0;
+                    }
+                    let move_dir = -direction.normalize_or_zero().x;
+                    self.velocity.x = move_dir * 16.0;
+                }
             }
             if self.attack_time <= 0.0 {
                 if player.death.is_none() {
@@ -222,6 +231,7 @@ pub enum MovementType {
     None,
     Wander,
     FollowPath,
+    Chase,
 }
 
 #[allow(dead_code)]
@@ -268,6 +278,12 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/bat.ase")),
             movement_type: MovementType::FollowPath,
+            attack_type: AttackType::Melee,
+            attack_delay: 0.0,
+        },
+        EnemyType {
+            animation: AnimationsGroup::from_file(include_bytes!("../assets/skeleton.ase")),
+            movement_type: MovementType::Chase,
             attack_type: AttackType::Melee,
             attack_delay: 0.0,
         },
