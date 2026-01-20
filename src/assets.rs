@@ -9,7 +9,7 @@ use include_dir::{Dir, include_dir};
 use macroquad::prelude::*;
 
 use crate::{
-    enemies::{ENEMIES, LevelEnemyData},
+    enemies::{ENEMIES, EnemySpawner, LevelEnemyData},
     utils::create_camera,
 };
 
@@ -269,7 +269,7 @@ impl Level {
                                 ty: &ENEMIES[(*tile - 2) as usize],
                                 attack_delay: 0.0,
                                 path_index: None,
-                                spawner: 0.0,
+                                spawner: None,
                             });
                         } else if *tile == 384 + 1 {
                             horses.push(Horse::new(pos, vec2(1.0, 0.0), false));
@@ -453,9 +453,16 @@ impl Level {
             }
             let tile = tile[3] - 1;
             // handle spawner
-            if tile == 481 {
+            if (tile == 481) || (tile >= 640 && tile <= 644) {
                 let x = i % width as usize;
                 let y = i / width as usize;
+
+                let spawner = if tile == 481 {
+                    EnemySpawner::Proximity
+                } else {
+                    EnemySpawner::Trigger((tile - 640) as u8)
+                };
+
                 for d in [(1, 0), (0, 1), (-1, 0), (0, -1)] {
                     let nx = x.saturating_add_signed(d.0);
                     let ny = y.saturating_add_signed(d.1);
@@ -470,7 +477,7 @@ impl Level {
 
                         // find enemy here
                         let enemy = enemies.iter_mut().find(|f| f.pos == pos).unwrap();
-                        enemy.spawner = f32::INFINITY;
+                        enemy.spawner = Some(spawner);
                     }
                 }
             }

@@ -7,6 +7,18 @@ use crate::{
 use macroquad::prelude::*;
 use std::{f32::consts::PI, sync::LazyLock};
 
+#[derive(Clone, Copy)]
+pub enum EnemySpawner {
+    /// Enemy is currently in the spawning animation.
+    /// When this reaches the end of the animation, enemy spawner should be set to None
+    Spawning(f32),
+    /// Enemy is waiting to be spawned. Will be spawned by the activation of a trigger.
+    /// The contained value is the trigger ID.
+    Trigger(u8),
+    /// Enemy is waiting to be spawned. Will be spawned by proximity to the player.
+    Proximity,
+}
+
 pub struct Enemy {
     pub pos: Vec2,
     pub velocity: Vec2,
@@ -20,7 +32,7 @@ pub struct Enemy {
     pub death_frames: f32,
     /// Random seed for each enemy, used for random-esque movement and behaviour
     pub wibble_wobble: f32,
-    pub waiting_to_spawn: f32,
+    pub spawner: Option<EnemySpawner>,
 }
 impl Enemy {
     pub fn update(
@@ -33,19 +45,39 @@ impl Enemy {
     ) -> bool {
         self.time += delta_time;
 
+        let player_tx = (player.pos / 8.0).floor();
+        let player_tile = level.get_tile(player_tx.x as i16, player_tx.y as i16);
+
         let mut force_moving_animation = false;
         if self.death_frames > 0.0 {
             self.death_frames += delta_time;
             self.time = 0.0;
-        } else if self.waiting_to_spawn == f32::INFINITY {
-            if self.pos.distance(player.pos) < 128.0 {
-                self.waiting_to_spawn =
-                    self.ty.animation.animations[self.ty.animation.tag_names["spawning"]]
-                        .total_length as f32
-                        / 1000.0;
+        } else if let Some(spawner) = &mut self.spawner {
+            match spawner {
+                EnemySpawner::Spawning(time) => {
+                    *time += delta_time;
+                    if *time * 1000.0
+                        >= (self.ty.animation.animations[self.ty.animation.tag_names["spawning"]]
+                            .total_length
+                            - 1) as f32
+                    {
+                        self.spawner = None;
+                    }
+                }
+                EnemySpawner::Proximity => {
+                    if self.pos.distance(player.pos) < 128.0 {
+                        self.spawner = Some(EnemySpawner::Spawning(0.0));
+                    }
+                }
+                EnemySpawner::Trigger(id) => {
+                    if player_tile[3] >= 608 + 1
+                        && player_tile[3] <= 612 + 1
+                        && (player_tile[3] - (608 + 1)) as u8 == *id
+                    {
+                        self.spawner = Some(EnemySpawner::Spawning(0.0));
+                    }
+                }
             }
-        } else if self.waiting_to_spawn > 0.0 {
-            self.waiting_to_spawn -= delta_time;
         } else {
             match self.ty.movement_type {
                 MovementType::None => {}
@@ -164,19 +196,15 @@ impl Enemy {
                 * (PI / 4.0)
                 * (if self.pos.x > player.pos.x { 1.0 } else { -1.0 })
         };
-        let (animation_id, time) = if self.waiting_to_spawn == f32::INFINITY {
-            if !self.ty.animation.tag_names.contains_key("unspawned") {
-                return true;
+        let (animation_id, time) = if let Some(spawner) = &self.spawner {
+            if let EnemySpawner::Spawning(time) = spawner {
+                (self.ty.animation.tag_names["spawning"], *time)
+            } else {
+                if !self.ty.animation.tag_names.contains_key("unspawned") {
+                    return true;
+                }
+                (self.ty.animation.tag_names["unspawned"], 0.0)
             }
-            (self.ty.animation.tag_names["unspawned"], 0.0)
-        } else if self.waiting_to_spawn > 0.0 {
-            let total = self.ty.animation.animations[self.ty.animation.tag_names["spawning"]]
-                .total_length as f32
-                / 1000.0;
-            (
-                self.ty.animation.tag_names["spawning"],
-                total - self.waiting_to_spawn,
-            )
         } else if self.attack_time > 0.0
             && self.attack_time * 1000.0
                 < self.ty.animation.get_by_name("attack").total_length as f32
@@ -207,7 +235,7 @@ impl Enemy {
             draw_cross(self.pos.x, self.pos.y, RED);
         }
         if self.death_frames <= 0.0 {
-            if self.waiting_to_spawn != f32::INFINITY {
+            if self.spawner.is_none() {
                 let mut hit_by_projectile = false;
                 for projectile in projectiles.iter_mut() {
                     if projectile.friendly
@@ -251,7 +279,7 @@ pub struct LevelEnemyData {
     pub ty: &'static EnemyType,
     pub attack_delay: f32,
     pub path_index: Option<(usize, usize)>,
-    pub spawner: f32,
+    pub spawner: Option<EnemySpawner>,
 }
 
 #[allow(dead_code)]
