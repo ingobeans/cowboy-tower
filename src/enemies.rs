@@ -42,10 +42,10 @@ impl Enemy {
                     force_moving_animation = true;
                     let (path_index, path_tile_index) = self.path_index.unwrap();
                     let path = &level.enemy_paths[path_index];
-                    const TIME_PER_TILE: f32 = 0.20;
-                    let path_time = path.len() as f32 * TIME_PER_TILE;
-                    let value = (self.time + path_tile_index as f32 * TIME_PER_TILE) % path_time
-                        / TIME_PER_TILE;
+                    let time_per_tile = 1.0 / self.ty.speed;
+                    let path_time = path.len() as f32 * time_per_tile;
+                    let value = (self.time + path_tile_index as f32 * time_per_tile) % path_time
+                        / time_per_tile;
                     let value_index = value.floor();
 
                     let current = path[value_index as usize];
@@ -66,7 +66,7 @@ impl Enemy {
                     } else {
                         -1.0
                     };
-                    self.velocity.x = value * 16.0;
+                    self.velocity.x = value * self.ty.speed;
                 }
                 MovementType::Chase => {
                     let mut direction = self.pos - player.pos;
@@ -75,7 +75,7 @@ impl Enemy {
                         direction.x = 0.0;
                     }
                     let move_dir = -direction.normalize_or_zero().x;
-                    self.velocity.x = move_dir * 16.0;
+                    self.velocity.x = move_dir * self.ty.speed;
                 }
             }
             if self.attack_time <= 0.0 {
@@ -248,24 +248,28 @@ pub struct EnemyType {
     pub movement_type: MovementType,
     pub attack_type: AttackType,
     pub attack_delay: f32,
+    pub speed: f32,
 }
 pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
     vec![
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/bandit.ase")),
             movement_type: MovementType::Wander,
+            speed: 16.0,
             attack_type: AttackType::Shoot(1),
             attack_delay: 1.5,
         },
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/bandit2.ase")),
             movement_type: MovementType::None,
+            speed: 0.0,
             attack_type: AttackType::Shoot(1),
             attack_delay: 2.0,
         },
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/demo_bandit.ase")),
             movement_type: MovementType::Wander,
+            speed: 16.0,
             attack_type: AttackType::ShootAfter(2),
             attack_delay: 2.0,
         },
@@ -273,18 +277,21 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/laser.ase")),
             movement_type: MovementType::None,
             attack_type: AttackType::ShootAfter(4),
+            speed: 0.0,
             attack_delay: 2.0,
         },
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/bat.ase")),
             movement_type: MovementType::FollowPath,
             attack_type: AttackType::Melee,
+            speed: 5.0,
             attack_delay: 0.0,
         },
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/skeleton.ase")),
             movement_type: MovementType::Chase,
             attack_type: AttackType::Melee,
+            speed: 32.0,
             attack_delay: 0.0,
         },
     ]
