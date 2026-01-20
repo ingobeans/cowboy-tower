@@ -1,6 +1,213 @@
-use crate::assets::AnimationsGroup;
+use crate::{
+    assets::{AnimationsGroup, Assets, Level},
+    player::{Player, update_physicsbody},
+    projectiles::Projectile,
+    utils::{DEBUG_FLAGS, draw_cross},
+};
 use macroquad::prelude::*;
-use std::sync::LazyLock;
+use std::{f32::consts::PI, sync::LazyLock};
+
+pub struct Enemy {
+    pub pos: Vec2,
+    pub velocity: Vec2,
+    pub ty: &'static EnemyType,
+    pub path_index: Option<(usize, usize)>,
+    pub time: f32,
+    /// Used for attack type ShootAfter
+    pub has_attacked: bool,
+    pub attack_time: f32,
+    /// Set to zero when alive. On death, tracks death animation time
+    pub death_frames: f32,
+    /// Random seed for each enemy, used for random-esque movement and behaviour
+    pub wibble_wobble: f32,
+}
+impl Enemy {
+    pub fn update(
+        &mut self,
+        player: &mut Player,
+        projectiles: &mut Vec<Projectile>,
+        assets: &Assets,
+        level: &Level,
+        delta_time: f32,
+    ) -> bool {
+        self.time += delta_time;
+        let mut force_moving_animation = false;
+        if self.death_frames > 0.0 {
+            self.death_frames += delta_time;
+            self.time = 0.0;
+        } else {
+            match self.ty.movement_type {
+                MovementType::None => {}
+                MovementType::FollowPath => {
+                    force_moving_animation = true;
+                    let (path_index, path_tile_index) = self.path_index.unwrap();
+                    let path = &level.enemy_paths[path_index];
+                    const TIME_PER_TILE: f32 = 0.20;
+                    let path_time = path.len() as f32 * TIME_PER_TILE;
+                    let value = (self.time + path_tile_index as f32 * TIME_PER_TILE) % path_time
+                        / TIME_PER_TILE;
+                    let value_index = value.floor();
+
+                    let current = path[value_index as usize];
+                    let next = path[(value_index as usize + 1) % path.len()];
+                    let amt_between = value - value_index;
+                    self.pos = current.lerp(next, amt_between);
+                }
+                MovementType::Wander => {
+                    let value = self.time + self.wibble_wobble;
+                    // values for this formula found with `find_lowest_drift_factor`
+                    let value = value.sin()
+                        * (value * 4.627175 + 1.5).sin()
+                        * (value * 5.306475 + 8.0).sin().powi(2);
+                    let value = if value.abs() < 0.1 {
+                        0.0
+                    } else if value.is_sign_positive() {
+                        1.0
+                    } else {
+                        -1.0
+                    };
+                    self.velocity.x = value * 16.0;
+                }
+            }
+            if self.attack_time <= 0.0 {
+                if player.death.is_none() {
+                    self.attack_time += delta_time;
+                    match self.ty.attack_type {
+                        AttackType::None => {
+                            self.attack_time = 0.0;
+                        }
+                        AttackType::Melee => {
+                            self.attack_time = 0.0;
+                            if (player.pos + 4.0).distance(self.pos + 4.0) < 5.0 {
+                                player.death = Some((0.0, 0, true))
+                            }
+                        }
+                        AttackType::ShootAfter(_) => {}
+                        AttackType::Shoot(sprite) => {
+                            let pos = if Projectile::shoot_offset(sprite) {
+                                self.pos
+                                    + if self.pos.x > player.pos.x {
+                                        vec2(-8.0, 0.0)
+                                    } else {
+                                        vec2(8.0, 0.0)
+                                    }
+                                    + vec2(4.0, 0.0)
+                            } else {
+                                self.pos
+                            };
+                            projectiles.push(Projectile::new(
+                                sprite,
+                                pos,
+                                vec2(if self.pos.x > player.pos.x { -1.0 } else { 1.0 }, 0.0),
+                            ));
+                        }
+                    }
+                }
+            } else {
+                self.attack_time += delta_time;
+                let delta = self.attack_time * 1000.0
+                    - self.ty.animation.get_by_name("attack").total_length as f32;
+                if delta >= 0.0
+                    && !self.has_attacked
+                    && let AttackType::ShootAfter(sprite) = self.ty.attack_type
+                {
+                    let pos = if Projectile::shoot_offset(sprite) {
+                        self.pos
+                            + if self.pos.x > player.pos.x {
+                                vec2(-8.0, 0.0)
+                            } else {
+                                vec2(8.0, 0.0)
+                            }
+                            + vec2(4.0, 0.0)
+                    } else {
+                        self.pos
+                    };
+                    projectiles.push(Projectile::new(
+                        sprite,
+                        pos,
+                        vec2(if self.pos.x > player.pos.x { -1.0 } else { 1.0 }, 0.0),
+                    ));
+                    self.has_attacked = true;
+                }
+                if delta >= self.ty.attack_delay * 1000.0 {
+                    self.attack_time = 0.0;
+                    self.has_attacked = false;
+                }
+            }
+            (self.pos, _, _) =
+                update_physicsbody(self.pos, &mut self.velocity, delta_time, level, true, false);
+        }
+        let rotation = if self.death_frames <= 0.0 {
+            0.0
+        } else {
+            (self.death_frames * 1000.0 * 2.0 / assets.blood.total_length as f32).min(1.0)
+                * (PI / 4.0)
+                * (if self.pos.x > player.pos.x { 1.0 } else { -1.0 })
+        };
+        let (animation_id, time) = if self.attack_time > 0.0
+            && self.attack_time * 1000.0
+                < self.ty.animation.get_by_name("attack").total_length as f32
+        {
+            (self.ty.animation.tag_names["attack"], self.attack_time)
+        } else {
+            (
+                if force_moving_animation || self.velocity.x.abs() > 5.0 {
+                    1
+                } else {
+                    0
+                },
+                self.time,
+            )
+        };
+        draw_texture_ex(
+            self.ty.animation.animations[animation_id].get_at_time((time * 1000.0) as u32),
+            self.pos.x.floor() - 8.0,
+            self.pos.y.floor() - 8.0,
+            WHITE,
+            DrawTextureParams {
+                flip_x: self.pos.x > player.pos.x,
+                rotation,
+                ..Default::default()
+            },
+        );
+        if DEBUG_FLAGS.centres {
+            draw_cross(self.pos.x, self.pos.y, RED);
+        }
+        if self.death_frames <= 0.0 {
+            let mut hit_by_projectile = false;
+            for projectile in projectiles.iter_mut() {
+                if projectile.friendly
+                    && projectile.can_kill()
+                    && ((projectile.pos.x - 4.0)..(projectile.pos.x + 4.0))
+                        .contains(&(self.pos.x + 4.0))
+                    && ((projectile.pos.y - 8.0)..(projectile.pos.y + 4.0)).contains(&self.pos.y)
+                {
+                    projectile.dead |= projectile.should_die_on_kill();
+                    hit_by_projectile = true;
+                    break;
+                }
+            }
+            if hit_by_projectile {
+                self.death_frames += delta_time;
+            }
+            true
+        } else {
+            draw_texture_ex(
+                assets
+                    .blood
+                    .get_at_time((self.death_frames * 1000.0) as u32),
+                self.pos.x.floor() - 4.0,
+                self.pos.y.floor() - 8.0,
+                WHITE,
+                DrawTextureParams {
+                    flip_x: self.pos.x > player.pos.x,
+                    ..Default::default()
+                },
+            );
+            self.death_frames * 1000.0 <= assets.blood.total_length as f32
+        }
+    }
+}
 
 #[derive(Clone, Copy)]
 pub struct LevelEnemyData {
