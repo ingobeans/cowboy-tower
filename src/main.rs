@@ -781,7 +781,7 @@ impl<'a> Game<'a> {
             let delta = death.0 - self.assets.die.animations[death.1].total_length as f32 / 1000.0;
             if delta > 0.0 {
                 if delta > 0.5 {
-                    let restarted = self.player.in_boss_battle;
+                    let restarted = self.player.in_boss_battle || self.player.has_restarted_level;
                     self.load_level(self.level);
                     self.fade_timer = 0.5;
                     self.player.has_restarted_level = restarted;
