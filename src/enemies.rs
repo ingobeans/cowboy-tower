@@ -35,6 +35,13 @@ pub struct Enemy {
     pub spawner: Option<EnemySpawner>,
 }
 impl Enemy {
+    fn trigger_spawning(&mut self) {
+        if self.ty.animation.tag_names.contains_key("spawning") {
+            self.spawner = Some(EnemySpawner::Spawning(0.0));
+        } else {
+            self.spawner = None;
+        }
+    }
     pub fn update(
         &mut self,
         player: &mut Player,
@@ -66,7 +73,7 @@ impl Enemy {
                 }
                 EnemySpawner::Proximity => {
                     if self.pos.distance(player.pos) < 128.0 {
-                        self.spawner = Some(EnemySpawner::Spawning(0.0));
+                        self.trigger_spawning();
                     }
                 }
                 EnemySpawner::Trigger(id) => {
@@ -74,7 +81,7 @@ impl Enemy {
                         && player_tile[3] <= 612 + 1
                         && (player_tile[3] - (608 + 1)) as u8 == *id
                     {
-                        self.spawner = Some(EnemySpawner::Spawning(0.0));
+                        self.trigger_spawning();
                     }
                 }
             }
