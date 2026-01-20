@@ -32,16 +32,13 @@ impl Enemy {
         delta_time: f32,
     ) -> bool {
         self.time += delta_time;
-        if self.waiting_to_spawn > 0.0 {
-            dbg!(self.waiting_to_spawn);
-        }
 
         let mut force_moving_animation = false;
         if self.death_frames > 0.0 {
             self.death_frames += delta_time;
             self.time = 0.0;
         } else if self.waiting_to_spawn == f32::INFINITY {
-            if self.pos.distance(player.pos) < 256.0 {
+            if self.pos.distance(player.pos) < 128.0 {
                 self.waiting_to_spawn =
                     self.ty.animation.animations[self.ty.animation.tag_names["spawning"]]
                         .total_length as f32
@@ -173,9 +170,12 @@ impl Enemy {
             }
             (self.ty.animation.tag_names["unspawned"], 0.0)
         } else if self.waiting_to_spawn > 0.0 {
+            let total = self.ty.animation.animations[self.ty.animation.tag_names["spawning"]]
+                .total_length as f32
+                / 1000.0;
             (
                 self.ty.animation.tag_names["spawning"],
-                self.waiting_to_spawn,
+                total - self.waiting_to_spawn,
             )
         } else if self.attack_time > 0.0
             && self.attack_time * 1000.0

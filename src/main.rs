@@ -30,12 +30,7 @@ fn load_enemies(input: Vec<LevelEnemyData>) -> Vec<Enemy> {
             time: 0.0,
             path_index: f.path_index,
             has_attacked: false,
-            waiting_to_spawn: {
-                if f.spawner > 0.0 {
-                    dbg!(f.spawner);
-                };
-                f.spawner
-            },
+            waiting_to_spawn: f.spawner,
             death_frames: 0.0,
             attack_time: -f.attack_delay,
             wibble_wobble: rand::gen_range(0.0, PI * 2.0),
