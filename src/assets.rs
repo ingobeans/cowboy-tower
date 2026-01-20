@@ -269,6 +269,7 @@ impl Level {
                                 ty: &ENEMIES[(*tile - 2) as usize],
                                 attack_delay: 0.0,
                                 path_index: None,
+                                spawner: 0.0,
                             });
                         } else if *tile == 384 + 1 {
                             horses.push(Horse::new(pos, vec2(1.0, 0.0), false));
@@ -451,6 +452,28 @@ impl Level {
                 continue;
             }
             let tile = tile[3] - 1;
+            // handle spawner
+            if tile == 481 {
+                let x = i % width as usize;
+                let y = i / width as usize;
+                for d in [(1, 0), (0, 1), (-1, 0), (0, -1)] {
+                    let nx = x.saturating_add_signed(d.0);
+                    let ny = y.saturating_add_signed(d.1);
+                    let ni = nx + ny * width as usize;
+                    let tile = data[ni][3];
+
+                    if tile > 0 + 1 && tile < 32 + 1 {
+                        let pos = vec2(
+                            (nx * 8) as f32 + (min_x * 8) as f32,
+                            (ny * 8) as f32 + (min_y * 8) as f32,
+                        );
+
+                        // find enemy here
+                        let enemy = enemies.iter_mut().find(|f| f.pos == pos).unwrap();
+                        enemy.spawner = f32::INFINITY;
+                    }
+                }
+            }
 
             // handle enemy paths
             if tile == 480 {

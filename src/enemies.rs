@@ -20,6 +20,7 @@ pub struct Enemy {
     pub death_frames: f32,
     /// Random seed for each enemy, used for random-esque movement and behaviour
     pub wibble_wobble: f32,
+    pub waiting_to_spawn: f32,
 }
 impl Enemy {
     pub fn update(
@@ -31,10 +32,23 @@ impl Enemy {
         delta_time: f32,
     ) -> bool {
         self.time += delta_time;
+        if self.waiting_to_spawn > 0.0 {
+            dbg!(self.waiting_to_spawn);
+        }
+
         let mut force_moving_animation = false;
         if self.death_frames > 0.0 {
             self.death_frames += delta_time;
             self.time = 0.0;
+        } else if self.waiting_to_spawn == f32::INFINITY {
+            if self.pos.distance(player.pos) < 256.0 {
+                self.waiting_to_spawn =
+                    self.ty.animation.animations[self.ty.animation.tag_names["spawning"]]
+                        .total_length as f32
+                        / 1000.0;
+            }
+        } else if self.waiting_to_spawn > 0.0 {
+            self.waiting_to_spawn -= delta_time;
         } else {
             match self.ty.movement_type {
                 MovementType::None => {}
@@ -153,7 +167,17 @@ impl Enemy {
                 * (PI / 4.0)
                 * (if self.pos.x > player.pos.x { 1.0 } else { -1.0 })
         };
-        let (animation_id, time) = if self.attack_time > 0.0
+        let (animation_id, time) = if self.waiting_to_spawn == f32::INFINITY {
+            if !self.ty.animation.tag_names.contains_key("unspawned") {
+                return true;
+            }
+            (self.ty.animation.tag_names["unspawned"], 0.0)
+        } else if self.waiting_to_spawn > 0.0 {
+            (
+                self.ty.animation.tag_names["spawning"],
+                self.waiting_to_spawn,
+            )
+        } else if self.attack_time > 0.0
             && self.attack_time * 1000.0
                 < self.ty.animation.get_by_name("attack").total_length as f32
         {
@@ -224,6 +248,7 @@ pub struct LevelEnemyData {
     pub ty: &'static EnemyType,
     pub attack_delay: f32,
     pub path_index: Option<(usize, usize)>,
+    pub spawner: f32,
 }
 
 #[allow(dead_code)]
