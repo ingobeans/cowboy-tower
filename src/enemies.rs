@@ -207,21 +207,24 @@ impl Enemy {
             draw_cross(self.pos.x, self.pos.y, RED);
         }
         if self.death_frames <= 0.0 {
-            let mut hit_by_projectile = false;
-            for projectile in projectiles.iter_mut() {
-                if projectile.friendly
-                    && projectile.can_kill()
-                    && ((projectile.pos.x - 4.0)..(projectile.pos.x + 4.0))
-                        .contains(&(self.pos.x + 4.0))
-                    && ((projectile.pos.y - 8.0)..(projectile.pos.y + 4.0)).contains(&self.pos.y)
-                {
-                    projectile.dead |= projectile.should_die_on_kill();
-                    hit_by_projectile = true;
-                    break;
+            if self.waiting_to_spawn != f32::INFINITY {
+                let mut hit_by_projectile = false;
+                for projectile in projectiles.iter_mut() {
+                    if projectile.friendly
+                        && projectile.can_kill()
+                        && ((projectile.pos.x - 4.0)..(projectile.pos.x + 4.0))
+                            .contains(&(self.pos.x + 4.0))
+                        && ((projectile.pos.y - 8.0)..(projectile.pos.y + 4.0))
+                            .contains(&self.pos.y)
+                    {
+                        projectile.dead |= projectile.should_die_on_kill();
+                        hit_by_projectile = true;
+                        break;
+                    }
                 }
-            }
-            if hit_by_projectile {
-                self.death_frames += delta_time;
+                if hit_by_projectile {
+                    self.death_frames += delta_time;
+                }
             }
             true
         } else {
