@@ -50,6 +50,8 @@ const HORSE_MOUNT_LEEWAY: f32 = 0.2;
 const JUMP_LAND_LEEWAY: f32 = 0.05;
 const COYOTE_TIME: f32 = 0.05;
 
+const MOVE_INABILITY_AFTER_WALL_JUMP: f32 = 0.23;
+
 pub struct Player {
     pub pos: Vec2,
     pub camera_pos: Vec2,
@@ -66,6 +68,8 @@ pub struct Player {
     pub lasso_target: Option<Vec2>,
     pub death: Option<(f32, usize, bool)>,
     pub wall_climbing: f32,
+    /// Time since last jump off wall
+    pub jump_of_wall_time: f32,
     /// Timer since how long it was since player last was on_ground
     pub last_touched_ground: f32,
     /// Count
@@ -95,6 +99,7 @@ impl Player {
             riding: None,
             active_dialogue: None,
             cinematic_bars: None,
+            jump_of_wall_time: 10.0,
             velocity: Vec2::ZERO,
             on_ground: false,
             last_touched_ground: 1.0,
@@ -182,6 +187,9 @@ impl Player {
                 horse.1.running = true;
                 horse.1.player_riding = true;
             }
+        }
+        if self.jump_of_wall_time < MOVE_INABILITY_AFTER_WALL_JUMP {
+            self.jump_of_wall_time += delta_time;
         }
         const MOVE_SPEED: f32 = 101.0;
         const MOVE_ACCELERATION: f32 = 22.0;
@@ -314,10 +322,12 @@ impl Player {
                 });
             }
 
-            self.velocity.x = self
-                .velocity
-                .x
-                .lerp(input.x * MOVE_SPEED, delta_time * MOVE_ACCELERATION);
+            if self.jump_of_wall_time >= MOVE_INABILITY_AFTER_WALL_JUMP {
+                self.velocity.x = self
+                    .velocity
+                    .x
+                    .lerp(input.x * MOVE_SPEED, delta_time * MOVE_ACCELERATION);
+            }
 
             if self.wall_climbing <= 0.0 || self.velocity.y < 0.0 {
                 self.velocity.y += GRAVITY * delta_time;
@@ -356,15 +366,16 @@ impl Player {
             if is_key_pressed(KeyCode::Space) {
                 if self.wall_climbing > 0.0 {
                     self.jump_time = delta_time;
-                    self.velocity.y = -JUMP_FORCE * 2.0;
+                    self.velocity.y = -JUMP_FORCE * 1.2;
                     self.on_ground = false;
-                    self.velocity.x = 3.0
+                    self.velocity.x = 0.8
                         * JUMP_FORCE
                         * if self.velocity.x.is_sign_positive() {
                             -1.0
                         } else {
                             1.0
                         };
+                    self.jump_of_wall_time = 0.0;
                 } else if let Some(riding) = self.riding.take() {
                     self.jump_time = delta_time;
                     self.velocity = horses[riding.horse_index].velocity;
