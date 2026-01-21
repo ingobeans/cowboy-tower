@@ -193,7 +193,7 @@ impl Enemy {
                     self.has_attacked = false;
                 }
             }
-            (self.pos, _, _) =
+            (self.pos, _, _, _) =
                 update_physicsbody(self.pos, &mut self.velocity, delta_time, level, true, false);
         }
         let rotation = if self.death_frames <= 0.0 {

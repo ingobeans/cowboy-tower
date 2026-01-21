@@ -65,6 +65,7 @@ pub struct Player {
     active_lasso: Option<ActiveLasso>,
     pub lasso_target: Option<Vec2>,
     pub death: Option<(f32, usize, bool)>,
+    pub wall_climbing: f32,
     /// Timer since how long it was since player last was on_ground
     pub last_touched_ground: f32,
     /// Count
@@ -103,6 +104,7 @@ impl Player {
             failed_horse_mount_time: 0.0,
             facing_left: false,
             moving: false,
+            wall_climbing: 0.0,
             time: 0.0,
             death: None,
             shooting: 0.0,
@@ -144,7 +146,7 @@ impl Player {
             if death.2 {
                 self.velocity.x = 0.0;
                 self.velocity.y += GRAVITY * delta_time;
-                (self.pos, self.on_ground, _) = update_physicsbody(
+                (self.pos, self.on_ground, _, _) = update_physicsbody(
                     self.pos,
                     &mut self.velocity,
                     delta_time,
@@ -316,7 +318,35 @@ impl Player {
                 .velocity
                 .x
                 .lerp(input.x * MOVE_SPEED, delta_time * MOVE_ACCELERATION);
-            self.velocity.y += GRAVITY * delta_time;
+
+            if self.wall_climbing <= 0.0 || self.velocity.y < 0.0 {
+                self.velocity.y += GRAVITY * delta_time;
+            } else if self.wall_climbing > 0.0 {
+                // handle gliding down wall when wall climbing
+                const STOP_TIME: f32 = 0.6;
+                const MAX_SPEED: f32 = 16.0;
+                const ACCELERATE_TIME: f32 = 1.0;
+
+                // the speed of which you glide should follow a curve that looks something like:
+                //
+                //              _______________________
+                //             /
+                //           /
+                //  _______/
+                //         ^
+                // STOP_TIME
+                //
+                //         <---->  ACCELERATE_TIME
+
+                let amt = if self.wall_climbing < STOP_TIME {
+                    0.0
+                } else if self.wall_climbing < STOP_TIME + ACCELERATE_TIME {
+                    MAX_SPEED * (self.wall_climbing - STOP_TIME) / ACCELERATE_TIME
+                } else {
+                    MAX_SPEED
+                };
+                self.velocity.y = amt;
+            }
 
             self.moving = input.x != 0.0;
             if self.moving {
@@ -361,12 +391,18 @@ impl Player {
 
         let old_velocity = self.velocity;
         let touched_death_tile;
+        let colliding_with_wall_climb_target;
 
         if let Some(riding) = &self.riding {
             self.pos =
                 horses[riding.horse_index].pos + horses[riding.horse_index].get_normal() * 16.0;
         } else {
-            (self.pos, self.on_ground, touched_death_tile) = update_physicsbody(
+            (
+                self.pos,
+                self.on_ground,
+                touched_death_tile,
+                colliding_with_wall_climb_target,
+            ) = update_physicsbody(
                 self.pos,
                 &mut self.velocity,
                 delta_time,
@@ -376,6 +412,11 @@ impl Player {
             );
             if self.on_ground {
                 self.last_touched_ground = 0.0;
+            }
+            if colliding_with_wall_climb_target {
+                self.wall_climbing += delta_time;
+            } else {
+                self.wall_climbing = 0.0;
             }
             if let Some(tile) = touched_death_tile
                 && self.death.is_none()
@@ -574,7 +615,7 @@ pub fn update_physicsbody(
     world: &Level,
     tall: bool,
     enable_special_collisions: bool,
-) -> (Vec2, bool, Option<u16>) {
+) -> (Vec2, bool, Option<u16>, bool) {
     let mut grounded = false;
     let mut touched_death_tile = None;
     let mut new = pos + *velocity * delta_time;
@@ -629,8 +670,10 @@ pub fn update_physicsbody(
         tiles_x.push((ceil_g(new.x / 8.0), (new.y / 8.0).floor() - 1.0));
     }
 
+    let mut colliding_with_wall_climb_target = false;
     for (tx, ty) in tiles_x {
-        let mut tile = world.get_tile((tx) as i16, (ty) as i16)[1];
+        let tile_data = world.get_tile((tx) as i16, (ty) as i16);
+        let mut tile = tile_data[1];
         if tile > 0 && DEATH_TILES.contains(&(tile - 1)) {
             continue;
         }
@@ -641,6 +684,12 @@ pub fn update_physicsbody(
             tile = 1;
         }
         if tile != 0 {
+            if tile_data[3] == 512 + 1 || tile_data[3] == 513 + 1 {
+                if velocity.y < 0.0 {
+                    velocity.y = (velocity.y + 125.0 * delta_time).min(0.0);
+                }
+                colliding_with_wall_climb_target = true;
+            }
             let c = if velocity.x < 0.0 {
                 tile_x.floor() * 8.0
             } else {
@@ -651,5 +700,10 @@ pub fn update_physicsbody(
             break;
         }
     }
-    (new, grounded, touched_death_tile)
+    (
+        new,
+        grounded,
+        touched_death_tile,
+        colliding_with_wall_climb_target,
+    )
 }

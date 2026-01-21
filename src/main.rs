@@ -272,7 +272,7 @@ impl<'a> Game<'a> {
                 }
             }
             let old_velocity = horse.velocity;
-            (horse.pos, _, _) = update_physicsbody(
+            (horse.pos, _, _, _) = update_physicsbody(
                 horse.pos,
                 &mut horse.velocity,
                 delta_time,
@@ -555,7 +555,7 @@ impl<'a> Game<'a> {
                 const OFFSET: Vec2 = vec2(4.0, 4.0);
                 projectile.direction.y += GRAVITY * delta_time;
 
-                let (new_pos, on_ground, _) = update_physicsbody(
+                let (new_pos, on_ground, _, _) = update_physicsbody(
                     projectile.pos - OFFSET,
                     &mut projectile.direction,
                     delta_time,
