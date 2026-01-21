@@ -169,11 +169,15 @@ impl<'a> Game<'a> {
         for l in &assets.levels[..level] {
             y += l.get_height() + FLOOR_PADDING + 16.0;
         }
+        let world_manager = WorldManager::new(assets);
+        let tower_height = world_manager.world_heights.last().unwrap().1;
+        SKY_MATERIAL.set_uniform("maxTowerHeight", tower_height);
+
         Self {
             assets,
             level,
             height: y,
-            world_manager: WorldManager::new(assets),
+            world_manager,
             player: Player::new(get_player_spawn(assets, level)),
             camera: Camera2D::default(),
             enemies: load_enemies(assets.levels[level].enemies.clone()),
@@ -361,8 +365,6 @@ impl<'a> Game<'a> {
             -self.height + camera_offset + actual_screen_height / scale_factor / 2.0,
         );
         SKY_MATERIAL.set_uniform("height", actual_screen_height / scale_factor + 4.0);
-        let tower_height = self.world_manager.world_heights.last().unwrap().1;
-        SKY_MATERIAL.set_uniform("maxTowerHeight", tower_height);
 
         const SKY_COLOR: Color = Color::from_hex(0x1CB7FF);
         clear_background(SKY_COLOR);
