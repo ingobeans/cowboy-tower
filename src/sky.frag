@@ -17,12 +17,12 @@ void main() {
     colors[2] = vec3(0.118,0.157,0.318);
     
     if (value >= maxTowerHeight) {
-        gl_FragColor = vec4(colors[colors.length()-1],1.0);
+        gl_FragColor = vec4(colors[2],1.0);
     } else if (value <= 0.0) {
         gl_FragColor = vec4(colors[0],1.0);
     }
     else {
-        float maxValue = maxTowerHeight / float(colors.length()-1);
+        float maxValue = maxTowerHeight / float(2);
 
         float stepLow = floor(value / maxValue);
         float stepHigh = ceil(value / maxValue);
