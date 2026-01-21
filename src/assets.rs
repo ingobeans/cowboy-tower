@@ -263,6 +263,8 @@ impl Level {
                         if *tile == 1 {
                             data[x + y * width as usize][index - 1] = *tile;
                             lasso_targets.push(pos + vec2(4.0, 4.0));
+                        } else if *tile == 512 + 1 || *tile == 513 + 1 {
+                            data[x + y * width as usize][index - 1] = *tile;
                         } else if *tile <= 32 && *tile > 1 {
                             enemies.push(LevelEnemyData {
                                 pos,
