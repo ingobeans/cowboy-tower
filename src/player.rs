@@ -354,7 +354,18 @@ impl Player {
             }
 
             if is_key_pressed(KeyCode::Space) {
-                if let Some(riding) = self.riding.take() {
+                if self.wall_climbing > 0.0 {
+                    self.jump_time = delta_time;
+                    self.velocity.y = -JUMP_FORCE * 2.0;
+                    self.on_ground = false;
+                    self.velocity.x = 3.0
+                        * JUMP_FORCE
+                        * if self.velocity.x.is_sign_positive() {
+                            -1.0
+                        } else {
+                            1.0
+                        };
+                } else if let Some(riding) = self.riding.take() {
                     self.jump_time = delta_time;
                     self.velocity = horses[riding.horse_index].velocity;
 
