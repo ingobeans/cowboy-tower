@@ -7,11 +7,9 @@ use crate::{
     projectiles::*,
     utils::*,
 };
+pub use physics::*;
 
-fn ceil_g(a: f32) -> f32 {
-    if a < 0.0 { a.floor() } else { a.ceil() }
-}
-
+mod physics;
 struct ActiveLasso {
     time: f32,
     hook_pos: Vec2,
@@ -51,6 +49,7 @@ const JUMP_LAND_LEEWAY: f32 = 0.05;
 const COYOTE_TIME: f32 = 0.05;
 
 const MOVE_INABILITY_AFTER_WALL_JUMP: f32 = 0.23;
+const COYOTE_TIME_WALL_JUMP: f32 = 0.1;
 
 pub struct Player {
     pub pos: Vec2,
@@ -67,9 +66,13 @@ pub struct Player {
     active_lasso: Option<ActiveLasso>,
     lasso_target: Option<Vec2>,
     pub death: Option<(f32, usize, bool)>,
-    wall_climbing: f32,
+    wall_climbing: Option<(f32, f32)>,
     /// Time since last jump off wall
     jump_of_wall_time: f32,
+    /// After falling off wall when wall-climbing, this is set.
+    /// - time since fall
+    /// - direction
+    fall_of_wall: (f32, f32),
     /// Timer since how long it was since player last was on_ground
     last_touched_ground: f32,
     /// Count
@@ -104,12 +107,13 @@ impl Player {
             on_ground: false,
             last_touched_ground: 1.0,
             jump_time: 0.0,
+            fall_of_wall: (COYOTE_TIME_WALL_JUMP, 0.0),
             time_since_last_boss_defeated: 10.0,
             defeated_bosses: 0,
             failed_horse_mount_time: 0.0,
             facing_left: false,
             moving: false,
-            wall_climbing: 0.0,
+            wall_climbing: None,
             time: 0.0,
             death: None,
             shooting: 0.0,
@@ -329,9 +333,9 @@ impl Player {
                     .lerp(input.x * MOVE_SPEED, delta_time * MOVE_ACCELERATION);
             }
 
-            if self.wall_climbing <= 0.0 || self.velocity.y < 0.0 {
+            if self.wall_climbing.is_none() || self.velocity.y < 0.0 {
                 self.velocity.y += GRAVITY * delta_time;
-            } else if self.wall_climbing > 0.0 {
+            } else if let Some((time, _)) = self.wall_climbing {
                 // handle gliding down wall when wall climbing
                 const STOP_TIME: f32 = 0.6;
                 const MAX_SPEED: f32 = 16.0;
@@ -348,10 +352,10 @@ impl Player {
                 //
                 //         <---->  ACCELERATE_TIME
 
-                let amt = if self.wall_climbing < STOP_TIME {
+                let amt = if time < STOP_TIME {
                     0.0
-                } else if self.wall_climbing < STOP_TIME + ACCELERATE_TIME {
-                    MAX_SPEED * (self.wall_climbing - STOP_TIME) / ACCELERATE_TIME
+                } else if time < STOP_TIME + ACCELERATE_TIME {
+                    MAX_SPEED * (time - STOP_TIME) / ACCELERATE_TIME
                 } else {
                     MAX_SPEED
                 };
@@ -364,17 +368,11 @@ impl Player {
             }
 
             if is_key_pressed(KeyCode::Space) {
-                if self.wall_climbing > 0.0 {
+                if let Some((_, direction)) = self.wall_climbing {
                     self.jump_time = delta_time;
                     self.velocity.y = -JUMP_FORCE * 1.2;
                     self.on_ground = false;
-                    self.velocity.x = 0.8
-                        * JUMP_FORCE
-                        * if self.velocity.x.is_sign_positive() {
-                            -1.0
-                        } else {
-                            1.0
-                        };
+                    self.velocity.x = 0.8 * JUMP_FORCE * -direction;
                     self.jump_of_wall_time = 0.0;
                 } else if let Some(riding) = self.riding.take() {
                     self.jump_time = delta_time;
@@ -435,10 +433,18 @@ impl Player {
             if self.on_ground {
                 self.last_touched_ground = 0.0;
             }
-            if colliding_with_wall_climb_target {
-                self.wall_climbing += delta_time;
+            if let Some(direction) = colliding_with_wall_climb_target {
+                if let Some((time, _)) = &mut self.wall_climbing {
+                    *time += delta_time;
+                } else {
+                    self.wall_climbing = Some((delta_time, direction));
+                }
             } else {
-                self.wall_climbing = 0.0;
+                if self.wall_climbing.is_some() {
+                    // wall climbing was canceled
+                    self.fall_of_wall = (delta_time, 0.0);
+                }
+                self.wall_climbing = None;
             }
             if let Some(tile) = touched_death_tile
                 && self.death.is_none()
@@ -628,104 +634,4 @@ impl Player {
             draw_cross(self.pos.x, self.pos.y, BLUE);
         }
     }
-}
-
-pub fn update_physicsbody(
-    pos: Vec2,
-    velocity: &mut Vec2,
-    delta_time: f32,
-    world: &Level,
-    tall: bool,
-    enable_special_collisions: bool,
-) -> (Vec2, bool, Option<u16>, bool) {
-    let mut grounded = false;
-    let mut touched_death_tile = None;
-    let mut new = pos + *velocity * delta_time;
-
-    let tile_x = pos.x / 8.0;
-    let tile_y = pos.y / 8.0;
-
-    let mut tiles_y = vec![
-        (tile_x.trunc(), ceil_g(new.y / 8.0)),
-        (ceil_g(tile_x), ceil_g(new.y / 8.0)),
-        (tile_x.trunc(), (new.y / 8.0).trunc()),
-        (ceil_g(tile_x), (new.y / 8.0).trunc()),
-    ];
-    if tall {
-        tiles_y.push((tile_x.trunc(), (new.y / 8.0).floor() - 1.0));
-        tiles_y.push((ceil_g(tile_x), (new.y / 8.0).floor() - 1.0));
-    }
-
-    for (tx, ty) in tiles_y {
-        let mut tile = world.get_tile((tx) as i16, (ty) as i16)[1];
-        if !grounded && tile > 0 && DEATH_TILES.contains(&(tile - 1)) {
-            touched_death_tile = Some(tile - 1);
-            continue;
-        }
-        if enable_special_collisions
-            && tile == 0
-            && world.get_tile(tx as i16, ty as i16)[3] == 864 + 1
-        {
-            tile = 1;
-        }
-        if tile != 0 {
-            let c = if velocity.y < 0.0 {
-                tile_y.floor() * 8.0
-            } else {
-                grounded = true;
-                touched_death_tile = None;
-                tile_y.ceil() * 8.0
-            };
-            new.y = c;
-            velocity.y = 0.0;
-            break;
-        }
-    }
-    let mut tiles_x = vec![
-        ((new.x / 8.0).trunc(), ceil_g(new.y / 8.0)),
-        (ceil_g(new.x / 8.0), ceil_g(new.y / 8.0)),
-        (ceil_g(new.x / 8.0), (new.y / 8.0).trunc()),
-        ((new.x / 8.0).trunc(), (new.y / 8.0).trunc()),
-    ];
-    if tall {
-        tiles_x.push(((new.x / 8.0).trunc(), (new.y / 8.0).floor() - 1.0));
-        tiles_x.push((ceil_g(new.x / 8.0), (new.y / 8.0).floor() - 1.0));
-    }
-
-    let mut colliding_with_wall_climb_target = false;
-    for (tx, ty) in tiles_x {
-        let tile_data = world.get_tile((tx) as i16, (ty) as i16);
-        let mut tile = tile_data[1];
-        if tile > 0 && DEATH_TILES.contains(&(tile - 1)) {
-            continue;
-        }
-        if enable_special_collisions
-            && tile == 0
-            && world.get_tile(tx as i16, ty as i16)[3] == 864 + 1
-        {
-            tile = 1;
-        }
-        if tile != 0 {
-            if tile_data[3] == 512 + 1 || tile_data[3] == 513 + 1 {
-                if velocity.y < 0.0 {
-                    velocity.y = (velocity.y + 125.0 * delta_time).min(0.0);
-                }
-                colliding_with_wall_climb_target = true;
-            }
-            let c = if velocity.x < 0.0 {
-                tile_x.floor() * 8.0
-            } else {
-                tile_x.ceil() * 8.0
-            };
-            new.x = c;
-            velocity.x = 0.0;
-            break;
-        }
-    }
-    (
-        new,
-        grounded,
-        touched_death_tile,
-        colliding_with_wall_climb_target,
-    )
 }
