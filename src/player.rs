@@ -576,8 +576,12 @@ impl Player {
             self.shooting = 0.0;
         }
 
-        let mut torso = assets.torso.animations[if self.shooting > 0.0 { 1 } else { 0 }]
-            .get_at_time((self.shooting * 1000.0) as u32);
+        let mut torso = if self.wall_climbing.is_some() {
+            &assets.torso.animations[3].frames[0].0
+        } else {
+            assets.torso.animations[if self.shooting > 0.0 { 1 } else { 0 }]
+                .get_at_time((self.shooting * 1000.0) as u32)
+        };
         if let Some(lasso) = &mut self.active_lasso {
             const LASSO_EXTEND_TIME: f32 = 0.2;
             const LASSO_EARLY_START: f32 = 0.1;
@@ -624,7 +628,9 @@ impl Player {
 
         // draw legs and torso textures
 
-        let legs = if self.jump_time > 0.0 {
+        let legs = if self.wall_climbing.is_some() {
+            &assets.legs.animations[3].frames[0].0
+        } else if self.jump_time > 0.0 {
             let anim = &assets.legs.animations[2];
             if self.jump_time * 1000.0 >= anim.total_length as f32 {
                 self.jump_time = 0.0;
