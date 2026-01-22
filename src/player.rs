@@ -49,7 +49,7 @@ const JUMP_LAND_LEEWAY: f32 = 0.05;
 const COYOTE_TIME: f32 = 0.05;
 
 const MOVE_INABILITY_AFTER_WALL_JUMP: f32 = 0.23;
-const COYOTE_TIME_WALL_JUMP: f32 = 0.5;
+const COYOTE_TIME_WALL_JUMP: f32 = 0.25;
 
 pub struct Player {
     pub pos: Vec2,
@@ -386,7 +386,7 @@ impl Player {
                     self.jump_time = delta_time;
                     self.velocity.y = -JUMP_FORCE * 1.2;
                     self.on_ground = false;
-                    self.velocity.x = 0.8 * JUMP_FORCE * -direction;
+                    self.velocity.x = 0.65 * JUMP_FORCE * -direction;
                     self.jump_of_wall_time = 0.0;
                 } else if let Some(riding) = self.riding.take() {
                     self.jump_time = delta_time;
