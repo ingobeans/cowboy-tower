@@ -197,6 +197,9 @@ impl Player {
         }
         if self.fall_of_wall.0 < COYOTE_TIME_WALL_JUMP {
             self.fall_of_wall.0 += delta_time;
+            if self.on_ground {
+                self.fall_of_wall.0 = COYOTE_TIME_WALL_JUMP;
+            }
         }
         const MOVE_SPEED: f32 = 101.0;
         const MOVE_ACCELERATION: f32 = 22.0;
