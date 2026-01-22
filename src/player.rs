@@ -388,6 +388,8 @@ impl Player {
                     self.on_ground = false;
                     self.velocity.x = 0.65 * JUMP_FORCE * -direction;
                     self.jump_of_wall_time = 0.0;
+                    // prevent extra jumps with coyote time
+                    self.fall_of_wall.0 = COYOTE_TIME_WALL_JUMP;
                 } else if let Some(riding) = self.riding.take() {
                     self.jump_time = delta_time;
                     self.velocity = horses[riding.horse_index].velocity;
@@ -454,7 +456,9 @@ impl Player {
                     self.wall_climbing = Some((delta_time, direction));
                 }
             } else {
-                if let Some((_, direction)) = self.wall_climbing {
+                if let Some((_, direction)) = self.wall_climbing
+                    && self.jump_of_wall_time > MOVE_INABILITY_AFTER_WALL_JUMP
+                {
                     // wall climbing was canceled
                     self.fall_of_wall = (delta_time, direction);
                 }
