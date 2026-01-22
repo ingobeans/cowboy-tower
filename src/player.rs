@@ -61,23 +61,23 @@ pub struct Player {
     pub moving: bool,
     pub time: f32,
     pub cinematic_bars: Option<CinematicBars>,
-    pub jump_time: f32,
+    jump_time: f32,
     pub active_dialogue: Option<ActiveDialogue>,
     riding: Option<ActiveRiding>,
     active_lasso: Option<ActiveLasso>,
-    pub lasso_target: Option<Vec2>,
+    lasso_target: Option<Vec2>,
     pub death: Option<(f32, usize, bool)>,
-    pub wall_climbing: f32,
+    wall_climbing: f32,
     /// Time since last jump off wall
-    pub jump_of_wall_time: f32,
+    jump_of_wall_time: f32,
     /// Timer since how long it was since player last was on_ground
-    pub last_touched_ground: f32,
+    last_touched_ground: f32,
     /// Count
     pub defeated_bosses: u8,
     pub time_since_last_boss_defeated: f32,
     /// If player isnt actively shooting a projectile, this is 0.
     /// Otherwise it will be the time for the shoot animation.
-    pub shooting: f32,
+    shooting: f32,
     pub in_boss_battle: bool,
     /// If the player isnt playing the level for the first time.
     /// Used to skip bosses' dialogue automatically
@@ -87,7 +87,7 @@ pub struct Player {
     /// before this timer reaches 0.0, the player will mount that horse.
     ///
     /// This gives a bit of leeway when mounting horses mid-air.
-    pub failed_horse_mount_time: f32,
+    failed_horse_mount_time: f32,
 }
 impl Player {
     pub fn new(pos: Vec2) -> Self {
