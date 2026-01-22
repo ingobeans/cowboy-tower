@@ -218,6 +218,7 @@ impl Player {
         } else if self.active_lasso.as_ref().is_none_or(|f| f.time == 0.0)
             && is_mouse_button_pressed(MouseButton::Left)
             && self.riding.is_none()
+            && self.wall_climbing.is_none()
         {
             self.shooting += delta_time;
             projectiles.push(Projectile::new(
