@@ -49,7 +49,7 @@ const JUMP_LAND_LEEWAY: f32 = 0.05;
 const COYOTE_TIME: f32 = 0.05;
 
 const MOVE_INABILITY_AFTER_WALL_JUMP: f32 = 0.23;
-const COYOTE_TIME_WALL_JUMP: f32 = 0.1;
+const COYOTE_TIME_WALL_JUMP: f32 = 0.5;
 
 pub struct Player {
     pub pos: Vec2,
@@ -194,6 +194,9 @@ impl Player {
         }
         if self.jump_of_wall_time < MOVE_INABILITY_AFTER_WALL_JUMP {
             self.jump_of_wall_time += delta_time;
+        }
+        if self.fall_of_wall.0 < COYOTE_TIME_WALL_JUMP {
+            self.fall_of_wall.0 += delta_time;
         }
         const MOVE_SPEED: f32 = 101.0;
         const MOVE_ACCELERATION: f32 = 22.0;
@@ -367,8 +370,16 @@ impl Player {
                 self.facing_left = input.x.is_sign_negative();
             }
 
+            let wall_jump_state = if let Some((_, direction)) = self.wall_climbing {
+                Some(direction)
+            } else if self.fall_of_wall.0 < COYOTE_TIME_WALL_JUMP {
+                Some(self.fall_of_wall.1)
+            } else {
+                None
+            };
+
             if is_key_pressed(KeyCode::Space) {
-                if let Some((_, direction)) = self.wall_climbing {
+                if let Some(direction) = wall_jump_state {
                     self.jump_time = delta_time;
                     self.velocity.y = -JUMP_FORCE * 1.2;
                     self.on_ground = false;
@@ -440,9 +451,9 @@ impl Player {
                     self.wall_climbing = Some((delta_time, direction));
                 }
             } else {
-                if self.wall_climbing.is_some() {
+                if let Some((_, direction)) = self.wall_climbing {
                     // wall climbing was canceled
-                    self.fall_of_wall = (delta_time, 0.0);
+                    self.fall_of_wall = (delta_time, direction);
                 }
                 self.wall_climbing = None;
             }
