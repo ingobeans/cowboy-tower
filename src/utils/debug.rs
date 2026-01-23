@@ -47,7 +47,7 @@ impl Display for DebugFlags {
                 if first {
                     first = false;
                 } else {
-                    write!(f, "\n")?;
+                    writeln!(f)?;
                 }
                 write!(f, "✓ {key}")?;
             }

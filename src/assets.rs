@@ -455,7 +455,7 @@ impl Level {
             }
             let tile = tile[3] - 1;
             // handle spawner
-            if (tile == 481) || (tile >= 640 && tile <= 644) {
+            if (tile == 481) || (640..=644).contains(&tile) {
                 let x = i % width as usize;
                 let y = i / width as usize;
 
@@ -471,7 +471,7 @@ impl Level {
                     let ni = nx + ny * width as usize;
                     let tile = data[ni][3];
 
-                    if tile > 0 + 1 && tile < 32 + 1 {
+                    if tile > 1 && tile < 32 + 1 {
                         let pos = vec2(
                             (nx * 8) as f32 + (min_x * 8) as f32,
                             (ny * 8) as f32 + (min_y * 8) as f32,
