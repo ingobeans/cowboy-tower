@@ -344,9 +344,9 @@ impl Player {
                 self.velocity.y += GRAVITY * delta_time;
             } else if let Some((time, _)) = self.wall_climbing {
                 // handle gliding down wall when wall climbing
-                const STOP_TIME: f32 = 0.6;
-                const MAX_SPEED: f32 = 16.0;
-                const ACCELERATE_TIME: f32 = 1.0;
+                const STOP_TIME: f32 = 0.4;
+                const MAX_SPEED: f32 = 48.0;
+                const ACCELERATE_TIME: f32 = 1.5;
 
                 // the speed of which you glide should follow a curve that looks something like:
                 //
