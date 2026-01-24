@@ -77,7 +77,7 @@ impl Enemy {
                     }
                 }
                 EnemySpawner::Trigger(id) => {
-                    if player_tile[3] > 608 + 1
+                    if player_tile[3] > 608
                         && player_tile[3] <= 612 + 1
                         && (player_tile[3] - (608 + 1)) as u8 == *id
                     {
