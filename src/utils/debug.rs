@@ -11,6 +11,7 @@ pub struct DebugFlags {
     pub boss: bool,
     pub centres: bool,
     pub horses: bool,
+    pub special: bool,
 }
 pub static DEBUG_FLAGS: LazyLock<DebugFlags> = LazyLock::new(|| {
     #[cfg(debug_assertions)]
@@ -21,6 +22,7 @@ pub static DEBUG_FLAGS: LazyLock<DebugFlags> = LazyLock::new(|| {
         let flags = DebugFlags {
             paths: args.contains(&"paths"),
             boss: args.contains(&"boss"),
+            special: args.contains(&"special"),
             horses: args.contains(&"horses"),
             centres: args.contains(&"centre") || args.contains(&"center"),
         };

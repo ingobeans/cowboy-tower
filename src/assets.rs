@@ -10,7 +10,7 @@ use macroquad::prelude::*;
 
 use crate::{
     enemies::{ENEMIES, EnemySpawner, LevelEnemyData},
-    utils::create_camera,
+    utils::{DEBUG_FLAGS, create_camera},
 };
 
 pub struct Assets {
@@ -328,7 +328,7 @@ impl Level {
                     floor_height = y;
                 }
             }
-            for t in &tile[..3] {
+            for t in &tile[..if DEBUG_FLAGS.special { 4 } else { 3 }] {
                 if *t == 0 {
                     continue;
                 }
