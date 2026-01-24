@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::assets::Level;
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct DebugFlags {
     pub paths: bool,
     pub boss: bool,
@@ -31,10 +31,7 @@ pub static DEBUG_FLAGS: LazyLock<DebugFlags> = LazyLock::new(|| {
     }
     #[cfg(not(debug_assertions))]
     {
-        DebugFlags {
-            show_paths: false,
-            show_boss_debug: false,
-        }
+        DebugFlags::default()
     }
 });
 impl Display for DebugFlags {
