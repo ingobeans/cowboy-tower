@@ -484,12 +484,22 @@ impl Player {
             lasso.speed = 0.0;
         }
 
+        let min_x = if world.name != "0-0.tmx" {
+            world.min_pos.x
+        } else {
+            world.find_marker(3).x
+        };
+        let max_x = if world.name != "0-0.tmx" {
+            world.max_pos.x
+        } else {
+            world.find_marker(1).x - 16.0 * 8.0 + 8.0
+        };
         let mut target_camera_pos = self.camera_pos;
         target_camera_pos.x = self
             .pos
             .x
-            .max(world.min_pos.x + SCREEN_WIDTH / 2.0 - 64.0)
-            .min(world.max_pos.x + 16.0 * 8.0 - (SCREEN_WIDTH / 2.0 - 64.0));
+            .max(min_x + SCREEN_WIDTH / 2.0 - 64.0)
+            .min(max_x + 16.0 * 8.0 - (SCREEN_WIDTH / 2.0 - 64.0));
         let target = self.pos.y - 22.0;
         if target_camera_pos.y < target {
             target_camera_pos.y = target;
