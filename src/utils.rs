@@ -1,3 +1,4 @@
+use gamepads::{Button, Gamepads};
 use macroquad::prelude::*;
 #[cfg(test)]
 use std::f32::consts::PI;
@@ -29,8 +30,43 @@ pub fn create_camera(w: f32, h: f32) -> Camera2D {
     }
 }
 
-pub fn get_input_axis() -> Vec2 {
+pub fn is_lasso_pressed(gamepad_engine: &mut Gamepads) -> bool {
+    is_mouse_button_pressed(MouseButton::Right)
+        || gamepad_engine
+            .all()
+            .any(|f| f.is_just_pressed(Button::FrontLeftUpper))
+}
+pub fn is_lasso_down(gamepad_engine: &mut Gamepads) -> bool {
+    is_mouse_button_down(MouseButton::Right)
+        || gamepad_engine
+            .all()
+            .any(|f| f.is_currently_pressed(Button::FrontLeftUpper))
+}
+pub fn is_shoot_pressed(gamepad_engine: &mut Gamepads) -> bool {
+    is_mouse_button_pressed(MouseButton::Left)
+        || gamepad_engine
+            .all()
+            .any(|f| f.is_just_pressed(Button::FrontRightUpper))
+}
+
+pub fn is_jump_pressed(gamepad_engine: &mut Gamepads) -> bool {
+    is_key_pressed(KeyCode::Space)
+        || gamepad_engine
+            .all()
+            .any(|f| f.is_just_pressed(Button::ActionRight))
+}
+
+pub fn get_input_axis(gamepad_engine: &mut Gamepads) -> Vec2 {
     let mut i = Vec2::ZERO;
+
+    for controller in gamepad_engine.all() {
+        let axis: Vec2 = controller.left_stick().into();
+        if axis == Vec2::ZERO {
+            continue;
+        }
+        return axis;
+    }
+
     if is_key_down(KeyCode::A) {
         i.x -= 1.0;
     }

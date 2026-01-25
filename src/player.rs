@@ -1,5 +1,6 @@
 use std::f32::consts::PI;
 
+use gamepads::Gamepads;
 use macroquad::prelude::*;
 
 use crate::{
@@ -146,6 +147,7 @@ impl Player {
         world: &Level,
         projectiles: &mut Vec<Projectile>,
         horses: &mut [Horse],
+        gamepad_engine: &mut Gamepads,
     ) {
         if let Some(death) = &mut self.death {
             death.0 += delta_time;
@@ -205,7 +207,7 @@ impl Player {
         const MOVE_ACCELERATION: f32 = 22.0;
         const JUMP_FORCE: f32 = 160.0;
         self.time += delta_time;
-        let input = get_input_axis();
+        let input = get_input_axis(gamepad_engine);
 
         if self.on_ground {
             self.jump_time = 0.0;
@@ -216,7 +218,7 @@ impl Player {
         if self.shooting > 0.0 {
             self.shooting += delta_time;
         } else if self.active_lasso.as_ref().is_none_or(|f| f.time == 0.0)
-            && is_mouse_button_pressed(MouseButton::Left)
+            && is_shoot_pressed(gamepad_engine)
             && self.riding.is_none()
             && self.wall_climbing.is_none()
         {
@@ -293,7 +295,7 @@ impl Player {
                     .lerp(normalized * MOVE_SPEED, delta_time * 5.0);
                 self.velocity = self.velocity.lerp(self.velocity * 1.2, delta_time * 5.0);
             }
-            if !is_mouse_button_down(MouseButton::Right) {
+            if !is_lasso_down(gamepad_engine) {
                 self.active_lasso = None;
             }
         } else {
@@ -320,7 +322,7 @@ impl Player {
                 let closest = *targets[0];
                 self.lasso_target = Some(closest);
             }
-            if is_mouse_button_pressed(MouseButton::Right)
+            if is_lasso_pressed(gamepad_engine)
                 && let Some(target) = &self.lasso_target
             {
                 self.active_lasso = Some(ActiveLasso {
@@ -382,7 +384,7 @@ impl Player {
                 None
             };
 
-            if is_key_pressed(KeyCode::Space) {
+            if is_jump_pressed(gamepad_engine) {
                 if let Some(direction) = wall_jump_state {
                     self.jump_time = delta_time;
                     self.velocity.y = -JUMP_FORCE * 1.2;

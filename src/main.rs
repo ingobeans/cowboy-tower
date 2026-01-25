@@ -1,5 +1,6 @@
 use std::{env::args, f32::consts::PI};
 
+use gamepads::Gamepads;
 use macroquad::{miniquad::window::screen_size, prelude::*};
 
 use crate::{
@@ -162,6 +163,7 @@ struct Game<'a> {
     level_transition_time: f32,
     height: f32,
     world_manager: WorldManager,
+    gamepad_engine: Gamepads,
 }
 impl<'a> Game<'a> {
     fn new(assets: &'a Assets, level: usize) -> Self {
@@ -183,6 +185,7 @@ impl<'a> Game<'a> {
             enemies: load_enemies(assets.levels[level].enemies.clone()),
             boss: load_boss(&assets.levels[level]),
             horses: assets.levels[level].horses.clone(),
+            gamepad_engine: Gamepads::new(),
             projectiles: Vec::new(),
             fade_timer: 0.0,
             level_complete: None,
@@ -204,6 +207,7 @@ impl<'a> Game<'a> {
         self.player.facing_left = !self.level.is_multiple_of(2);
     }
     fn update(&mut self) {
+        self.gamepad_engine.poll();
         // cap delta time to a minimum of 60 fps.
         let delta_time = get_frame_time().min(1.0 / 60.0);
         self.time += delta_time;
@@ -233,6 +237,7 @@ impl<'a> Game<'a> {
                 &self.assets.levels[self.level],
                 &mut self.projectiles,
                 &mut self.horses,
+                &mut self.gamepad_engine,
             );
         }
         let level = &self.assets.levels[self.level];
@@ -335,6 +340,7 @@ impl<'a> Game<'a> {
                 &self.assets.levels[self.level],
                 &mut self.projectiles,
                 &mut self.horses,
+                &mut self.gamepad_engine,
             );
         }
 
