@@ -525,7 +525,6 @@ impl Player {
             self.camera_pos = target_camera_pos;
         }
         if level.name == "0-0.tmx" {
-            dbg!(self.camera_pos.y);
             self.camera_pos.y = self.camera_pos.y.min(-22.0);
         }
     }
