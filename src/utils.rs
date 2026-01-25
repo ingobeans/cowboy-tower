@@ -74,13 +74,13 @@ pub fn get_input_axis(gamepad_engine: &mut Gamepads) -> Vec2 {
             let up = controller.is_currently_pressed(Button::DPadUp);
             let down = controller.is_currently_pressed(Button::DPadDown);
             if left || right || up || down {
-                let horizontal = 0.0 + if left { 1.0 } else { 0.0 } - if right { 1.0 } else { 0.0 };
+                let horizontal = 0.0 - if left { 1.0 } else { 0.0 } + if right { 1.0 } else { 0.0 };
                 let vertical = 0.0 + if down { 1.0 } else { 0.0 } - if up { 1.0 } else { 0.0 };
                 return vec2(horizontal, vertical);
             }
             continue;
         }
-        return axis;
+        return axis.normalize_or_zero();
     }
 
     if is_key_down(KeyCode::A) {
