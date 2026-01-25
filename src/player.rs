@@ -144,7 +144,7 @@ impl Player {
     pub fn update(
         &mut self,
         delta_time: f32,
-        world: &Level,
+        level: &Level,
         projectiles: &mut Vec<Projectile>,
         horses: &mut [Horse],
         gamepad_engine: &mut Gamepads,
@@ -161,7 +161,7 @@ impl Player {
                     self.pos,
                     &mut self.velocity,
                     delta_time,
-                    world,
+                    level,
                     true,
                     false,
                 );
@@ -300,7 +300,7 @@ impl Player {
             }
         } else {
             // find nearest lasso target in direction player is facing
-            let mut targets: Vec<&Vec2> = world
+            let mut targets: Vec<&Vec2> = level
                 .lasso_targets
                 .iter()
                 .filter(|f| {
@@ -445,7 +445,7 @@ impl Player {
                 self.pos,
                 &mut self.velocity,
                 delta_time,
-                world,
+                level,
                 true,
                 self.in_boss_battle,
             );
@@ -484,15 +484,15 @@ impl Player {
             lasso.speed = 0.0;
         }
 
-        let min_x = if world.name != "0-0.tmx" {
-            world.min_pos.x
+        let min_x = if level.name != "0-0.tmx" {
+            level.min_pos.x
         } else {
-            world.find_marker(3).x
+            level.find_marker(3).x
         };
-        let max_x = if world.name != "0-0.tmx" {
-            world.max_pos.x
+        let max_x = if level.name != "0-0.tmx" {
+            level.max_pos.x
         } else {
-            world.find_marker(1).x - 16.0 * 8.0 + 8.0
+            level.find_marker(1).x - 16.0 * 8.0 + 8.0
         };
         let mut target_camera_pos = self.camera_pos;
         target_camera_pos.x = self
@@ -524,7 +524,7 @@ impl Player {
         } else {
             self.camera_pos = target_camera_pos;
         }
-        if world.name == "0-0.tmx" {
+        if level.name == "0-0.tmx" {
             dbg!(self.camera_pos.y);
             self.camera_pos.y = self.camera_pos.y.min(-22.0);
         }
