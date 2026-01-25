@@ -206,7 +206,7 @@ impl Boss for Henry {
 
         if !dead && self.activated > 0.0 {
             for projectile in projectiles {
-                if projectile.friendly && self.pos.distance(projectile.pos) <= 16.0 {
+                if projectile.friendly && (self.pos - 8.0).distance(projectile.pos) <= 18.0 {
                     projectile.dead = true;
                     self.health = self.health.saturating_sub(1);
                     self.blood_effects.push((
