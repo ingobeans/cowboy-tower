@@ -129,19 +129,35 @@ impl WorldManager {
 
         for world_index in 0..=2 {
             let (wall_color, border_color, _) = self.world_colors[world_index];
+            let min_x = if level_index > 0 {
+                level.min_pos.x
+            } else {
+                level.find_marker(0).x
+            };
+            let max_x = if level_index > 0 {
+                level.max_pos.x
+            } else {
+                level.find_marker(1).x - 16.0 * 8.0 + 8.0
+            };
+
+            let offset = if level_index == 0 {
+                level.find_marker(0).y - 3.0 * 8.0
+            } else {
+                0.0
+            };
 
             draw_rectangle(
-                level.min_pos.x - 2.0,
-                -self.world_heights[world_index].1 + y,
-                level.max_pos.x - level.min_pos.x + 16.0 * 8.0 + 4.0,
-                -(self.world_heights[world_index].0 + FLOOR_PADDING),
+                min_x - 2.0,
+                -self.world_heights[world_index].1 + y + offset,
+                max_x - min_x + 16.0 * 8.0 + 4.0,
+                -(self.world_heights[world_index].0 + FLOOR_PADDING) - offset,
                 border_color,
             );
             draw_rectangle(
-                level.min_pos.x,
-                -self.world_heights[world_index].1 + y,
-                level.max_pos.x - level.min_pos.x + 16.0 * 8.0,
-                -(self.world_heights[world_index].0 + FLOOR_PADDING),
+                min_x,
+                -self.world_heights[world_index].1 + y + offset,
+                max_x - min_x + 16.0 * 8.0,
+                -(self.world_heights[world_index].0 + FLOOR_PADDING) - offset,
                 wall_color,
             );
         }
@@ -389,23 +405,34 @@ impl<'a> Game<'a> {
         );
         gl_use_default_material();
 
+        let ground_y = self.assets.levels[0].find_marker(2).y;
+        draw_rectangle(
+            screen_offset.x,
+            ground_y - 1.0 + self.height,
+            actual_screen_width / scale_factor,
+            actual_screen_height / scale_factor,
+            Color::from_hex(0xefb775),
+        );
         self.world_manager
             .draw_tower(self.height, self.assets, self.level);
 
-        SKY_MATERIAL.set_uniform(
-            "y",
-            -self.height + camera_offset - level.floor_height + 56.0,
-        );
-        SKY_MATERIAL.set_uniform("height", level.get_height());
-        gl_use_material(&SKY_MATERIAL);
-        draw_rectangle(
-            level.min_pos.x + 2.0,
-            level.roof_height + 2.0,
-            (level.min_pos.x - level.max_pos.x).abs() + 16.0 * 8.0 - 4.0,
-            level.get_height() - 4.0,
-            SKY_COLOR,
-        );
-        gl_use_default_material();
+        if self.level > 0 {
+            SKY_MATERIAL.set_uniform(
+                "y",
+                -self.height + camera_offset - level.floor_height + 56.0,
+            );
+            SKY_MATERIAL.set_uniform("height", level.get_height());
+            gl_use_material(&SKY_MATERIAL);
+
+            draw_rectangle(
+                level.min_pos.x + 2.0,
+                level.roof_height + 2.0,
+                (level.min_pos.x - level.max_pos.x).abs() + 16.0 * 8.0 - 4.0,
+                level.get_height() - 4.0,
+                SKY_COLOR,
+            );
+            gl_use_default_material();
+        }
 
         let t = &level.camera.render_target.as_ref().unwrap().texture;
         draw_texture(t, level.min_pos.x, level.min_pos.y, WHITE);
