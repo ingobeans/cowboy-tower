@@ -170,7 +170,7 @@ impl Player {
         }
         if let Some(dialogue) = &mut self.active_dialogue {
             dialogue.time += delta_time;
-            if is_key_pressed(KeyCode::E) {
+            if is_interact_pressed(gamepad_engine) {
                 dialogue.closed = true;
             }
             return;
