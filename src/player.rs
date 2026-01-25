@@ -510,7 +510,6 @@ impl Player {
                 target_camera_pos.y = max_delta * if delta < 0.0 { -1.0 } else { 1.0 } + target;
             }
         }
-
         if let Some(riding) = &mut self.riding
             && riding.camera_lerp_time > 0.0
         {
@@ -524,6 +523,10 @@ impl Player {
             }
         } else {
             self.camera_pos = target_camera_pos;
+        }
+        if world.name == "0-0.tmx" {
+            dbg!(self.camera_pos.y);
+            self.camera_pos.y = self.camera_pos.y.min(-22.0);
         }
     }
     fn find_mountable_horse<'a>(&self, horses: &'a mut [Horse]) -> Option<(usize, &'a mut Horse)> {
