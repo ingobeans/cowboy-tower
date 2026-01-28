@@ -53,7 +53,7 @@ impl Assets {
         );
 
         let mut levels = Vec::new();
-        static LEVELS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/assets/levels");
+        static LEVELS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/levels");
         for file in LEVELS_DIR.files() {
             let name = file
                 .path()
