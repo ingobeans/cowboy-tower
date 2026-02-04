@@ -6,6 +6,23 @@ fn ceil_g(a: f32) -> f32 {
     if a < 0.0 { a.floor() } else { a.ceil() }
 }
 
+pub fn raycast(from: Vec2, to: Vec2, world: &Level) -> Option<Vec2> {
+    const STEP_SIZE: f32 = 0.5;
+    let mut pos = (from / 8.0).floor();
+    let to = (to / 8.0).floor();
+    let delta = (to - pos).normalize_or_zero();
+
+    while pos.distance(to) > STEP_SIZE {
+        pos += delta * STEP_SIZE;
+        let tx = pos.x.floor();
+        let ty = pos.y.floor();
+        if world.get_tile(tx as _, ty as _)[1] > 0 {
+            return Some(pos);
+        }
+    }
+    None
+}
+
 pub fn update_physicsbody(
     pos: Vec2,
     velocity: &mut Vec2,

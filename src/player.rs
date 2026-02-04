@@ -309,12 +309,12 @@ impl Player {
                 .lasso_targets
                 .iter()
                 .filter(|f| {
-                    f.distance(self.pos) <= MAX_LASSO_DISTANCE
-                        && if self.facing_left {
-                            f.x < self.pos.x
-                        } else {
-                            f.x > self.pos.x
-                        }
+                    (if self.facing_left {
+                        f.x < self.pos.x
+                    } else {
+                        f.x > self.pos.x
+                    }) && f.distance(self.pos) <= MAX_LASSO_DISTANCE
+                        && raycast(**f, self.pos, level).is_none()
                 })
                 .collect();
             self.lasso_target = None;
