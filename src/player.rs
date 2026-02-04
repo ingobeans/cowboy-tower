@@ -16,6 +16,7 @@ struct ActiveLasso {
     hook_pos: Vec2,
     speed: f32,
     lasso_length: f32,
+    space_activated: bool,
     in_swing: bool,
     /// When further away than [lasso_length], player will lerp towards the nearest point
     /// on the lasso arch. This is the source that is used to find the nearest point.
@@ -295,7 +296,11 @@ impl Player {
                     .lerp(normalized * MOVE_SPEED, delta_time * 5.0);
                 self.velocity = self.velocity.lerp(self.velocity * 1.2, delta_time * 5.0);
             }
-            if !is_lasso_down(gamepad_engine) {
+            if lasso.space_activated {
+                if !is_jump_down(gamepad_engine) {
+                    self.active_lasso = None;
+                }
+            } else if !is_lasso_down(gamepad_engine) {
                 self.active_lasso = None;
             }
         } else {
@@ -332,6 +337,7 @@ impl Player {
                     lasso_length: target.distance(self.pos),
                     in_swing: false,
                     lerp_source: self.pos,
+                    space_activated: false,
                 });
             }
 
@@ -417,8 +423,23 @@ impl Player {
                         self.velocity.y = -JUMP_FORCE;
                         self.on_ground = false;
                     } else {
-                        // failed to mount horse or jump.
-                        self.failed_horse_mount_time = HORSE_MOUNT_LEEWAY;
+                        // check if we can lasso
+                        if self.active_lasso.is_none()
+                            && let Some(target) = &self.lasso_target
+                        {
+                            self.active_lasso = Some(ActiveLasso {
+                                time: delta_time,
+                                hook_pos: *target,
+                                speed: f32::NAN,
+                                lasso_length: target.distance(self.pos),
+                                in_swing: false,
+                                lerp_source: self.pos,
+                                space_activated: true,
+                            });
+                        } else {
+                            // failed to mount horse or jump.
+                            self.failed_horse_mount_time = HORSE_MOUNT_LEEWAY;
+                        }
                     }
                 }
             }

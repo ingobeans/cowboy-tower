@@ -55,6 +55,12 @@ pub fn is_jump_pressed(gamepad_engine: &mut Gamepads) -> bool {
             .all()
             .any(|f| f.is_just_pressed(Button::ActionRight))
 }
+pub fn is_jump_down(gamepad_engine: &mut Gamepads) -> bool {
+    is_key_down(KeyCode::Space)
+        || gamepad_engine
+            .all()
+            .any(|f| f.is_currently_pressed(Button::ActionRight))
+}
 pub fn is_interact_pressed(gamepad_engine: &mut Gamepads) -> bool {
     is_key_pressed(KeyCode::E)
         || gamepad_engine
