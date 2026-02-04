@@ -27,7 +27,7 @@ pub fn update_physicsbody(
     pos: Vec2,
     velocity: &mut Vec2,
     delta_time: f32,
-    world: &Level,
+    level: &Level,
     tall: bool,
     enable_special_collisions: bool,
 ) -> (Vec2, bool, Option<u16>, Option<f32>) {
@@ -50,14 +50,14 @@ pub fn update_physicsbody(
     }
 
     for (tx, ty) in tiles_y {
-        let mut tile = world.get_tile((tx) as i16, (ty) as i16)[1];
+        let mut tile = level.get_tile((tx) as i16, (ty) as i16)[1];
         if !grounded && tile > 0 && DEATH_TILES.contains(&(tile - 1)) {
             touched_death_tile = Some(tile - 1);
             continue;
         }
         if enable_special_collisions
             && tile == 0
-            && world.get_tile(tx as i16, ty as i16)[3] == 864 + 1
+            && level.get_tile(tx as i16, ty as i16)[3] == 864 + 1
         {
             tile = 1;
         }
@@ -87,14 +87,14 @@ pub fn update_physicsbody(
 
     let mut colliding_with_wall_climb_target = None;
     for (tx, ty) in tiles_x {
-        let tile_data = world.get_tile((tx) as i16, (ty) as i16);
+        let tile_data = level.get_tile((tx) as i16, (ty) as i16);
         let mut tile = tile_data[1];
         if tile > 0 && DEATH_TILES.contains(&(tile - 1)) {
             continue;
         }
         if enable_special_collisions
             && tile == 0
-            && world.get_tile(tx as i16, ty as i16)[3] == 864 + 1
+            && level.get_tile(tx as i16, ty as i16)[3] == 864 + 1
         {
             tile = 1;
         }
