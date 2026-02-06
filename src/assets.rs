@@ -432,7 +432,7 @@ impl Level {
                     (nx * 8) as f32 + (min_x * 8) as f32,
                     (ny * 8) as f32 + (min_y * 8) as f32,
                 );
-                if tile > 0 && tile < 32 {
+                if tile > 1 && tile < 32 {
                     // find enemy here
                     let enemy = enemies.iter_mut().find(|f| f.pos == pos).unwrap();
                     enemy.path_index = Some((path_index, counter));
