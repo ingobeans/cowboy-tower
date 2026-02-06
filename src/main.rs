@@ -823,7 +823,6 @@ async fn main() {
                 break 'outer;
             }
         }
-        warn!("no level by name '{arg}' found. (trying to load from command line argument)");
     }
     let mut game = Game::new(&assets, level);
 
