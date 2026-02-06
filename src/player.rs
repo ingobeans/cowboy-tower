@@ -297,7 +297,7 @@ impl Player {
                 self.velocity = self.velocity.lerp(self.velocity * 1.2, delta_time * 5.0);
             }
             if lasso.space_activated {
-                if !is_jump_down(gamepad_engine) {
+                if !is_jump_down(gamepad_engine) && !is_lasso_down(gamepad_engine) {
                     self.active_lasso = None;
                 }
             } else if !is_lasso_down(gamepad_engine) {
