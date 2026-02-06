@@ -221,7 +221,7 @@
 </chunk>
   </data>
  </layer>
- <layer id="1" name="Collision" width="32" height="18" visible="0">
+ <layer id="1" name="Collision" width="32" height="18">
   <data encoding="csv">
    <chunk x="32" y="-16" width="16" height="16">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

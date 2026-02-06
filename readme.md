@@ -12,6 +12,8 @@ theres bandits, horses, lasers, lava, wall climbing, monsters and mooooreeeeeeee
 
 all assets and code made by me. no ai (slop) here!
 
+project made entirely for Hackclub's [flavortown](https://flavortown.hackclub.com/)!
+
 the project is written in rust, but also uses GLSL shaders. as of writing this the project is almost nearing 4000 lines !
 
 ![madeinrustbutton.png](./web/madeinrustbutton.png)
