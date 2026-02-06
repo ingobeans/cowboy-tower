@@ -156,6 +156,7 @@ impl<'a> Game<'a> {
         // would yield other RNG than playing through the game until the level
         rand::srand(level as u64);
         self.level = level;
+        self.fog_points = load_fog_points(&self.assets.levels[level]);
         self.projectiles.clear();
         self.enemies = load_enemies(self.assets.levels[level].enemies.clone());
         self.boss = load_boss(&self.assets.levels[level]);
