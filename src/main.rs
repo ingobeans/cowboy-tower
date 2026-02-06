@@ -85,6 +85,24 @@ fn load_boss(level: &Level) -> Option<Box<dyn Boss>> {
     level.boss.map(|(i, p)| new_boss(i, p))
 }
 
+fn load_fog_points(level: &Level) -> Vec<FogPoint> {
+    let density = 0.01;
+    let points_amt = level.fog_points.len();
+    let amt = (points_amt as f32 * 8.0 * 8.0 * density) as u32;
+    let mut points = Vec::new();
+    for _ in 0..amt {
+        let index = rand::gen_range(0, points_amt);
+        let localized_offset = vec2(rand::gen_range(0.0, 8.0), rand::gen_range(0.0, 8.0));
+        let pos = level.fog_points[index] + localized_offset;
+        points.push(FogPoint { pos });
+    }
+    points
+}
+
+struct FogPoint {
+    pos: Vec2,
+}
+
 struct Game<'a> {
     assets: &'a Assets,
     camera: Camera2D,
@@ -101,6 +119,7 @@ struct Game<'a> {
     height: f32,
     world_manager: WorldManager,
     gamepad_engine: Gamepads,
+    fog_points: Vec<FogPoint>,
 }
 impl<'a> Game<'a> {
     fn new(assets: &'a Assets, level: usize) -> Self {
@@ -121,6 +140,7 @@ impl<'a> Game<'a> {
             camera: Camera2D::default(),
             enemies: load_enemies(assets.levels[level].enemies.clone()),
             boss: load_boss(&assets.levels[level]),
+            fog_points: load_fog_points(&assets.levels[level]),
             horses: assets.levels[level].horses.clone(),
             gamepad_engine: Gamepads::new(),
             projectiles: Vec::new(),
@@ -317,6 +337,7 @@ impl<'a> Game<'a> {
             self.camera.target.x - actual_screen_width / scale_factor / 2.0,
             self.camera.target.y - actual_screen_height / scale_factor / 2.0,
         );
+
         draw_rectangle(
             screen_offset.x - 2.0,
             screen_offset.y - 2.0,
@@ -334,6 +355,7 @@ impl<'a> Game<'a> {
             actual_screen_height / scale_factor,
             Color::from_hex(0xefb775),
         );
+        // self.world_manager.draw_clouds(self.assets);
         self.world_manager
             .draw_tower(self.height, self.assets, self.level);
 
@@ -355,6 +377,7 @@ impl<'a> Game<'a> {
             gl_use_default_material();
         }
 
+        // draw level
         let t = &level.camera.render_target.as_ref().unwrap().texture;
         draw_texture(t, level.min_pos.x, level.min_pos.y, WHITE);
 
@@ -756,6 +779,17 @@ impl<'a> Game<'a> {
             );
         }
         self.player.time_since_last_boss_defeated += delta_time;
+        // draw fog
+        for point in self.fog_points.iter() {
+            let t = &self.assets.clouds.frames[0].0;
+            draw_texture(
+                t,
+                point.pos.x - 32.0,
+                point.pos.y - 32.0,
+                WHITE.with_alpha(0.02),
+            );
+        }
+
         draw_boss_badges(
             self.assets,
             self.player.time_since_last_boss_defeated,

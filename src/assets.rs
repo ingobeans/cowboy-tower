@@ -19,6 +19,7 @@ pub struct Assets {
     pub boss_badges: Spritesheet,
     pub get_badge: Animation,
 
+    pub clouds: Animation,
     pub torso: AnimationsGroup,
     pub legs: AnimationsGroup,
     pub elevator: AnimationsGroup,
@@ -78,6 +79,7 @@ impl Assets {
             ),
             get_badge: Animation::from_file(include_bytes!("../assets/get_badge.ase")),
             font: load_ttf_font_from_bytes(include_bytes!("../assets/font.ttf")).unwrap(),
+            clouds: Animation::from_file(include_bytes!("../assets/clouds.ase")),
             torso: AnimationsGroup::from_file(include_bytes!("../assets/torso.ase")),
             legs: AnimationsGroup::from_file(include_bytes!("../assets/legs.ase")),
             elevator: AnimationsGroup::from_file(include_bytes!("../assets/elevator.ase")),
@@ -168,6 +170,8 @@ pub struct Level {
     pub lasso_targets: Vec<Vec2>,
     pub animated_tiles: Vec<(Vec2, usize)>,
 
+    pub fog_points: Vec<Vec2>,
+
     pub forced_player_spawn: Option<Vec2>,
     pub forced_level_end: Option<Vec2>,
 }
@@ -243,6 +247,7 @@ impl Level {
         let mut boss = None;
 
         let mut enemy_paths = Vec::new();
+        let mut fog_points = Vec::new();
 
         let mut forced_player_spawn = None;
         let mut forced_level_end = None;
@@ -265,6 +270,8 @@ impl Level {
                             lasso_targets.push(pos + vec2(4.0, 4.0));
                         } else if *tile == 512 + 1 || *tile == 513 + 1 {
                             data[x + y * width as usize][index - 1] = *tile;
+                        } else if *tile == 1024 + 1 {
+                            fog_points.push(pos);
                         } else if *tile <= 32 && *tile > 1 {
                             enemies.push(LevelEnemyData {
                                 pos,
@@ -552,6 +559,7 @@ impl Level {
             max_pos: vec2((max_x * 8) as f32, (max_y * 8) as f32),
             forced_player_spawn,
             forced_level_end,
+            fog_points,
             enemy_paths,
             min_pos,
             boss,
