@@ -26,7 +26,7 @@ pub static DEBUG_FLAGS: LazyLock<DebugFlags> = LazyLock::new(|| {
             horses: args.contains(&"horses"),
             centres: args.contains(&"centre") || args.contains(&"center"),
         };
-        println!("{flags}");
+        print!("{flags}");
         flags
     }
     #[cfg(not(debug_assertions))]
@@ -51,7 +51,7 @@ impl Display for DebugFlags {
                 write!(f, "✓ {key}")?;
             }
         }
-        Ok(())
+        if first { Ok(()) } else { writeln!(f) }
     }
 }
 
