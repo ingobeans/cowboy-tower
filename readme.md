@@ -12,6 +12,12 @@ theres bandits, horses, lasers, lava, wall climbing, monsters and mooooreeeeeeee
 
 all assets and code made by me. no ai (slop) here!
 
+the project is written in rust, but also uses GLSL shaders. as of writing this the project is almost nearing 4000 lines !
+
+![madeinrustbutton.png](./web/madeinrustbutton.png)
+![madeinaseprite.png](./web/madeinaseprite.png)
+![madeintiledbutton.png](./web/madeintiledbutton.png)
+
 ## building
 
 the project is made in rust, so youll need that installed.
