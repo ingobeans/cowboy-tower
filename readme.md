@@ -4,7 +4,7 @@
 
 cowboy tower is an action platformer written in rust hwere you are cowboy!! you need to climb the tower and defeat bosses to reach the top! 
 
-theres bandits, horses, lasers, lava, wall climbing, monsters and mooooreeeeeeee!!!!!!!
+theres bandits, lasso-swinging, horses, lasers, lava, wall climbing, monsters and mooooreeeeeeee!!!!!!!
 
 ![cowboy](https://github.com/ingobeans/cowboy-tower/blob/main/web/cowboy.png?raw=true)
 
