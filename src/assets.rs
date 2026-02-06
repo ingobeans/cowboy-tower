@@ -270,8 +270,6 @@ impl Level {
                             lasso_targets.push(pos + vec2(4.0, 4.0));
                         } else if *tile == 512 + 1 || *tile == 513 + 1 {
                             data[x + y * width as usize][index - 1] = *tile;
-                        } else if *tile == 1024 + 1 {
-                            fog_points.push(pos);
                         } else if *tile <= 32 && *tile > 1 {
                             enemies.push(LevelEnemyData {
                                 pos,
@@ -295,6 +293,10 @@ impl Level {
                         animated_tiles.push((pos, 0));
                     } else if *tile == 256 + 1 {
                         animated_tiles.push((pos, 1));
+                    }
+                    if *tile == 1024 + 1 {
+                        data[x + y * width as usize][index] = 0;
+                        fog_points.push(pos);
                     }
                 }
             }
