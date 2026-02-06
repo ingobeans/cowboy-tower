@@ -802,6 +802,7 @@ impl<'a> Game<'a> {
 
 #[macroquad::main("cowboy tower")]
 async fn main() {
+    info!("cowboy tower v{}", env!("CARGO_PKG_VERSION"));
     //miniquad::window::set_window_size(SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32);
     let assets = Assets::load();
     let mut level = 0;
