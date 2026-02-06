@@ -355,7 +355,6 @@ impl<'a> Game<'a> {
             actual_screen_height / scale_factor,
             Color::from_hex(0xefb775),
         );
-        // self.world_manager.draw_clouds(self.assets);
         self.world_manager
             .draw_tower(self.height, self.assets, self.level);
 
