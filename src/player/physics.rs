@@ -52,7 +52,9 @@ pub fn update_physicsbody(
     for (tx, ty) in tiles_y {
         let mut tile = level.get_tile((tx) as i16, (ty) as i16)[1];
         if !grounded && tile > 0 && DEATH_TILES.contains(&(tile - 1)) {
-            touched_death_tile = Some(tile - 1);
+            if ty * 8.0 > pos.y {
+                touched_death_tile = Some(tile - 1);
+            }
             continue;
         }
         if enable_special_collisions
