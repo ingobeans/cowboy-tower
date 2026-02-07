@@ -400,7 +400,9 @@ impl<'a> Game<'a> {
                 elevator_pos.x,
                 old.roof_height + (old.min_pos.y - (level.max_pos.y + 16.0)).abs(),
                 elevator_texture.width(),
-                old.player_spawn.y - elevator_texture.height() + 8.0 - old.roof_height,
+                old.forced_level_end.unwrap_or(old.player_spawn).y - elevator_texture.height()
+                    + 8.0
+                    - old.roof_height,
                 self.world_manager.world_colors[old.get_world_index() as usize].2,
             );
             draw_texture(elevator_texture, elevator_pos.x, elevator_pos.y, WHITE);
