@@ -448,6 +448,10 @@ impl Player {
         if !self.on_ground {
             self.last_touched_ground += delta_time;
         }
+        #[cfg(debug_assertions)]
+        let noclip = is_key_down(KeyCode::LeftShift);
+        #[cfg(not(debug_assertions))]
+        let noclip = false;
 
         let old_velocity = self.velocity;
         let touched_death_tile;
@@ -456,6 +460,10 @@ impl Player {
         if let Some(riding) = &self.riding {
             self.pos =
                 horses[riding.horse_index].pos + horses[riding.horse_index].get_normal() * 16.0;
+        } else if noclip {
+            self.pos += input.normalize_or_zero() * delta_time * 350.0;
+            self.velocity = Vec2::ZERO;
+            self.on_ground = false;
         } else {
             (
                 self.pos,
