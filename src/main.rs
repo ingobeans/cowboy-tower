@@ -631,7 +631,9 @@ impl<'a> Game<'a> {
                     let tx = (projectile.pos.x / 8.0).floor() as i16;
                     for offset in [0.0, -2.0] {
                         let ty = ((projectile.pos.y + offset) / 8.0).floor() as i16;
-                        let hit_wall = level.get_tile(tx, ty)[1] != 0;
+                        let tile = level.get_tile(tx, ty);
+                        // make projectile hit wall if there is a collision tile or special tile id 672 (projectile barrier)
+                        let hit_wall = tile[1] > 0 || tile[3] == 672 + 1;
                         if !hit_wall {
                             didnt_hit_wall = true;
                         }
