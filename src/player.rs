@@ -491,11 +491,7 @@ impl Player {
             if let Some(tile) = touched_death_tile
                 && self.death.is_none()
             {
-                let mut death_tile_index = DEATH_TILES.iter().position(|f| *f == tile).unwrap();
-                // make the black spike tile use same death animation as regular spike
-                if death_tile_index == 3 {
-                    death_tile_index = 0;
-                }
+                let death_tile_index = DEATH_TILES.iter().position(|f| *f == tile).unwrap();
                 self.death = Some((0.0, death_tile_index, false));
             }
         }
