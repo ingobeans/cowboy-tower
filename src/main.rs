@@ -49,7 +49,7 @@ fn get_elevator_pos(assets: &Assets, level_index: usize) -> Vec2 {
             if !level_index.is_multiple_of(2) {
                 pos.x
             } else {
-                pos.x - elevator_texture.width()
+                pos.x - elevator_texture.width() + 8.0
             },
             pos.y - elevator_texture.height() + 8.0,
         );
