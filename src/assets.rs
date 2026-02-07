@@ -174,6 +174,7 @@ pub struct Level {
 
     pub forced_player_spawn: Option<Vec2>,
     pub forced_level_end: Option<Vec2>,
+    pub forced_level_elevator_shaft_height: Option<f32>,
 }
 impl Level {
     pub fn get_world_index(&self) -> u32 {
@@ -251,6 +252,7 @@ impl Level {
 
         let mut forced_player_spawn = None;
         let mut forced_level_end = None;
+        let mut forced_level_elevator_shaft_height = None;
 
         let mut horse_arrows = Vec::new();
 
@@ -288,6 +290,8 @@ impl Level {
                             forced_player_spawn = Some(pos)
                         } else if *tile == 449 + 1 {
                             forced_level_end = Some(pos)
+                        } else if *tile == 450 + 1 {
+                            forced_level_elevator_shaft_height = Some(pos.y);
                         }
                     } else if *tile == 320 + 1 {
                         animated_tiles.push((pos, 0));
@@ -561,6 +565,7 @@ impl Level {
             max_pos: vec2((max_x * 8) as f32, (max_y * 8) as f32),
             forced_player_spawn,
             forced_level_end,
+            forced_level_elevator_shaft_height,
             fog_points,
             enemy_paths,
             min_pos,

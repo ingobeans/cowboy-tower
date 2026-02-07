@@ -396,13 +396,16 @@ impl<'a> Game<'a> {
                     x - old.min_pos.x,
                     (old.min_pos.y - (level.max_pos.y + 16.0)).abs(),
                 );
+            let elevator_shaft_height = old
+                .forced_level_elevator_shaft_height
+                .unwrap_or(old.roof_height);
             draw_rectangle(
                 elevator_pos.x,
-                old.roof_height + (old.min_pos.y - (level.max_pos.y + 16.0)).abs(),
+                elevator_shaft_height + (old.min_pos.y - (level.max_pos.y + 16.0)).abs(),
                 elevator_texture.width(),
                 old.forced_level_end.unwrap_or(old.player_spawn).y - elevator_texture.height()
                     + 8.0
-                    - old.roof_height,
+                    - elevator_shaft_height,
                 self.world_manager.world_colors[old.get_world_index() as usize].2,
             );
             draw_texture(elevator_texture, elevator_pos.x, elevator_pos.y, WHITE);
@@ -414,11 +417,14 @@ impl<'a> Game<'a> {
             );
         }
 
+        let elevator_shaft_height = level
+            .forced_level_elevator_shaft_height
+            .unwrap_or(level.roof_height);
         draw_rectangle(
             elevator_pos.x,
-            level.roof_height,
+            elevator_shaft_height,
             elevator_texture.width(),
-            elevator_pos.y - level.roof_height,
+            elevator_pos.y - elevator_shaft_height,
             self.world_manager.world_colors[level.get_world_index() as usize].2,
         );
         // draw animated tiles
