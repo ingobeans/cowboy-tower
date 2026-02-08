@@ -800,6 +800,19 @@ impl<'a> Game<'a> {
             );
         }
 
+        if DEBUG_FLAGS.bloom {
+            BLOOM_MATERIAL.set_uniform("scale", scale_factor);
+            gl_use_material(&BLOOM_MATERIAL);
+            draw_rectangle(
+                screen_offset.x,
+                screen_offset.y,
+                actual_screen_width / scale_factor,
+                actual_screen_height / scale_factor,
+                WHITE,
+            );
+            gl_use_default_material();
+        }
+
         draw_boss_badges(
             self.assets,
             self.player.time_since_last_boss_defeated,

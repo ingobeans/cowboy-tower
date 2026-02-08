@@ -1,5 +1,5 @@
 use gamepads::{Button, Gamepads};
-use macroquad::prelude::*;
+use macroquad::{miniquad::*, prelude::*};
 #[cfg(test)]
 use std::f32::consts::PI;
 use std::sync::LazyLock;
@@ -121,6 +121,33 @@ pub static SKY_MATERIAL: LazyLock<Material> = LazyLock::new(|| {
                 UniformDesc::new("height", UniformType::Float1),
                 UniformDesc::new("maxTowerHeight", UniformType::Float1),
             ],
+            ..Default::default()
+        },
+    )
+    .unwrap()
+});
+pub static BLOOM_MATERIAL: LazyLock<Material> = LazyLock::new(|| {
+    let pipeline = PipelineParams {
+        alpha_blend: Some(BlendState::new(
+            Equation::Add,
+            BlendFactor::Value(BlendValue::SourceAlpha),
+            BlendFactor::OneMinusValue(BlendValue::SourceAlpha),
+        )),
+        color_blend: Some(BlendState::new(
+            Equation::Add,
+            BlendFactor::Value(BlendValue::SourceAlpha),
+            BlendFactor::OneMinusValue(BlendValue::SourceAlpha),
+        )),
+        ..Default::default()
+    };
+    load_material(
+        ShaderSource::Glsl {
+            vertex: DEFAULT_VERTEX_SHADER,
+            fragment: include_str!("bloom.frag"),
+        },
+        MaterialParams {
+            pipeline_params: pipeline,
+            uniforms: vec![UniformDesc::new("scale", UniformType::Float1)],
             ..Default::default()
         },
     )
