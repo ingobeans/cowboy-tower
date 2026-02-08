@@ -46,6 +46,34 @@ struct ActiveRiding {
     camera_lerp_src: Vec2,
 }
 
+#[derive(Default)]
+pub struct CameraOffset {
+    amount: f32,
+    time: f32,
+    pub current_offset: f32,
+    lerp_source: f32,
+}
+impl CameraOffset {
+    pub fn set_target(&mut self, amount: f32) {
+        if amount != self.amount {
+            self.lerp_source = self.current_offset;
+            self.amount = amount;
+            self.time = 0.0;
+        }
+    }
+    fn update(&mut self, delta_time: f32) {
+        const LERP_TIME: f32 = 0.5;
+        if self.time < LERP_TIME {
+            self.time += delta_time;
+            let amt = self.time / LERP_TIME;
+            let amt = amt * amt;
+            self.current_offset = self.lerp_source.lerp(self.amount, amt);
+        } else {
+            self.current_offset = self.amount;
+        }
+    }
+}
+
 const HORSE_MOUNT_LEEWAY: f32 = 0.2;
 const JUMP_LAND_LEEWAY: f32 = 0.05;
 const COYOTE_TIME: f32 = 0.05;
@@ -61,6 +89,7 @@ pub struct Player {
     pub facing_left: bool,
     pub moving: bool,
     pub time: f32,
+    pub camera_offset: CameraOffset,
     pub cinematic_bars: Option<CinematicBars>,
     jump_time: f32,
     pub active_dialogue: Option<ActiveDialogue>,
@@ -105,6 +134,7 @@ impl Player {
             active_dialogue: None,
             cinematic_bars: None,
             jump_of_wall_time: 10.0,
+            camera_offset: CameraOffset::default(),
             velocity: Vec2::ZERO,
             on_ground: false,
             last_touched_ground: 1.0,
@@ -553,6 +583,7 @@ impl Player {
         if level.name == "0-0.tmx" {
             self.camera_pos.y = self.camera_pos.y.min(-22.0);
         }
+        self.camera_offset.update(delta_time);
     }
     fn find_mountable_horse<'a>(&self, horses: &'a mut [Horse]) -> Option<(usize, &'a mut Horse)> {
         let mut horses: Vec<(usize, &'a mut Horse)> = horses

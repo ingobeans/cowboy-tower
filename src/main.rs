@@ -213,6 +213,11 @@ impl<'a> Game<'a> {
             self.level_complete = Some(0.0);
         }
 
+        let player_tile = level.get_tile(
+            (self.player.pos.x / 8.0).floor() as i16,
+            (self.player.pos.y / 8.0).floor() as i16,
+        )[3];
+
         // update horses
 
         for horse in self.horses.iter_mut() {
@@ -267,13 +272,18 @@ impl<'a> Game<'a> {
                 && !horse.running
                 && !horse.player_riding
                 && horse.pos.distance(horse.home_pos) > 1.0
-                && level.get_tile(
-                    (self.player.pos.x / 8.0) as i16,
-                    (self.player.pos.y / 8.0) as i16,
-                )[3] != 419 + 1
+                && player_tile != 419 + 1
             {
                 horse.returning_home = true;
             }
+        }
+
+        if player_tile == 705 + 1 {
+            let pos = (self.player.pos / 8.0).floor() * 8.0;
+            let camera_offset = level.camera_offsets.iter().find(|f| f.0 == pos).unwrap();
+            self.player.camera_offset.set_target(camera_offset.1);
+        } else if player_tile == 704 + 1 {
+            self.player.camera_offset.set_target(0.0);
         }
 
         if let Some(time) = &mut self.level_complete {
@@ -316,6 +326,7 @@ impl<'a> Game<'a> {
                 .lerp(self.player.camera_pos.y.floor(), amt);
         } else {
             self.camera.target = self.player.camera_pos.floor();
+            self.camera.target.y -= self.player.camera_offset.current_offset * 8.0;
         }
         self.camera.zoom = vec2(
             1.0 / actual_screen_width * 2.0 * scale_factor,

@@ -170,6 +170,8 @@ pub struct Level {
     pub lasso_targets: Vec<Vec2>,
     pub animated_tiles: Vec<(Vec2, usize)>,
 
+    pub camera_offsets: Vec<(Vec2, f32)>,
+
     pub fog_points: Vec<Vec2>,
 
     pub forced_player_spawn: Option<Vec2>,
@@ -249,6 +251,7 @@ impl Level {
 
         let mut enemy_paths = Vec::new();
         let mut fog_points = Vec::new();
+        let mut camera_offsets = Vec::new();
 
         let mut forced_player_spawn = None;
         let mut forced_level_end = None;
@@ -292,6 +295,8 @@ impl Level {
                             forced_level_end = Some(pos)
                         } else if *tile == 450 + 1 {
                             forced_level_elevator_shaft_height = Some(pos.y);
+                        } else if *tile == 705 + 1 {
+                            camera_offsets.push((pos, 0.0));
                         }
                     } else if *tile == 320 + 1 {
                         animated_tiles.push((pos, 0));
@@ -399,7 +404,7 @@ impl Level {
                         factor,
                         number_affectable_tiles,
                     );
-                } else if tile > 2 && tile < 33 {
+                } else if (tile > 0 && tile < 32) || tile == 705 {
                     number_affectable_tiles.push(ni);
                 }
             }
@@ -537,6 +542,8 @@ impl Level {
                     &mut factor,
                     &mut number_affectable_tiles,
                 );
+                let number_y = i / width as usize;
+
                 let sum = sum as f32 * factor;
                 for item in number_affectable_tiles {
                     let x = item % width as usize;
@@ -545,8 +552,29 @@ impl Level {
                         (x * 8) as f32 + (min_x * 8) as f32,
                         (y * 8) as f32 + (min_y * 8) as f32,
                     );
-                    let enemy = enemies.iter_mut().find(|f| f.pos == pos).unwrap();
-                    enemy.attack_delay = sum;
+                    let tile_index = data[item][3];
+                    if tile_index > 1 && tile_index < 33 {
+                        let enemy = enemies.iter_mut().find(|f| f.pos == pos).unwrap();
+                        enemy.attack_delay = sum;
+                    } else if tile_index == 705 + 1 {
+                        let value = sum * if number_y > y { -1.0 } else { 1.0 };
+                        // daisy chain all adjacent camera offsets
+                        let offset: isize = if number_y > y { -1 } else { 1 };
+                        let mut y = y;
+                        loop {
+                            if data[x + y * width as usize][3] != 705 + 1 {
+                                break;
+                            }
+                            let pos = vec2(
+                                (x * 8) as f32 + (min_x * 8) as f32,
+                                (y * 8) as f32 + (min_y * 8) as f32,
+                            );
+                            let camera_offset =
+                                camera_offsets.iter_mut().find(|f| f.0 == pos).unwrap();
+                            camera_offset.1 = value;
+                            y = y.saturating_add_signed(offset);
+                        }
+                    }
                 }
             }
         }
@@ -567,6 +595,7 @@ impl Level {
             forced_level_end,
             forced_level_elevator_shaft_height,
             fog_points,
+            camera_offsets,
             enemy_paths,
             min_pos,
             boss,
