@@ -762,6 +762,17 @@ impl<'a> Game<'a> {
             );
         }
 
+        // draw fog
+        for point in self.fog_points.iter() {
+            let t = &self.assets.clouds.frames[0].0;
+            draw_texture(
+                t,
+                point.pos.x - 32.0,
+                point.pos.y - 32.0,
+                WHITE.with_alpha(0.02),
+            );
+        }
+
         // handle fading out
         if self.fade_timer > 0.0 {
             self.fade_timer -= delta_time;
@@ -789,16 +800,6 @@ impl<'a> Game<'a> {
             );
         }
         self.player.time_since_last_boss_defeated += delta_time;
-        // draw fog
-        for point in self.fog_points.iter() {
-            let t = &self.assets.clouds.frames[0].0;
-            draw_texture(
-                t,
-                point.pos.x - 32.0,
-                point.pos.y - 32.0,
-                WHITE.with_alpha(0.02),
-            );
-        }
 
         if DEBUG_FLAGS.bloom {
             BLOOM_MATERIAL.set_uniform("scale", scale_factor);
