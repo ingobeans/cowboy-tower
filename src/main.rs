@@ -106,6 +106,7 @@ struct FogPoint {
 struct Game<'a> {
     assets: &'a Assets,
     camera: Camera2D,
+    ui_camera: Camera2D,
     player: Player,
     enemies: Vec<Enemy>,
     horses: Vec<Horse>,
@@ -138,6 +139,7 @@ impl<'a> Game<'a> {
             world_manager,
             player: Player::new(get_player_spawn(assets, level)),
             camera: Camera2D::default(),
+            ui_camera: Camera2D::default(),
             enemies: load_enemies(assets.levels[level].enemies.clone()),
             boss: load_boss(&assets.levels[level]),
             fog_points: load_fog_points(&assets.levels[level]),
@@ -332,6 +334,8 @@ impl<'a> Game<'a> {
             1.0 / actual_screen_width * 2.0 * scale_factor,
             1.0 / actual_screen_height * 2.0 * scale_factor,
         );
+        self.ui_camera.zoom = self.camera.zoom;
+        self.ui_camera.offset = vec2(-1.0, 1.0);
         set_camera(&self.camera);
         let camera_offset = self.camera.target.y - (player_spawn.y - 22.0);
 
@@ -678,12 +682,13 @@ impl<'a> Game<'a> {
 
         // SCREEN EFFECTS
 
+        set_camera(&self.ui_camera);
         if DEBUG_FLAGS.bloom {
             BLOOM_MATERIAL.set_uniform("scale", scale_factor);
             gl_use_material(&BLOOM_MATERIAL);
             draw_rectangle(
-                screen_offset.x,
-                screen_offset.y,
+                0.0,
+                0.0,
                 actual_screen_width / scale_factor,
                 actual_screen_height / scale_factor,
                 WHITE,
@@ -820,8 +825,8 @@ impl<'a> Game<'a> {
         }
         if fade_amt > 0.0 {
             draw_rectangle(
-                screen_offset.x,
-                screen_offset.y,
+                0.0,
+                0.0,
                 actual_screen_width,
                 actual_screen_height,
                 BLACK.with_alpha(fade_amt),
@@ -833,7 +838,6 @@ impl<'a> Game<'a> {
             self.assets,
             self.player.time_since_last_boss_defeated,
             self.player.defeated_bosses,
-            screen_offset,
             actual_screen_width / scale_factor,
         );
         if is_key_pressed(KeyCode::H) {

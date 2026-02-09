@@ -1,13 +1,7 @@
 use crate::assets::Assets;
 use macroquad::prelude::*;
 
-pub fn draw_boss_badges(
-    assets: &Assets,
-    amt: f32,
-    mut achieved: u8,
-    screen_offset: Vec2,
-    active_screen_width: f32,
-) {
+pub fn draw_boss_badges(assets: &Assets, amt: f32, mut achieved: u8, active_screen_width: f32) {
     // draw boss badge animation
     const BOSS_COUNT: u8 = 3;
     const FADE_IN_TIME: f32 = 0.2;
@@ -26,8 +20,8 @@ pub fn draw_boss_badges(
         fly_off = ((delta - PAUSE_TIME) / FLY_OFF_TIME).min(1.0);
     }
 
-    let x = (screen_offset.x + (active_screen_width - width) / 2.0).floor();
-    let y = (screen_offset.y + 8.0).floor() - fly_off * 22.0;
+    let x = ((active_screen_width - width) / 2.0).floor();
+    let y = 8.0 - fly_off * 22.0;
 
     let alpha = (amt / FADE_IN_TIME).min(1.0);
 
@@ -77,7 +71,7 @@ pub fn draw_boss_badges(
     }
     // draw current badge animation
     if amt < 1.0 {
-        let start_pos = screen_offset - vec2(16.0, 16.0);
+        let start_pos = -vec2(16.0, 16.0);
         let target_pos = vec2(x + padding + achieved as f32 * (10.0 + gap), y + 1.0);
         let x = start_pos.x.lerp(target_pos.x, amt);
         let y = (-(2.0 * amt - 1.0).powi(2) + 1.0) * 32.0 + start_pos.y.lerp(target_pos.y, amt);
