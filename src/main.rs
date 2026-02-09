@@ -1,7 +1,10 @@
 use std::{env::args, f32::consts::PI};
 
 use gamepads::Gamepads;
-use macroquad::{miniquad::window::screen_size, prelude::*};
+use macroquad::{
+    miniquad::{conf::Platform, window::screen_size},
+    prelude::*,
+};
 
 use crate::{
     assets::{Assets, Horse, Level},
@@ -847,10 +850,23 @@ impl<'a> Game<'a> {
         if is_key_pressed(KeyCode::L) {
             self.player.cinematic_bars = Some(CinematicBars::Extending(0.0));
         }
+        if DEBUG_FLAGS.fps {
+            draw_fps();
+        }
     }
 }
 
-#[macroquad::main("cowboy tower")]
+fn window_conf() -> Conf {
+    Conf {
+        window_title: "cowboy tower".to_string(),
+        platform: Platform {
+            swap_interval: if DEBUG_FLAGS.uncapped { Some(0) } else { None },
+            ..Default::default()
+        },
+        ..Default::default()
+    }
+}
+#[macroquad::main(window_conf)]
 async fn main() {
     info!("cowboy tower v{}", env!("CARGO_PKG_VERSION"));
     //miniquad::window::set_window_size(SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32);
