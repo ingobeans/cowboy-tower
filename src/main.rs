@@ -665,6 +665,34 @@ impl<'a> Game<'a> {
         });
         self.projectiles.append(&mut new_projectiles);
 
+        // draw fog
+        for point in self.fog_points.iter() {
+            let t = &self.assets.clouds.frames[0].0;
+            draw_texture(
+                t,
+                point.pos.x - 32.0,
+                point.pos.y - 32.0,
+                WHITE.with_alpha(0.02),
+            );
+        }
+
+        // SCREEN EFFECTS
+
+        if DEBUG_FLAGS.bloom {
+            BLOOM_MATERIAL.set_uniform("scale", scale_factor);
+            gl_use_material(&BLOOM_MATERIAL);
+            draw_rectangle(
+                screen_offset.x,
+                screen_offset.y,
+                actual_screen_width / scale_factor,
+                actual_screen_height / scale_factor,
+                WHITE,
+            );
+            gl_use_default_material();
+        }
+
+        // DRAW UI
+
         // draw cinematic bars
         if let Some(bars) = &mut self.player.cinematic_bars {
             let amt = match bars {
@@ -773,17 +801,6 @@ impl<'a> Game<'a> {
             );
         }
 
-        // draw fog
-        for point in self.fog_points.iter() {
-            let t = &self.assets.clouds.frames[0].0;
-            draw_texture(
-                t,
-                point.pos.x - 32.0,
-                point.pos.y - 32.0,
-                WHITE.with_alpha(0.02),
-            );
-        }
-
         // handle fading out
         if self.fade_timer > 0.0 {
             self.fade_timer -= delta_time;
@@ -812,19 +829,6 @@ impl<'a> Game<'a> {
         }
         self.player.time_since_last_boss_defeated += delta_time;
 
-        if DEBUG_FLAGS.bloom {
-            BLOOM_MATERIAL.set_uniform("scale", scale_factor);
-            gl_use_material(&BLOOM_MATERIAL);
-            draw_rectangle(
-                screen_offset.x,
-                screen_offset.y,
-                actual_screen_width / scale_factor,
-                actual_screen_height / scale_factor,
-                WHITE,
-            );
-            gl_use_default_material();
-        }
-
         draw_boss_badges(
             self.assets,
             self.player.time_since_last_boss_defeated,
@@ -832,6 +836,13 @@ impl<'a> Game<'a> {
             screen_offset,
             actual_screen_width / scale_factor,
         );
+        if is_key_pressed(KeyCode::H) {
+            self.player.time_since_last_boss_defeated = 0.0;
+            self.player.defeated_bosses = 1;
+        }
+        if is_key_pressed(KeyCode::L) {
+            self.player.cinematic_bars = Some(CinematicBars::Extending(0.0));
+        }
     }
 }
 
