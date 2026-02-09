@@ -715,21 +715,16 @@ impl<'a> Game<'a> {
             }
             .clamp(0.0, 1.0);
             const CINEMATIC_BAR_HEIGHT: f32 = 12.0;
-            let screen_zero_coordinate = vec2(
-                self.camera.target.x - actual_screen_width / scale_factor / 2.0,
-                self.camera.target.y - actual_screen_height / scale_factor / 2.0,
-            );
             draw_rectangle(
-                screen_zero_coordinate.x,
-                screen_zero_coordinate.y,
+                0.0,
+                0.0,
                 actual_screen_width,
                 CINEMATIC_BAR_HEIGHT * amt,
                 BLACK,
             );
             draw_rectangle(
-                screen_zero_coordinate.x,
-                screen_zero_coordinate.y + actual_screen_height / scale_factor
-                    - CINEMATIC_BAR_HEIGHT * amt,
+                0.0,
+                0.0 + actual_screen_height / scale_factor - CINEMATIC_BAR_HEIGHT * amt,
                 actual_screen_width,
                 CINEMATIC_BAR_HEIGHT * amt,
                 BLACK,
@@ -754,13 +749,8 @@ impl<'a> Game<'a> {
             };
             let slide_amt = slide_amt.powi(2);
             let pos = vec2(
-                self.camera.target.x - actual_screen_width / scale_factor / 2.0 + 2.0
-                    - max_slide_offset
-                    + max_slide_offset * slide_amt,
-                self.camera.target.y - actual_screen_height / scale_factor / 2.0
-                    + actual_screen_height / scale_factor
-                    - t.height()
-                    - 2.0,
+                2.0 - max_slide_offset + max_slide_offset * slide_amt,
+                actual_screen_height / scale_factor - t.height() - 2.0,
             )
             .floor();
             draw_texture(t, pos.x, pos.y, WHITE);
