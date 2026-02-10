@@ -436,6 +436,13 @@ impl Player {
                     let normal = horses[riding.horse_index].get_normal();
                     self.velocity += normal * JUMP_FORCE;
                     horses[riding.horse_index].player_riding = false;
+
+                    // check that you can actually dismount safely without getting stuck in something.
+                    let tile_pos = (self.pos / 8.0).floor();
+                    if level.get_tile(tile_pos.x as _, tile_pos.y as _)[1] != 0 {
+                        // move player 1 tile toward center of horse
+                        self.pos = horses[riding.horse_index].pos;
+                    }
                 } else {
                     // check if by horse
                     if let Some(horse) = self.find_mountable_horse(horses) {
