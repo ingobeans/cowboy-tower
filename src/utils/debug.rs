@@ -15,6 +15,7 @@ pub struct DebugFlags {
     pub bloom: bool,
     pub uncapped: bool,
     pub fps: bool,
+    pub unscaled: bool,
 }
 pub static DEBUG_FLAGS: LazyLock<DebugFlags> = LazyLock::new(|| {
     #[cfg(debug_assertions)]
@@ -30,6 +31,7 @@ pub static DEBUG_FLAGS: LazyLock<DebugFlags> = LazyLock::new(|| {
             bloom: args.contains(&"bloom"),
             uncapped: args.contains(&"uncapped"),
             fps: args.contains(&"fps"),
+            unscaled: args.contains(&"unscaled"),
             centres: args.contains(&"centre") || args.contains(&"center"),
         };
         print!("{flags}");
