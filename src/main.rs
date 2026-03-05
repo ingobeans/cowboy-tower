@@ -556,7 +556,7 @@ impl<'a> Game<'a> {
             let physics = projectile.get_physics();
 
             if let Some(friction) = physics {
-                const OFFSET: Vec2 = vec2(4.0, 4.0);
+                const OFFSET: Vec2 = vec2(4.0, 7.0);
                 projectile.direction.y += GRAVITY * delta_time;
 
                 let (new_pos, on_ground, _, _) = update_physicsbody(
