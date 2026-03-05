@@ -131,6 +131,7 @@ impl<'a> Game<'a> {
         for l in &assets.levels[..level] {
             y += l.get_height() + FLOOR_PADDING + 16.0;
         }
+        rand::srand(level as u64);
         let world_manager = WorldManager::new(assets);
         let tower_height = world_manager.world_heights.last().unwrap().1;
         SKY_MATERIAL.set_uniform("maxTowerHeight", tower_height);
