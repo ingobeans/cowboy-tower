@@ -250,7 +250,7 @@ impl Enemy {
             draw_cross(self.pos.x, self.pos.y, RED);
         }
         if self.death_frames <= 0.0 {
-            if self.spawner.is_none() {
+            if self.spawner.is_none() && !self.ty.unkillable {
                 let mut hit_by_projectile = false;
                 for projectile in projectiles.iter_mut() {
                     if projectile.friendly
@@ -321,6 +321,7 @@ pub struct EnemyType {
     pub attack_type: AttackType,
     pub attack_delay: f32,
     pub speed: f32,
+    pub unkillable: bool,
 }
 pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
     vec![
@@ -330,6 +331,7 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
             speed: 16.0,
             attack_type: AttackType::Shoot(1),
             attack_delay: 1.5,
+            unkillable: false,
         },
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/bandit2.ase")),
@@ -337,6 +339,7 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
             speed: 0.0,
             attack_type: AttackType::Shoot(1),
             attack_delay: 2.0,
+            unkillable: false,
         },
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/demo_bandit.ase")),
@@ -344,6 +347,7 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
             speed: 16.0,
             attack_type: AttackType::ShootAfter(2),
             attack_delay: 2.0,
+            unkillable: false,
         },
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/laser.ase")),
@@ -351,6 +355,7 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
             attack_type: AttackType::ShootAfter(4),
             speed: 0.0,
             attack_delay: 2.0,
+            unkillable: true,
         },
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/bat.ase")),
@@ -358,6 +363,7 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
             attack_type: AttackType::Melee,
             speed: 5.0,
             attack_delay: 0.0,
+            unkillable: false,
         },
         EnemyType {
             animation: AnimationsGroup::from_file(include_bytes!("../assets/skeleton.ase")),
@@ -365,6 +371,7 @@ pub static ENEMIES: LazyLock<Vec<EnemyType>> = LazyLock::new(|| {
             attack_type: AttackType::Melee,
             speed: 32.0,
             attack_delay: 0.0,
+            unkillable: false,
         },
     ]
 });
