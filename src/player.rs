@@ -533,11 +533,24 @@ impl Player {
                 }
                 self.wall_climbing = None;
             }
-            if let Some(tile) = touched_death_tile
-                && self.death.is_none()
-            {
-                let death_tile_index = DEATH_TILES.iter().position(|f| *f == tile).unwrap();
-                self.death = Some((0.0, death_tile_index, false));
+            if self.death.is_none() {
+                let mut died_from_death_tile = None;
+
+                if let Some(tile) = touched_death_tile {
+                    let death_tile_index = DEATH_TILES.iter().position(|f| *f == tile).unwrap();
+                    died_from_death_tile = Some(death_tile_index);
+                } else {
+                    let tile_pos = ((self.pos + vec2(4.0, 0.0)) / 8.0).floor();
+                    let tile = level.get_tile(tile_pos.x as i16, tile_pos.y as i16)[1];
+                    if tile != 0
+                        && let Some(index) = DEATH_TILES.iter().position(|f| *f == tile - 1)
+                    {
+                        died_from_death_tile = Some(index);
+                    }
+                }
+                if let Some(death_tile_index) = died_from_death_tile {
+                    self.death = Some((0.0, death_tile_index, false));
+                }
             }
         }
 
