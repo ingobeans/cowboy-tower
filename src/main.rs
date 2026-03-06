@@ -49,7 +49,7 @@ fn get_elevator_pos(assets: &Assets, level_index: usize) -> Vec2 {
     let elevator_texture = assets.elevator.animations[0].get_at_time(0);
     if let Some(pos) = level.forced_level_end {
         return vec2(
-            if !level_index.is_multiple_of(2) {
+            if level_index.is_multiple_of(2) {
                 pos.x
             } else {
                 pos.x - elevator_texture.width() + 8.0
@@ -58,7 +58,7 @@ fn get_elevator_pos(assets: &Assets, level_index: usize) -> Vec2 {
         );
     }
     vec2(
-        if !level_index.is_multiple_of(2) {
+        if level_index.is_multiple_of(2) {
             level.player_spawn.x
         } else {
             level.max_pos.x + 16.0 * 8.0 - elevator_texture.width()
@@ -72,7 +72,7 @@ fn get_player_spawn(assets: &Assets, level_index: usize) -> Vec2 {
     if let Some(pos) = level.forced_player_spawn {
         return pos;
     }
-    let left_level_end = !level_index.is_multiple_of(2);
+    let left_level_end = level_index.is_multiple_of(2);
 
     if left_level_end {
         vec2(
@@ -124,6 +124,7 @@ struct Game<'a> {
     world_manager: WorldManager,
     gamepad_engine: Gamepads,
     fog_points: Vec<FogPoint>,
+    title_text: Option<f32>,
 }
 impl<'a> Game<'a> {
     fn new(assets: &'a Assets, level: usize) -> Self {
@@ -154,6 +155,7 @@ impl<'a> Game<'a> {
             level_complete: None,
             time: 0.0,
             level_transition_time: 0.0,
+            title_text: None,
         }
     }
     fn load_level(&mut self, level: usize) {
@@ -168,7 +170,7 @@ impl<'a> Game<'a> {
         self.boss = load_boss(&self.assets.levels[level]);
         self.horses = self.assets.levels[level].horses.clone();
         self.player = Player::new(get_player_spawn(self.assets, level));
-        self.player.facing_left = !self.level.is_multiple_of(2);
+        self.player.facing_left = self.level.is_multiple_of(2);
     }
     fn update(&mut self) {
         self.gamepad_engine.poll();
@@ -206,7 +208,7 @@ impl<'a> Game<'a> {
         }
         let level = &self.assets.levels[self.level];
 
-        let left_level_end = !self.level.is_multiple_of(2);
+        let left_level_end = self.level.is_multiple_of(2);
 
         let elevator_texture =
             &self.assets.elevator.animations[level.get_world_index() as usize].frames[0].0;
@@ -305,7 +307,7 @@ impl<'a> Game<'a> {
                 if self.player.pos.distance(elevator_pos + ELEVATOR_OFFSET) <= 1.0 {
                     *time = delta_time;
                 }
-            } else {
+            } else if *time > 0.0 {
                 *time += delta_time;
             }
         } else {
@@ -446,6 +448,53 @@ impl<'a> Game<'a> {
             elevator_pos.y - elevator_shaft_height,
             self.world_manager.world_colors[level.get_world_index() as usize].2,
         );
+
+        // draw gate on first level
+        if self.level == 0 {
+            let pos = level.find_marker(6);
+
+            if let Some(time) = &mut self.level_complete {
+                // uh so we actually count time in the negatives because i am lazy and am basically using this variable
+                // but i dont want the regular level complete to trigger so instead of counting upward which would trigger
+                // the next level to load after some delay, i count negative and use this timer multiplied by -1.0.
+                // please dont hate me for this.
+                *time -= delta_time;
+
+                if *time < -0.7 {
+                    self.fade_timer += delta_time + delta_time;
+                }
+
+                let anim_time = ((*time * -1000.0) as u32).min(self.assets.gate.total_length - 1);
+                draw_texture(
+                    &self.assets.gate.get_at_time(anim_time),
+                    pos.x,
+                    pos.y,
+                    WHITE,
+                );
+                let target = level.find_marker(4);
+                self.player.pos.x += delta_time * 10.0;
+                self.player.pos.y = self.player.pos.move_towards(target, delta_time * 24.0).y;
+                if self.player.pos.x >= target.x {
+                    self.load_level(1);
+                    self.level_complete = None;
+                    self.title_text = Some(0.0);
+                    self.player.update(
+                        delta_time,
+                        &self.assets.levels[self.level],
+                        &mut self.projectiles,
+                        &mut self.horses,
+                        &mut self.gamepad_engine,
+                    );
+                }
+                self.player.time += delta_time;
+            } else {
+                draw_texture(&self.assets.gate.frames[0].0, pos.x, pos.y, WHITE);
+                if self.player.pos.x + 8.0 >= level.find_marker(0).x {
+                    self.level_complete = Some(0.0);
+                }
+            }
+        }
+
         // draw animated tiles
         for (pos, index) in level.animated_tiles.iter() {
             let time = self.time + pos.x.powi(2) + pos.y.powi(2) * 4.2;
@@ -470,7 +519,7 @@ impl<'a> Game<'a> {
         });
 
         // draw level beginning elevator
-        if self.level > 0 {
+        if self.level > 1 {
             let time =
                 (LEVEL_TRANSITION_LENGTH - self.level_transition_time) / LEVEL_TRANSITION_LENGTH;
             let pos = get_player_spawn(self.assets, self.level);
@@ -799,6 +848,26 @@ impl<'a> Game<'a> {
                 },
             );
         }
+        // handle title text
+        if let Some(time) = &mut self.title_text {
+            *time += delta_time;
+
+            draw_rectangle(0.0, 0.0, actual_screen_width, actual_screen_height, BLACK);
+            let mut fade_amt = (*time - 0.5).max(0.0);
+            if fade_amt > 3.0 {
+                fade_amt = 4.0 - fade_amt;
+                if fade_amt <= 0.0 && self.fade_timer <= 0.0 {
+                    self.title_text = None;
+                    self.fade_timer = 0.5
+                }
+            }
+            draw_texture(
+                &self.assets.title,
+                (actual_screen_width / scale_factor - self.assets.title.width()) / 2.0,
+                (actual_screen_height / scale_factor - self.assets.title.height()) / 2.0,
+                WHITE.with_alpha(fade_amt),
+            );
+        }
 
         // handle fading out
         if self.fade_timer > 0.0 {
@@ -841,6 +910,7 @@ impl<'a> Game<'a> {
         if is_key_pressed(KeyCode::L) {
             self.player.cinematic_bars = Some(CinematicBars::Extending(0.0));
         }
+
         if DEBUG_FLAGS.fps {
             draw_fps();
         }

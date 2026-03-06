@@ -560,12 +560,12 @@ impl Player {
             lasso.speed = 0.0;
         }
 
-        let min_x = if level.name != "0-0.tmx" {
+        let min_x = if level.name != "0-0_inside.tmx" {
             level.min_pos.x
         } else {
             level.find_marker(3).x
         };
-        let max_x = if level.name != "0-0.tmx" {
+        let max_x = if level.name != "0-0_inside.tmx" {
             level.max_pos.x
         } else {
             level.find_marker(1).x - 16.0 * 8.0 + 8.0
@@ -600,7 +600,7 @@ impl Player {
         } else {
             self.camera_pos = target_camera_pos;
         }
-        if level.name == "0-0.tmx" {
+        if level.name == "0-0-inside.tmx" {
             self.camera_pos.y = self.camera_pos.y.min(-22.0);
         }
         self.camera_offset.update(delta_time);

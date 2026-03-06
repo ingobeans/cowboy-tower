@@ -7,7 +7,7 @@ fn calculate_world_heights(assets: &Assets) -> Vec<(f32, f32)> {
     let mut total = -3.0 * 8.0;
     let mut worlds = vec![(0.0, total)];
     let mut last_world = 0;
-    for level in assets.levels.iter() {
+    for level in assets.levels.iter().skip(1) {
         let world = level.get_world_index();
         if world != last_world {
             last_world = world;
@@ -49,18 +49,18 @@ impl WorldManager {
 
         for world_index in 0..=2 {
             let (wall_color, border_color, _) = self.world_colors[world_index];
-            let min_x = if level_index > 0 {
+            let min_x = if level_index > 1 {
                 level.min_pos.x
             } else {
                 level.find_marker(0).x
             };
-            let max_x = if level_index > 0 {
+            let max_x = if level_index > 1 {
                 level.max_pos.x
             } else {
                 level.find_marker(1).x - 16.0 * 8.0 + 8.0
             };
 
-            let offset = if level_index == 0 {
+            let offset = if level_index <= 1 {
                 level.find_marker(0).y - 3.0 * 8.0
             } else {
                 0.0
