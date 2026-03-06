@@ -133,9 +133,11 @@ impl<'a> Game<'a> {
             y += l.get_height() + FLOOR_PADDING + 16.0;
         }
         rand::srand(level as u64);
-        let world_manager = WorldManager::new(assets);
+        let mut world_manager = WorldManager::new(assets);
         let tower_height = world_manager.world_heights.last().unwrap().1;
         SKY_MATERIAL.set_uniform("maxTowerHeight", tower_height);
+
+        world_manager.create_clouds(assets, level);
 
         Self {
             assets,
@@ -197,6 +199,7 @@ impl<'a> Game<'a> {
             self.level_complete = None;
             self.height += self.assets.levels[self.level].get_height() + FLOOR_PADDING + 16.0;
             self.load_level(self.level + 1);
+            self.world_manager.create_clouds(self.assets, self.level);
             self.level_transition_time = LEVEL_TRANSITION_LENGTH;
             self.player.update(
                 delta_time,
@@ -377,6 +380,8 @@ impl<'a> Game<'a> {
             actual_screen_height / scale_factor,
             Color::from_hex(0xefb775),
         );
+        self.world_manager
+            .draw_clouds(self.assets, level, delta_time);
         self.world_manager
             .draw_tower(self.height, self.assets, self.level);
 

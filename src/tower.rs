@@ -1,7 +1,7 @@
 use macroquad::prelude::*;
 
-use crate::assets::Assets;
-use crate::utils::*;
+use crate::assets::{Assets, Level};
+use crate::{get_elevator_pos, get_player_spawn, utils::*};
 
 fn calculate_world_heights(assets: &Assets) -> Vec<(f32, f32)> {
     let mut total = -3.0 * 8.0;
@@ -21,9 +21,14 @@ fn calculate_world_heights(assets: &Assets) -> Vec<(f32, f32)> {
     worlds
 }
 
+struct Cloud {
+    pos: Vec2,
+}
+
 pub struct WorldManager {
     pub world_heights: Vec<(f32, f32)>,
     pub world_colors: Vec<(Color, Color, Color)>,
+    clouds: Vec<Cloud>,
 }
 impl WorldManager {
     pub fn new(assets: &Assets) -> Self {
@@ -42,7 +47,49 @@ impl WorldManager {
                 ),
                 (BLACK, Color::from_hex(0x392a1c), Color::from_hex(0x36170c)),
             ],
+            clouds: Vec::new(),
         }
+    }
+    pub fn create_clouds(&mut self, assets: &Assets, level_index: usize) {
+        let level = &assets.levels[level_index];
+        let w = (level.max_pos.x - level.min_pos.x).abs() + 16.0 * 8.0 + SCREEN_WIDTH * 2.0;
+        let h = (level.roof_height - level.floor_height).abs();
+        const DENSITY: f32 = 0.0005;
+        let amt = (DENSITY * w * h) as u16;
+
+        if !self.clouds.is_empty() {
+            let x_offset = get_elevator_pos(assets, level_index - 1).x
+                - get_player_spawn(assets, level_index).x
+                + 13.0;
+            for cloud in &mut self.clouds {
+                cloud.pos.y += assets.levels[level_index].get_height() + FLOOR_PADDING + 16.0;
+                cloud.pos.x -= x_offset;
+            }
+        }
+
+        for _ in 0..amt {
+            let x = rand::gen_range(0.0, w);
+            let y = rand::gen_range(0.0, h);
+            let pos = vec2(level.min_pos.x - SCREEN_WIDTH + x, level.roof_height + y);
+            let cloud = Cloud { pos };
+            self.clouds.push(cloud);
+        }
+    }
+    pub fn draw_clouds(&mut self, assets: &Assets, level: &Level, delta_time: f32) {
+        let offset = assets.clouds.frames[0].0.size() / 2.0;
+        self.clouds.retain_mut(|cloud| {
+            draw_texture(
+                &assets.clouds.frames[0].0,
+                cloud.pos.x - offset.x,
+                cloud.pos.y - offset.y,
+                WHITE,
+            );
+            cloud.pos.x -= delta_time * 6.0;
+            if cloud.pos.x <= level.min_pos.x - SCREEN_WIDTH {
+                cloud.pos.x = level.max_pos.x + SCREEN_WIDTH + 16.0 * 8.0;
+            }
+            cloud.pos.y < level.floor_height + SCREEN_HEIGHT * 2.0
+        });
     }
     pub fn draw_tower(&self, y: f32, assets: &Assets, level_index: usize) {
         let level = &assets.levels[level_index];
