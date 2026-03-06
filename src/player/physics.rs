@@ -86,7 +86,7 @@ pub fn update_physicsbody(
             let in_bound = if tile == 833 + 1 {
                 (stair_pos.x - 1.0..stair_pos.x + w).contains(&pos.x)
             } else {
-                (stair_pos.x..stair_pos.x + w + 1.0).contains(&pos.x)
+                (stair_pos.x..stair_pos.x + w + 2.0).contains(&pos.x)
             };
 
             if in_bound {
