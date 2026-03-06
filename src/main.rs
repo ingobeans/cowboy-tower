@@ -385,7 +385,7 @@ impl<'a> Game<'a> {
         self.world_manager
             .draw_tower(self.height, self.assets, self.level);
 
-        if self.level > 0 {
+        if self.level > 1 {
             SKY_MATERIAL.set_uniform(
                 "y",
                 -self.height + camera_offset - level.floor_height + 56.0,

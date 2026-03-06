@@ -53,7 +53,10 @@ impl WorldManager {
     pub fn create_clouds(&mut self, assets: &Assets, level_index: usize) {
         let level = &assets.levels[level_index];
         let w = (level.max_pos.x - level.min_pos.x).abs() + 16.0 * 8.0 + SCREEN_WIDTH * 2.0;
-        let h = (level.roof_height - level.floor_height).abs();
+        let mut h = (level.roof_height - level.floor_height).abs();
+        if level_index <= 1 {
+            h -= 64.0;
+        }
         const DENSITY: f32 = 0.0005;
         let amt = (DENSITY * w * h) as u16;
 
