@@ -1,5 +1,6 @@
 use std::env::args;
 
+use gamepads::Gamepads;
 use macroquad::{miniquad::conf::Platform, prelude::*};
 
 use crate::{assets::Assets, game::Game, menu::MainMenu, utils::*};
@@ -19,21 +20,24 @@ struct GameManager<'a> {
     assets: &'a Assets,
     game: Option<Game<'a>>,
     menu: MainMenu,
+    gamepad_engine: Gamepads,
 }
 
 impl<'a> GameManager<'a> {
     fn new(assets: &'a Assets, level: Option<usize>) -> Self {
         Self {
             assets,
+            gamepad_engine: Gamepads::new(),
             game: level.map(|i| Game::new(assets, i)),
             menu: MainMenu::new(),
         }
     }
     fn update(&mut self) {
+        self.gamepad_engine.poll();
         if let Some(game) = &mut self.game {
-            game.update();
+            game.update(&mut self.gamepad_engine);
         } else {
-            let result = self.menu.update(self.assets);
+            let result = self.menu.update(self.assets, &mut self.gamepad_engine);
             if result {
                 self.game = Some(Game::new(self.assets, 0));
             }

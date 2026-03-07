@@ -109,7 +109,6 @@ pub struct Game<'a> {
     level_transition_time: f32,
     height: f32,
     world_manager: WorldManager,
-    gamepad_engine: Gamepads,
     fog_points: Vec<FogPoint>,
     title_text: Option<f32>,
 }
@@ -138,7 +137,6 @@ impl<'a> Game<'a> {
             boss: load_boss(&assets.levels[level]),
             fog_points: load_fog_points(&assets.levels[level]),
             horses: assets.levels[level].horses.clone(),
-            gamepad_engine: Gamepads::new(),
             projectiles: Vec::new(),
             fade_timer: 0.0,
             level_complete: None,
@@ -161,8 +159,7 @@ impl<'a> Game<'a> {
         self.player = Player::new(get_player_spawn(self.assets, level));
         self.player.facing_left = self.level.is_multiple_of(2);
     }
-    pub fn update(&mut self) {
-        self.gamepad_engine.poll();
+    pub fn update(&mut self, gamepad_engine: &mut Gamepads) {
         // cap delta time to a minimum of 60 fps.
         let delta_time = get_frame_time().min(1.0 / 60.0);
         self.time += delta_time;
@@ -193,7 +190,7 @@ impl<'a> Game<'a> {
                 &self.assets.levels[self.level],
                 &mut self.projectiles,
                 &mut self.horses,
-                &mut self.gamepad_engine,
+                gamepad_engine,
             );
         }
         let level = &self.assets.levels[self.level];
@@ -306,7 +303,7 @@ impl<'a> Game<'a> {
                 &self.assets.levels[self.level],
                 &mut self.projectiles,
                 &mut self.horses,
-                &mut self.gamepad_engine,
+                gamepad_engine,
             );
         }
 
@@ -475,7 +472,7 @@ impl<'a> Game<'a> {
                         &self.assets.levels[self.level],
                         &mut self.projectiles,
                         &mut self.horses,
-                        &mut self.gamepad_engine,
+                        gamepad_engine,
                     );
                 }
                 self.player.time += delta_time;

@@ -38,6 +38,9 @@ pub struct Assets {
     pub pole: Animation,
     pub font: Font,
 
+    pub menu_button: Animation,
+    pub logo: Texture2D,
+
     pub fireking: AnimationsGroup,
     pub fire_crown: Animation,
     pub lavafall: Animation,
@@ -50,7 +53,6 @@ pub struct Assets {
     pub henry_dust: Animation,
 
     pub tower_mesh: Mesh,
-    // pub ground_mesh: Mesh,
 }
 impl Assets {
     pub fn load() -> Self {
@@ -113,6 +115,9 @@ impl Assets {
             title: load_ase_texture(include_bytes!("../assets/title.ase"), None),
             gate: Animation::from_file(include_bytes!("../assets/gate.ase")),
             pole: Animation::from_file(include_bytes!("../assets/pole.ase")),
+
+            menu_button: Animation::from_file(include_bytes!("../assets/menu_button.ase")),
+            logo: load_ase_texture(include_bytes!("../assets/logo.ase"), None),
 
             fireking: AnimationsGroup::from_file(include_bytes!("../assets/fireking.ase")),
             fireball: AnimationsGroup::from_file(include_bytes!("../assets/fireball.ase")),

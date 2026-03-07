@@ -1,12 +1,15 @@
 use std::f32::consts::PI;
 
+use gamepads::Gamepads;
 use macroquad::prelude::*;
 
-use crate::{assets::Assets, utils::DEBUG_FLAGS};
+use crate::{assets::Assets, utils::*};
 
 pub struct MainMenu {
     camera: Camera3D,
     time: f32,
+    button_index: Option<usize>,
+    last_input: Vec2,
 }
 
 const RENDER_WIDTH: u32 = 256 * 4;
@@ -33,6 +36,8 @@ impl MainMenu {
                 render_target: Some(rt),
                 ..Default::default()
             },
+            button_index: None,
+            last_input: Vec2::ZERO,
         }
     }
     fn get_look_angle(&self) -> Vec2 {
@@ -80,21 +85,8 @@ impl MainMenu {
 
         target.normalize()
     }
-    fn movement(&mut self) {
-        let mut i = Vec2::ZERO;
-
-        if is_key_down(KeyCode::A) {
-            i.x -= 1.0;
-        }
-        if is_key_down(KeyCode::D) {
-            i.x += 1.0;
-        }
-        if is_key_down(KeyCode::W) {
-            i.y -= 1.0;
-        }
-        if is_key_down(KeyCode::S) {
-            i.y += 1.0;
-        }
+    fn movement(&mut self, gamepad_engine: &mut Gamepads) {
+        let i = get_input_axis(gamepad_engine);
         let mut moved: Vec3 = Vec3::ZERO;
 
         moved += self.forward(true) * -i.y * get_frame_time() * 10.0;
@@ -111,11 +103,11 @@ impl MainMenu {
             dbg!(self.camera.target);
         }
     }
-    pub fn update(&mut self, assets: &Assets) -> bool {
+    pub fn update(&mut self, assets: &Assets, gamepad_engine: &mut Gamepads) -> bool {
         self.time += get_frame_time();
 
         if DEBUG_FLAGS.menufly {
-            self.movement();
+            self.movement(gamepad_engine);
         } else {
             const ORBIT_RADIUS: f32 = 8.7;
             const ORBIT_CENTER: Vec3 = Vec3::ZERO;
@@ -131,6 +123,27 @@ impl MainMenu {
                 (self.time * ORBIT_SPEED).cos() * ORBIT_RADIUS + ORBIT_CENTER.x;
             self.camera.position.z =
                 (self.time * ORBIT_SPEED).sin() * ORBIT_RADIUS + ORBIT_CENTER.z;
+        }
+        const BUTTON_AMT: usize = 2;
+
+        let input = get_input_axis(gamepad_engine);
+        if input != self.last_input {
+            if input.y != 0.0 {
+                if input.y < 0.0 {
+                    self.button_index = Some(
+                        self.button_index
+                            .map(|f| if f > 0 { f - 1 } else { BUTTON_AMT - 1 })
+                            .unwrap_or(0),
+                    );
+                } else {
+                    self.button_index = Some(
+                        self.button_index
+                            .map(|f| if f + 1 < BUTTON_AMT { f + 1 } else { 0 })
+                            .unwrap_or(0),
+                    );
+                }
+            }
+            self.last_input = input;
         }
 
         set_camera(&self.camera);
@@ -155,7 +168,71 @@ impl MainMenu {
                 ..Default::default()
             },
         );
-        draw_text("press space to start", 64.0, 64.0, 64.0, WHITE);
-        is_key_pressed(KeyCode::Space)
+
+        let scale_factor =
+            (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
+
+        let margin: Vec2 = vec2(11.0, 6.0) * scale_factor;
+        draw_texture_ex(
+            &assets.logo,
+            margin.x,
+            margin.y,
+            WHITE,
+            DrawTextureParams {
+                dest_size: Some(assets.logo.size() * scale_factor),
+                ..Default::default()
+            },
+        );
+
+        fn draw_button(
+            x: f32,
+            y: f32,
+            index: usize,
+            assets: &Assets,
+            scale_factor: f32,
+            selected: bool,
+        ) -> bool {
+            let size = assets.menu_button.frames[0].0.size() * scale_factor;
+            let mouse = mouse_position();
+            let hovered = (x..x + size.x).contains(&mouse.0) && (y..y + size.y).contains(&mouse.1);
+
+            if selected || hovered {
+                gl_use_material(&BUTTON_HOVER_MATERIAL);
+            }
+            draw_texture_ex(
+                &assets.menu_button.frames[index].0,
+                x,
+                y,
+                WHITE,
+                DrawTextureParams {
+                    dest_size: Some(size),
+                    ..Default::default()
+                },
+            );
+            if selected || hovered {
+                gl_use_default_material();
+            }
+            hovered
+        }
+
+        let play_hovered = draw_button(
+            margin.x,
+            margin.y + 57.0 * scale_factor,
+            0,
+            assets,
+            scale_factor,
+            self.button_index.is_some_and(|f| f == 0),
+        );
+        draw_button(
+            margin.x,
+            margin.y + (57.0 + 15.0) * scale_factor,
+            2,
+            assets,
+            scale_factor,
+            self.button_index.is_some_and(|f| f == 1),
+        );
+
+        (play_hovered && is_mouse_button_pressed(MouseButton::Left))
+            || (self.button_index.is_some_and(|f| f == 0) && is_jump_pressed(gamepad_engine))
     }
 }
