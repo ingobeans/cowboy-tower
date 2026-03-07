@@ -7,6 +7,7 @@ use asefile::AsepriteFile;
 use image::EncodableLayout;
 use include_dir::{Dir, include_dir};
 use macroquad::prelude::*;
+use obj::FromRawVertex;
 
 use crate::{
     enemies::{ENEMIES, EnemySpawner, LevelEnemyData},
@@ -47,6 +48,9 @@ pub struct Assets {
     pub henry: AnimationsGroup,
     pub henry_target: Texture2D,
     pub henry_dust: Animation,
+
+    pub tower_mesh: Mesh,
+    // pub ground_mesh: Mesh,
 }
 impl Assets {
     pub fn load() -> Self {
@@ -68,6 +72,16 @@ impl Assets {
             let level = Level::load(file.contents_utf8().unwrap(), &tileset, name);
             levels.push(level);
         }
+
+        let model_data = include_str!("../assets/tower.obj");
+        let tower_mesh = obj_to_mesh(
+            model_data,
+            Some(load_ase_texture(
+                include_bytes!("../assets/tower.ase"),
+                None,
+            )),
+        );
+
         info!("loaded {} levels", levels.len());
         Self {
             levels,
@@ -110,8 +124,35 @@ impl Assets {
             henry: AnimationsGroup::from_file(include_bytes!("../assets/henry.ase")),
             henry_target: load_ase_texture(include_bytes!("../assets/henry_target.ase"), None),
             henry_dust: Animation::from_file(include_bytes!("../assets/henry_dust.ase")),
+
+            tower_mesh,
             tileset,
         }
+    }
+}
+
+fn obj_to_mesh(data: &str, texture: Option<Texture2D>) -> Mesh {
+    let obj = obj::raw::parse_obj(data.as_bytes()).unwrap();
+    let vertices: (Vec<obj::TexturedVertex>, Vec<u16>) =
+        obj::TexturedVertex::process(obj.positions, obj.normals, obj.tex_coords, obj.polygons)
+            .unwrap();
+    Mesh {
+        vertices: vertices
+            .0
+            .iter()
+            .map(|v| {
+                Vertex::new(
+                    v.position[0],
+                    v.position[1],
+                    v.position[2],
+                    v.texture[0],
+                    1.0 - v.texture[1],
+                    WHITE,
+                )
+            })
+            .collect(),
+        indices: vertices.1,
+        texture,
     }
 }
 

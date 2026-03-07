@@ -10,6 +10,7 @@ use crate::{
     assets::{Assets, Horse, Level},
     bosses::{Boss, new_boss},
     enemies::*,
+    menu::MainMenu,
     player::{CinematicBars, Player, update_physicsbody},
     projectiles::*,
     tower::*,
@@ -20,6 +21,7 @@ use crate::{
 mod assets;
 mod bosses;
 mod enemies;
+mod menu;
 mod player;
 mod projectiles;
 mod tower;
@@ -125,6 +127,7 @@ struct Game<'a> {
     gamepad_engine: Gamepads,
     fog_points: Vec<FogPoint>,
     title_text: Option<f32>,
+    menu: MainMenu,
 }
 impl<'a> Game<'a> {
     fn new(assets: &'a Assets, level: usize) -> Self {
@@ -158,6 +161,7 @@ impl<'a> Game<'a> {
             time: 0.0,
             level_transition_time: 0.0,
             title_text: None,
+            menu: MainMenu::new(),
         }
     }
     fn load_level(&mut self, level: usize) {
@@ -919,6 +923,8 @@ impl<'a> Game<'a> {
         if DEBUG_FLAGS.fps {
             draw_fps();
         }
+
+        self.menu.update(self.assets);
     }
 }
 
