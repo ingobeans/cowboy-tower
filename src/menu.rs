@@ -1,27 +1,22 @@
+use std::f32::consts::PI;
+
 use macroquad::prelude::*;
 
 use crate::{assets::Assets, utils::DEBUG_FLAGS};
 
 pub struct MainMenu {
-    pub camera: Camera3D,
+    camera: Camera3D,
+    time: f32,
 }
 
 impl MainMenu {
     pub fn new() -> Self {
-        let (position, target) = if DEBUG_FLAGS.menufly {
-            (vec3(0., 1.0, 0.0), vec3(0., 1.7, -5.))
-        } else {
-            (
-                vec3(-4.156386, -2.2503686, 8.904824),
-                vec3(-4.042063, -2.0609324, 7.911381),
-            )
-        };
         Self {
+            time: 0.0,
             camera: Camera3D {
-                position,
-                target,
+                position: vec3(-4.156386, -2.2503686, 8.904824),
+                target: vec3(-4.042063, -2.0609324, 7.911381),
                 up: vec3(0., 1.0, 0.),
-
                 ..Default::default()
             },
         }
@@ -105,9 +100,24 @@ impl MainMenu {
     pub fn update(&mut self, assets: &Assets) -> bool {
         set_default_camera();
         clear_background(Color::from_hex(0x1cb7ff));
+        self.time += get_frame_time();
 
         if DEBUG_FLAGS.menufly {
             self.movement();
+        } else {
+            const ORBIT_RADIUS: f32 = 8.7;
+            const ORBIT_CENTER: Vec3 = Vec3::ZERO;
+            const ORBIT_SPEED: f32 = 0.1;
+            self.camera.target = ORBIT_CENTER - vec3(0.0, 0.0, 0.0)
+                + vec3(
+                    (self.time * ORBIT_SPEED + PI / 2.0).cos(),
+                    0.0,
+                    (self.time * ORBIT_SPEED + PI / 2.0).sin(),
+                ) * 3.0;
+            self.camera.position.x =
+                (self.time * ORBIT_SPEED).cos() * ORBIT_RADIUS + ORBIT_CENTER.x;
+            self.camera.position.z =
+                (self.time * ORBIT_SPEED).sin() * ORBIT_RADIUS + ORBIT_CENTER.z;
         }
         draw_text("press space to start", 64.0, 64.0, 64.0, WHITE);
 
