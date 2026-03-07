@@ -57,8 +57,9 @@ impl WorldManager {
         if level_index <= 1 {
             h -= 64.0;
         }
-        const DENSITY: f32 = 0.0005;
-        let amt = (DENSITY * w * h) as u16;
+        let world = level.get_world_index();
+        const WORLD_DENSITIES: &[f32] = &[0.0005, 0.0001, 0.0];
+        let amt = (WORLD_DENSITIES[world as usize] * w * h) as u16;
 
         if !self.clouds.is_empty() {
             let x_offset = get_elevator_pos(assets, level_index - 1).x
