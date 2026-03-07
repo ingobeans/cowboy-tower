@@ -138,7 +138,6 @@ impl MainMenu {
 
         set_default_camera();
         clear_background(Color::from_hex(0x1cb7ff));
-        draw_text("press space to start", 64.0, 64.0, 64.0, WHITE);
 
         let actual_screen_width = screen_width();
         let actual_screen_height = screen_height();
@@ -155,6 +154,7 @@ impl MainMenu {
                 ..Default::default()
             },
         );
+        draw_text("press space to start", 64.0, 64.0, 64.0, WHITE);
         is_key_pressed(KeyCode::Space)
     }
 }
