@@ -203,6 +203,24 @@ impl MainMenu {
             self.button_index.is_some_and(|f| f == 1),
         );
 
+        let bubble_height = 0.0;
+        let draw_height = actual_screen_height
+            - 16.0 * scale_factor
+            - assets.player_bubble.frames[0].0.height() * scale_factor;
+
+        let x = actual_screen_width
+            - (71.96 * actual_screen_width / actual_screen_height - 88.0) * scale_factor
+            - assets.player_bubble.frames[0].0.width() * scale_factor * 2.0;
+        draw_texture_ex(
+            &assets.player_bubble.frames[if bubble_height == 0.0 { 0 } else { 1 }].0,
+            x,
+            draw_height,
+            WHITE,
+            DrawTextureParams {
+                dest_size: Some(assets.player_bubble.frames[0].0.size() * scale_factor),
+                ..Default::default()
+            },
+        );
         (play_hovered && is_mouse_button_pressed(MouseButton::Left))
             || (self.button_index.is_some_and(|f| f == 0) && is_jump_pressed(gamepad_engine))
     }

@@ -40,6 +40,7 @@ pub struct Assets {
 
     pub menu_button: Animation,
     pub logo: Texture2D,
+    pub player_bubble: Animation,
 
     pub fireking: AnimationsGroup,
     pub fire_crown: Animation,
@@ -118,6 +119,7 @@ impl Assets {
 
             menu_button: Animation::from_file(include_bytes!("../assets/menu_button.ase")),
             logo: load_ase_texture(include_bytes!("../assets/logo.ase"), None),
+            player_bubble: Animation::from_file(include_bytes!("../assets/player_bubble.ase")),
 
             fireking: AnimationsGroup::from_file(include_bytes!("../assets/fireking.ase")),
             fireball: AnimationsGroup::from_file(include_bytes!("../assets/fireball.ase")),
