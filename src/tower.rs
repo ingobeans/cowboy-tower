@@ -1,7 +1,8 @@
 use macroquad::prelude::*;
 
 use crate::assets::{Assets, Level};
-use crate::{get_elevator_pos, get_player_spawn, utils::*};
+use crate::game::{get_elevator_pos, get_player_spawn};
+use crate::utils::*;
 
 fn calculate_world_heights(assets: &Assets) -> Vec<(f32, f32)> {
     let mut total = -3.0 * 8.0;

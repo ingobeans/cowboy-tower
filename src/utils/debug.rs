@@ -16,6 +16,7 @@ pub struct DebugFlags {
     pub uncapped: bool,
     pub fps: bool,
     pub unscaled: bool,
+    pub menufly: bool,
 }
 pub static DEBUG_FLAGS: LazyLock<DebugFlags> = LazyLock::new(|| {
     #[cfg(debug_assertions)]
@@ -32,6 +33,7 @@ pub static DEBUG_FLAGS: LazyLock<DebugFlags> = LazyLock::new(|| {
             uncapped: args.contains(&"uncapped"),
             fps: args.contains(&"fps"),
             unscaled: args.contains(&"unscaled"),
+            menufly: args.contains(&"menufly"),
             centres: args.contains(&"centre") || args.contains(&"center"),
         };
         print!("{flags}");

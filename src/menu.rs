@@ -1,6 +1,6 @@
 use macroquad::prelude::*;
 
-use crate::assets::Assets;
+use crate::{assets::Assets, utils::DEBUG_FLAGS};
 
 pub struct MainMenu {
     pub camera: Camera3D,
@@ -8,11 +8,19 @@ pub struct MainMenu {
 
 impl MainMenu {
     pub fn new() -> Self {
+        let (position, target) = if DEBUG_FLAGS.menufly {
+            (vec3(0., 1.0, 0.0), vec3(0., 1.7, -5.))
+        } else {
+            (
+                vec3(-4.156386, -2.2503686, 8.904824),
+                vec3(-4.042063, -2.0609324, 7.911381),
+            )
+        };
         Self {
             camera: Camera3D {
-                position: vec3(0., 1.0, 0.0),
+                position,
+                target,
                 up: vec3(0., 1.0, 0.),
-                target: vec3(0., 1.7, -5.),
 
                 ..Default::default()
             },
@@ -86,14 +94,25 @@ impl MainMenu {
         self.camera.target += moved;
         if is_mouse_button_down(MouseButton::Right) {
             self.look(mouse_delta_position());
+        } else {
+            self.look(Vec2::ZERO);
+        }
+        if is_key_pressed(KeyCode::G) {
+            dbg!(self.camera.position);
+            dbg!(self.camera.target);
         }
     }
-    pub fn update(&mut self, assets: &Assets) {
-        #[cfg(debug_assertions)]
-        {
+    pub fn update(&mut self, assets: &Assets) -> bool {
+        set_default_camera();
+        clear_background(Color::from_hex(0x1cb7ff));
+
+        if DEBUG_FLAGS.menufly {
             self.movement();
         }
+        draw_text("press space to start", 64.0, 64.0, 64.0, WHITE);
+
         set_camera(&self.camera);
         draw_mesh(&assets.tower_mesh);
+        is_key_pressed(KeyCode::Space)
     }
 }
