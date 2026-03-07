@@ -31,7 +31,7 @@ impl<'a> GameManager<'a> {
     }
     fn update(&mut self) {
         if let Some(game) = &mut self.game {
-            game.update(); 
+            game.update();
         } else {
             let result = self.menu.update(self.assets);
             if result {

@@ -9,14 +9,28 @@ pub struct MainMenu {
     time: f32,
 }
 
+const RENDER_WIDTH: u32 = 256 * 2;
+const RENDER_HEIGHT: u32 = 144 * 2;
+
 impl MainMenu {
     pub fn new() -> Self {
+        let rt = render_target_ex(
+            RENDER_WIDTH,
+            RENDER_HEIGHT,
+            RenderTargetParams {
+                sample_count: 1,
+                depth: true,
+            },
+        );
+        rt.texture.set_filter(FilterMode::Nearest);
+
         Self {
             time: 0.0,
             camera: Camera3D {
                 position: vec3(-4.156386, -2.2503686, 8.904824),
                 target: vec3(-4.042063, -2.0609324, 7.911381),
                 up: vec3(0., 1.0, 0.),
+                render_target: Some(rt),
                 ..Default::default()
             },
         }
@@ -98,8 +112,6 @@ impl MainMenu {
         }
     }
     pub fn update(&mut self, assets: &Assets) -> bool {
-        set_default_camera();
-        clear_background(Color::from_hex(0x1cb7ff));
         self.time += get_frame_time();
 
         if DEBUG_FLAGS.menufly {
@@ -119,10 +131,30 @@ impl MainMenu {
             self.camera.position.z =
                 (self.time * ORBIT_SPEED).sin() * ORBIT_RADIUS + ORBIT_CENTER.z;
         }
-        draw_text("press space to start", 64.0, 64.0, 64.0, WHITE);
 
         set_camera(&self.camera);
+        clear_background(Color::from_hex(0x1cb7ff));
         draw_mesh(&assets.tower_mesh);
+
+        set_default_camera();
+        clear_background(Color::from_hex(0x1cb7ff));
+        draw_text("press space to start", 64.0, 64.0, 64.0, WHITE);
+
+        let actual_screen_width = screen_width();
+        let actual_screen_height = screen_height();
+        let screen_height = actual_screen_width / RENDER_WIDTH as f32 * RENDER_HEIGHT as f32;
+
+        draw_texture_ex(
+            &self.camera.render_target.as_ref().unwrap().texture,
+            0.0,
+            actual_screen_height - screen_height,
+            WHITE,
+            DrawTextureParams {
+                dest_size: Some(vec2(actual_screen_width, screen_height)),
+                flip_y: true,
+                ..Default::default()
+            },
+        );
         is_key_pressed(KeyCode::Space)
     }
 }
