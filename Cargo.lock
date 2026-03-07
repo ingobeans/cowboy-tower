@@ -132,7 +132,7 @@ checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
 name = "cowboy-tower"
-version = "0.1.224"
+version = "0.1.225"
 dependencies = [
  "asefile",
  "gamepads",
@@ -469,8 +469,7 @@ dependencies = [
 [[package]]
 name = "macroquad"
 version = "0.4.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2befbae373456143ef55aa93a73594d080adfb111dc32ec96a1123a3e4ff4ae"
+source = "git+https://github.com/ingobeans/macroquad.git#74c8130ceb833596dddb8167d26d3af73012c9a7"
 dependencies = [
  "fontdue",
  "glam",
@@ -483,8 +482,7 @@ dependencies = [
 [[package]]
 name = "macroquad_macro"
 version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64b1d96218903768c1ce078b657c0d5965465c95a60d2682fd97443c9d2483dd"
+source = "git+https://github.com/ingobeans/macroquad.git#74c8130ceb833596dddb8167d26d3af73012c9a7"
 
 [[package]]
 name = "malloc_buf"
