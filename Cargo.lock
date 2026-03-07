@@ -469,7 +469,8 @@ dependencies = [
 [[package]]
 name = "macroquad"
 version = "0.4.14"
-source = "git+https://github.com/ingobeans/macroquad.git#74c8130ceb833596dddb8167d26d3af73012c9a7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2befbae373456143ef55aa93a73594d080adfb111dc32ec96a1123a3e4ff4ae"
 dependencies = [
  "fontdue",
  "glam",
@@ -482,7 +483,8 @@ dependencies = [
 [[package]]
 name = "macroquad_macro"
 version = "0.1.8"
-source = "git+https://github.com/ingobeans/macroquad.git#74c8130ceb833596dddb8167d26d3af73012c9a7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64b1d96218903768c1ce078b657c0d5965465c95a60d2682fd97443c9d2483dd"
 
 [[package]]
 name = "malloc_buf"

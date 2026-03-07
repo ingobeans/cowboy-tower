@@ -9,5 +9,4 @@ image = "0.24.9"
 include_dir = "0.7.4"
 gamepads = { version = "0.1.7", default-features = false }
 obj-rs = "0.7.4"
-# use my fork of macroquad that fixes Camera3D aspect when using render targets
-macroquad = { git = "https://github.com/ingobeans/macroquad.git" }
+macroquad = "0.4.14"

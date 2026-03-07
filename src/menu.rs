@@ -12,28 +12,14 @@ pub struct MainMenu {
     last_input: Vec2,
 }
 
-const RENDER_WIDTH: u32 = 256 * 4;
-const RENDER_HEIGHT: u32 = 144 * 4;
-
 impl MainMenu {
     pub fn new() -> Self {
-        let rt = render_target_ex(
-            RENDER_WIDTH,
-            RENDER_HEIGHT,
-            RenderTargetParams {
-                sample_count: 1,
-                depth: true,
-            },
-        );
-        rt.texture.set_filter(FilterMode::Nearest);
-
         Self {
             time: 0.0,
             camera: Camera3D {
                 position: vec3(-4.156386, -2.2503686, 8.904824),
                 target: vec3(-4.042063, -2.0609324, 7.911381),
                 up: vec3(0., 1.0, 0.),
-                render_target: Some(rt),
                 ..Default::default()
             },
             button_index: None,
@@ -149,25 +135,10 @@ impl MainMenu {
         set_camera(&self.camera);
         clear_background(Color::from_hex(0x1cb7ff));
         draw_mesh(&assets.tower_mesh);
-
         set_default_camera();
-        clear_background(Color::from_hex(0x1cb7ff));
 
         let actual_screen_width = screen_width();
         let actual_screen_height = screen_height();
-        let screen_height = actual_screen_width / RENDER_WIDTH as f32 * RENDER_HEIGHT as f32;
-
-        draw_texture_ex(
-            &self.camera.render_target.as_ref().unwrap().texture,
-            0.0,
-            actual_screen_height - screen_height,
-            WHITE,
-            DrawTextureParams {
-                dest_size: Some(vec2(actual_screen_width, screen_height)),
-                flip_y: true,
-                ..Default::default()
-            },
-        );
 
         let scale_factor =
             (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
