@@ -313,7 +313,7 @@ impl<'a> Game<'a> {
             } else if *time > 0.0 {
                 *time += delta_time;
             }
-        } else {
+        } else if self.title_text.is_none() {
             self.player.update(
                 delta_time,
                 &self.assets.levels[self.level],
