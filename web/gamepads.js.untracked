@@ -19,12 +19,13 @@ miniquad_add_plugin({
             for (const [i, r] of e.slice(0, u).entries()) {
                 let e = n + m * i + 1;
 
-                // this check is commented out by me:
-
-                // if (!r || !r.connected || r.mapping !== "standard") {
-                //     o[e] = 0;
-                //     continue
-                // }
+                // this check normally also checks if the controller has an unknown format,
+                // but i disabled this so it instead tries its best even with an unknown mapping.
+                // (my controller is unknown format but works with the check disabled)
+                if (!r || !r.buttons || !r.axes) {
+                    o[e] = 0;
+                    continue
+                }
                 o[e++] = 1;
                 o[e++] = r.buttons.length;
                 o[e++] = r.axes.length;
