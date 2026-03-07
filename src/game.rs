@@ -454,12 +454,7 @@ impl<'a> Game<'a> {
                 }
 
                 let anim_time = ((*time * -1000.0) as u32).min(self.assets.gate.total_length - 1);
-                draw_texture(
-                    &self.assets.gate.get_at_time(anim_time),
-                    pos.x,
-                    pos.y,
-                    WHITE,
-                );
+                draw_texture(self.assets.gate.get_at_time(anim_time), pos.x, pos.y, WHITE);
                 let target = level.find_marker(4);
                 self.player.pos.x += delta_time * 10.0;
                 self.player.pos.y = self.player.pos.move_towards(target, delta_time * 24.0).y;
