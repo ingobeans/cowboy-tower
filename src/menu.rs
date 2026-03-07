@@ -9,8 +9,8 @@ pub struct MainMenu {
     time: f32,
 }
 
-const RENDER_WIDTH: u32 = 256 * 2;
-const RENDER_HEIGHT: u32 = 144 * 2;
+const RENDER_WIDTH: u32 = 256 * 4;
+const RENDER_HEIGHT: u32 = 144 * 4;
 
 impl MainMenu {
     pub fn new() -> Self {
@@ -120,7 +120,8 @@ impl MainMenu {
             const ORBIT_RADIUS: f32 = 8.7;
             const ORBIT_CENTER: Vec3 = Vec3::ZERO;
             const ORBIT_SPEED: f32 = 0.1;
-            self.camera.target = ORBIT_CENTER - vec3(0.0, 0.0, 0.0)
+            self.camera.target = ORBIT_CENTER
+                + vec3(0.0, 0.5, 0.0)
                 + vec3(
                     (self.time * ORBIT_SPEED + PI / 2.0).cos(),
                     0.0,
