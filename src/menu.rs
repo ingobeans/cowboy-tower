@@ -144,7 +144,10 @@ impl MainMenu {
 
         set_camera(&self.camera);
         clear_background(Color::from_hex(0x1cb7ff));
+        // draw scene
         draw_mesh(&assets.tower_mesh);
+
+        // return to default camera to draw UI
         set_default_camera();
 
         let actual_screen_width = screen_width();
