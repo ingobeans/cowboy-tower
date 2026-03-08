@@ -193,7 +193,7 @@ impl MainMenu {
         let play_hovered = draw_button(
             margin.x,
             margin.y + 57.0 * scale_factor,
-            0,
+            if save_manager.level == 0 { 0 } else { 1 },
             assets,
             scale_factor,
             self.button_index.is_some_and(|f| f == 0),
@@ -250,7 +250,7 @@ impl MainMenu {
 
         let x = actual_screen_width
             - (71.96 * actual_screen_width / actual_screen_height - 88.0) * scale_factor
-            - assets.player_bubble.frames[0].0.width() * scale_factor * 2.0;
+            - assets.player_bubble.frames[0].0.width() * scale_factor * 2.1;
         draw_texture_ex(
             &assets.player_bubble.frames[if bubble_height == 0.0 { 0 } else { 1 }].0,
             x,
