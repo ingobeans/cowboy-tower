@@ -6,6 +6,7 @@ use macroquad::{miniquad::window::screen_size, prelude::*};
 use crate::{
     assets::{Assets, Horse, Level},
     bosses::{Boss, new_boss},
+    data::SaveManager,
     enemies::*,
     player::{CinematicBars, Player, update_physicsbody},
     projectiles::*,
@@ -159,7 +160,7 @@ impl<'a> Game<'a> {
         self.player = Player::new(get_player_spawn(self.assets, level));
         self.player.facing_left = self.level.is_multiple_of(2);
     }
-    pub fn update(&mut self, gamepad_engine: &mut Gamepads) {
+    pub fn update(&mut self, gamepad_engine: &mut Gamepads, save_manager: &mut SaveManager) {
         // cap delta time to a minimum of 60 fps.
         let delta_time = get_frame_time().min(1.0 / 60.0);
         self.time += delta_time;
@@ -183,6 +184,7 @@ impl<'a> Game<'a> {
             self.level_complete = None;
             self.height += self.assets.levels[self.level].get_height() + FLOOR_PADDING + 16.0;
             self.load_level(self.level + 1);
+            save_manager.save(self.level);
             self.world_manager.create_clouds(self.assets, self.level);
             self.level_transition_time = LEVEL_TRANSITION_LENGTH;
             self.player.update(

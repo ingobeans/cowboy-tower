@@ -3,10 +3,11 @@ use std::env::args;
 use gamepads::Gamepads;
 use macroquad::{miniquad::conf::Platform, prelude::*};
 
-use crate::{assets::Assets, game::Game, menu::MainMenu, utils::*};
+use crate::{assets::Assets, data::SaveManager, game::Game, menu::MainMenu, utils::*};
 
 mod assets;
 mod bosses;
+mod data;
 mod enemies;
 mod game;
 mod menu;
@@ -21,6 +22,7 @@ struct GameManager<'a> {
     game: Option<Game<'a>>,
     menu: MainMenu,
     gamepad_engine: Gamepads,
+    save_manager: SaveManager,
 }
 
 impl<'a> GameManager<'a> {
@@ -28,6 +30,7 @@ impl<'a> GameManager<'a> {
         Self {
             assets,
             gamepad_engine: Gamepads::new(),
+            save_manager: SaveManager::new(),
             game: level.map(|i| Game::new(assets, i)),
             menu: MainMenu::new(),
         }
@@ -35,9 +38,13 @@ impl<'a> GameManager<'a> {
     fn update(&mut self) {
         self.gamepad_engine.poll();
         if let Some(game) = &mut self.game {
-            game.update(&mut self.gamepad_engine);
+            game.update(&mut self.gamepad_engine, &mut self.save_manager);
         } else {
-            let result = self.menu.update(self.assets, &mut self.gamepad_engine);
+            let result = self.menu.update(
+                self.assets,
+                &mut self.gamepad_engine,
+                &mut self.save_manager,
+            );
             if result {
                 self.game = Some(Game::new(self.assets, 0));
             }

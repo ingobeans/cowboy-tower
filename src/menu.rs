@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use gamepads::Gamepads;
 use macroquad::prelude::*;
 
-use crate::{assets::Assets, utils::*};
+use crate::{assets::Assets, data::SaveManager, utils::*};
 
 pub struct MainMenu {
     camera: Camera3D,
@@ -89,7 +89,12 @@ impl MainMenu {
             dbg!(self.camera.target);
         }
     }
-    pub fn update(&mut self, assets: &Assets, gamepad_engine: &mut Gamepads) -> bool {
+    pub fn update(
+        &mut self,
+        assets: &Assets,
+        gamepad_engine: &mut Gamepads,
+        save_manager: &mut SaveManager,
+    ) -> bool {
         self.time += get_frame_time();
 
         if DEBUG_FLAGS.menufly {
@@ -203,10 +208,46 @@ impl MainMenu {
             self.button_index.is_some_and(|f| f == 1),
         );
 
-        let bubble_height = 0.0;
+        let level = &assets.levels[save_manager.level];
+        let (world, level) = level
+            .name
+            .split_once('-')
+            .map(|f| {
+                (
+                    f.0.parse::<usize>().unwrap(),
+                    (&f.1[..1]).parse::<u8>().unwrap_or_else(|_| {
+                        assets.levels[save_manager.level - 1].name[2..3]
+                            .parse::<u8>()
+                            .unwrap()
+                            + 1
+                    }),
+                )
+            })
+            .unwrap();
+        // count how many levels are in the current world
+        let mut count = 0;
+        for level in &assets.levels {
+            if level.get_world_index() == world as _ {
+                count += 1;
+            }
+        }
+
+        let world_tower_heights = [37.0, 37.0, 33.0];
+        let mut prev_worlds = 0.0;
+        for i in 0..world {
+            prev_worlds += world_tower_heights[i];
+        }
+        let bubble_height =
+            level as f32 / (count - 1) as f32 * world_tower_heights[world] + prev_worlds;
         let draw_height = actual_screen_height
             - 16.0 * scale_factor
-            - assets.player_bubble.frames[0].0.height() * scale_factor;
+            - assets.player_bubble.frames[0].0.height() * scale_factor
+            - bubble_height * scale_factor
+            + if bubble_height > 0.0 {
+                19.0 * scale_factor
+            } else {
+                0.0
+            };
 
         let x = actual_screen_width
             - (71.96 * actual_screen_width / actual_screen_height - 88.0) * scale_factor
