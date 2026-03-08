@@ -10,6 +10,7 @@ pub struct MainMenu {
     time: f32,
     button_index: Option<usize>,
     last_input: Vec2,
+    fade_out: f32,
 }
 
 impl MainMenu {
@@ -24,6 +25,7 @@ impl MainMenu {
             },
             button_index: None,
             last_input: Vec2::ZERO,
+            fade_out: 0.0,
         }
     }
     fn get_look_angle(&self) -> Vec2 {
@@ -96,6 +98,9 @@ impl MainMenu {
         save_manager: &mut SaveManager,
     ) -> bool {
         self.time += get_frame_time();
+        if self.fade_out > 0.0 {
+            self.fade_out += get_frame_time();
+        }
 
         if DEBUG_FLAGS.menufly {
             self.movement(gamepad_engine);
@@ -261,7 +266,20 @@ impl MainMenu {
                 ..Default::default()
             },
         );
-        (play_hovered && is_mouse_button_pressed(MouseButton::Left))
+        const FADE_OUT_TIME: f32 = 0.5;
+        if self.fade_out > 0.0 {
+            draw_rectangle(
+                -1.0,
+                -1.0,
+                actual_screen_width + 2.0,
+                actual_screen_height + 2.0,
+                BLACK.with_alpha(self.fade_out / FADE_OUT_TIME),
+            );
+        } else if (play_hovered && is_mouse_button_pressed(MouseButton::Left))
             || (self.button_index.is_some_and(|f| f == 0) && is_jump_pressed(gamepad_engine))
+        {
+            self.fade_out = get_frame_time();
+        }
+        self.fade_out >= FADE_OUT_TIME
     }
 }

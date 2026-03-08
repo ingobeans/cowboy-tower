@@ -104,7 +104,7 @@ pub struct Game<'a> {
     projectiles: Vec<Projectile>,
     boss: Option<Box<dyn Boss>>,
     level: usize,
-    fade_timer: f32,
+    pub fade_timer: f32,
     level_complete: Option<f32>,
     time: f32,
     level_transition_time: f32,
