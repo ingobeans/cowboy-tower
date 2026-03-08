@@ -46,7 +46,7 @@ impl<'a> GameManager<'a> {
                 &mut self.save_manager,
             );
             if result {
-                self.game = Some(Game::new(self.assets, 0));
+                self.game = Some(Game::new(self.assets, self.save_manager.level));
             }
         }
     }
