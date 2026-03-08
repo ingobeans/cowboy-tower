@@ -145,8 +145,7 @@ impl MainMenu {
         let actual_screen_width = screen_width();
         let actual_screen_height = screen_height();
 
-        let scale_factor =
-            (actual_screen_width / SCREEN_WIDTH).min(actual_screen_height / SCREEN_HEIGHT);
+        let scale_factor = actual_screen_height / SCREEN_HEIGHT;
 
         let margin: Vec2 = vec2(11.0, 6.0) * scale_factor;
         draw_texture_ex(

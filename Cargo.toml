@@ -1,6 +1,6 @@
 [package]
 name = "cowboy-tower"
-version = "0.1.232"
+version = "0.1.233"
 edition = "2024"
 
 [dependencies]
