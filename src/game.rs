@@ -889,13 +889,6 @@ impl<'a> Game<'a> {
             self.player.defeated_bosses,
             actual_screen_width / scale_factor,
         );
-        if is_key_pressed(KeyCode::H) {
-            self.player.time_since_last_boss_defeated = 0.0;
-            self.player.defeated_bosses = 1;
-        }
-        if is_key_pressed(KeyCode::L) {
-            self.player.cinematic_bars = Some(CinematicBars::Extending(0.0));
-        }
 
         if DEBUG_FLAGS.fps {
             draw_fps();
