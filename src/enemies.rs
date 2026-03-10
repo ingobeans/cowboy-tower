@@ -250,7 +250,7 @@ impl Enemy {
             draw_cross(self.pos.x, self.pos.y, RED);
         }
         if self.death_frames <= 0.0 {
-            if self.spawner.is_none() && !self.ty.unkillable {
+            if self.spawner.is_none() {
                 let mut hit_by_projectile = false;
                 for projectile in projectiles.iter_mut() {
                     if projectile.friendly
@@ -261,7 +261,7 @@ impl Enemy {
                             .contains(&self.pos.y)
                     {
                         projectile.dead |= projectile.should_die_on_kill();
-                        hit_by_projectile = true;
+                        hit_by_projectile = !self.ty.unkillable;
                         break;
                     }
                 }
