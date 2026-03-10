@@ -2,7 +2,7 @@ use crate::{
     assets::{AnimationsGroup, Assets, Level},
     player::{Player, update_physicsbody},
     projectiles::Projectile,
-    utils::{DEBUG_FLAGS, draw_cross},
+    utils::{DEBUG_FLAGS, GRAVITY, draw_cross},
 };
 use macroquad::prelude::*;
 use std::{f32::consts::PI, sync::LazyLock};
@@ -192,6 +192,12 @@ impl Enemy {
                     self.attack_time = 0.0;
                     self.has_attacked = false;
                 }
+            }
+            if !matches!(
+                self.ty.movement_type,
+                MovementType::FollowPath | MovementType::None
+            ) {
+                self.velocity.y += GRAVITY * delta_time;
             }
             (self.pos, _, _, _) =
                 update_physicsbody(self.pos, &mut self.velocity, delta_time, level, true, false);
