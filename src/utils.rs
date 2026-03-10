@@ -42,11 +42,11 @@ pub fn is_lasso_down(gamepad_engine: &mut Gamepads) -> bool {
             .all()
             .any(|f| f.is_currently_pressed(Button::FrontRightUpper))
 }
-pub fn is_shoot_pressed(gamepad_engine: &mut Gamepads) -> bool {
-    is_mouse_button_pressed(MouseButton::Left)
+pub fn is_shoot_down(gamepad_engine: &mut Gamepads) -> bool {
+    is_mouse_button_down(MouseButton::Left)
         || gamepad_engine
             .all()
-            .any(|f| f.is_just_pressed(Button::FrontLeftUpper))
+            .any(|f| f.is_currently_pressed(Button::FrontLeftUpper))
 }
 
 pub fn is_jump_pressed(gamepad_engine: &mut Gamepads) -> bool {

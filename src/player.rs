@@ -249,7 +249,7 @@ impl Player {
         if self.shooting > 0.0 {
             self.shooting += delta_time;
         } else if self.active_lasso.as_ref().is_none_or(|f| f.time == 0.0)
-            && is_shoot_pressed(gamepad_engine)
+            && is_shoot_down(gamepad_engine)
             && self.riding.is_none()
             && self.wall_climbing.is_none()
         {
