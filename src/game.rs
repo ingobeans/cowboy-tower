@@ -126,12 +126,15 @@ impl<'a> Game<'a> {
 
         world_manager.create_clouds(assets, level);
 
+        let mut player = Player::new(get_player_spawn(assets, level));
+        player.facing_left = level.is_multiple_of(2);
+
         Self {
             assets,
             level,
             height: y,
             world_manager,
-            player: Player::new(get_player_spawn(assets, level)),
+            player,
             camera: Camera2D::default(),
             ui_camera: Camera2D::default(),
             enemies: load_enemies(assets.levels[level].enemies.clone()),
