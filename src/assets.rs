@@ -224,6 +224,8 @@ pub struct Level {
 
     pub camera_offsets: Vec<(Vec2, f32)>,
 
+    pub markers: HashMap<u16, Vec2>,
+
     pub fog_points: Vec<Vec2>,
 
     pub forced_player_spawn: Option<Vec2>,
@@ -235,20 +237,7 @@ impl Level {
         self.name.chars().next().unwrap() as u32 - '0' as u32
     }
     pub fn find_marker(&self, marker_index: u16) -> Vec2 {
-        for (index, tile) in self.data.iter().enumerate() {
-            if tile[3] == 0 {
-                continue;
-            }
-            let tile = tile[3] - 1;
-            if tile == 896 + marker_index {
-                let pos = vec2(
-                    ((index % self.width) * 8) as f32 + self.min_pos.x,
-                    ((index / self.width) * 8) as f32 + self.min_pos.y,
-                );
-                return pos;
-            }
-        }
-        panic!()
+        self.markers.get(&marker_index).unwrap().clone()
     }
     pub fn get_height(&self) -> f32 {
         self.floor_height - self.roof_height + 8.0
@@ -305,6 +294,8 @@ impl Level {
         let mut fog_points = Vec::new();
         let mut camera_offsets = Vec::new();
 
+        let mut markers = HashMap::new();
+
         let mut forced_player_spawn = None;
         let mut forced_level_end = None;
         let mut forced_level_elevator_shaft_height = None;
@@ -337,6 +328,8 @@ impl Level {
                             });
                         } else if *tile == 384 + 1 {
                             horses.push(Horse::new(pos, vec2(1.0, 0.0), false));
+                        } else if *tile >= 896 + 1 && *tile <= 902 + 1 {
+                            markers.insert(*tile - 896 - 1, pos);
                         } else if *tile == 416 + 1 || *tile == 417 + 1 {
                             horse_arrows.push((pos, *tile == 417 + 1));
                         } else if *tile > 928 && *tile < 960 + 1 {
@@ -648,6 +641,7 @@ impl Level {
             forced_level_elevator_shaft_height,
             fog_points,
             camera_offsets,
+            markers,
             enemy_paths,
             min_pos,
             boss,
