@@ -126,7 +126,10 @@ pub static SKY_MATERIAL: LazyLock<Material> = LazyLock::new(|| {
     )
     .unwrap()
 });
-pub static BUTTON_HOVER_MATERIAL: LazyLock<Material> = LazyLock::new(|| {
+fn create_glsl_material_with_pipeline(
+    fragment: &'static str,
+    uniforms: Vec<UniformDesc>,
+) -> Material {
     let pipeline = PipelineParams {
         alpha_blend: Some(BlendState::new(
             Equation::Add,
@@ -143,41 +146,24 @@ pub static BUTTON_HOVER_MATERIAL: LazyLock<Material> = LazyLock::new(|| {
     load_material(
         ShaderSource::Glsl {
             vertex: DEFAULT_VERTEX_SHADER,
-            fragment: include_str!("button_hover.frag"),
+            fragment,
         },
         MaterialParams {
             pipeline_params: pipeline,
+            uniforms,
             ..Default::default()
         },
     )
     .unwrap()
+}
+pub static BUTTON_HOVER_MATERIAL: LazyLock<Material> = LazyLock::new(|| {
+    create_glsl_material_with_pipeline(include_str!("button_hover.frag"), Vec::new())
 });
 pub static BLOOM_MATERIAL: LazyLock<Material> = LazyLock::new(|| {
-    let pipeline = PipelineParams {
-        alpha_blend: Some(BlendState::new(
-            Equation::Add,
-            BlendFactor::Value(BlendValue::SourceAlpha),
-            BlendFactor::OneMinusValue(BlendValue::SourceAlpha),
-        )),
-        color_blend: Some(BlendState::new(
-            Equation::Add,
-            BlendFactor::Value(BlendValue::SourceAlpha),
-            BlendFactor::OneMinusValue(BlendValue::SourceAlpha),
-        )),
-        ..Default::default()
-    };
-    load_material(
-        ShaderSource::Glsl {
-            vertex: DEFAULT_VERTEX_SHADER,
-            fragment: include_str!("bloom.frag"),
-        },
-        MaterialParams {
-            pipeline_params: pipeline,
-            uniforms: vec![UniformDesc::new("scale", UniformType::Float1)],
-            ..Default::default()
-        },
+    create_glsl_material_with_pipeline(
+        include_str!("bloom.frag"),
+        vec![UniformDesc::new("scale", UniformType::Float1)],
     )
-    .unwrap()
 });
 
 pub const SKY_FRAGMENT: &str = include_str!("sky.frag");
