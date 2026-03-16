@@ -725,7 +725,7 @@ impl<'a> Game<'a> {
         // SCREEN EFFECTS
 
         set_camera(&self.ui_camera);
-        if DEBUG_FLAGS.bloom {
+        if !DEBUG_FLAGS.nobloom {
             BLOOM_MATERIAL.set_uniform("scale", scale_factor);
             gl_use_material(&BLOOM_MATERIAL);
             draw_rectangle(
