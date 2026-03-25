@@ -130,7 +130,7 @@ impl<'a> Game<'a> {
         world_manager.create_clouds(assets, level);
 
         let mut player = Player::new(get_player_spawn(assets, level));
-        player.facing_left = level.is_multiple_of(2);
+        player.facing_left = level != 0 && level.is_multiple_of(2);
 
         Self {
             assets,
