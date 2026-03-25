@@ -172,6 +172,15 @@ pub static BLOOM_MATERIAL: LazyLock<Material> = LazyLock::new(|| {
         vec![UniformDesc::new("scale", UniformType::Float1)],
     )
 });
+pub static BLUR_MATERIAL: LazyLock<Material> = LazyLock::new(|| {
+    create_glsl_material_with_pipeline(
+        include_str!("blur.frag"),
+        vec![
+            UniformDesc::new("res", UniformType::Float2),
+            UniformDesc::new("r", UniformType::Float1),
+        ],
+    )
+});
 
 pub const SKY_FRAGMENT: &str = include_str!("sky.frag");
 
