@@ -80,7 +80,7 @@ impl WorldManager {
             self.clouds.push(cloud);
         }
     }
-    pub fn draw_clouds(&mut self, assets: &Assets, level: &Level, delta_time: f32) {
+    pub fn draw_clouds(&mut self, assets: &Assets, level: &Level, delta_time: f32, paused: bool) {
         let offset = assets.clouds.frames[0].0.size() / 2.0;
         self.clouds.retain_mut(|cloud| {
             draw_texture(
@@ -89,9 +89,11 @@ impl WorldManager {
                 cloud.pos.y - offset.y,
                 WHITE,
             );
-            cloud.pos.x -= delta_time * 6.0;
-            if cloud.pos.x <= level.min_pos.x - SCREEN_WIDTH {
-                cloud.pos.x = level.max_pos.x + SCREEN_WIDTH + 16.0 * 8.0;
+            if !paused {
+                cloud.pos.x -= delta_time * 6.0;
+                if cloud.pos.x <= level.min_pos.x - SCREEN_WIDTH {
+                    cloud.pos.x = level.max_pos.x + SCREEN_WIDTH + 16.0 * 8.0;
+                }
             }
             cloud.pos.y < level.floor_height + SCREEN_HEIGHT * 2.0
         });

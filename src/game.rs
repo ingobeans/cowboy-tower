@@ -388,7 +388,7 @@ impl<'a> Game<'a> {
             Color::from_hex(0xefb775),
         );
         self.world_manager
-            .draw_clouds(self.assets, level, delta_time);
+            .draw_clouds(self.assets, level, delta_time, self.paused);
         self.world_manager
             .draw_tower(self.height, self.assets, self.level);
 
