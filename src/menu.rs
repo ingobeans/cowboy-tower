@@ -5,6 +5,66 @@ use macroquad::prelude::*;
 
 use crate::{assets::Assets, data::SaveManager, utils::*};
 
+fn inside(point: Vec2, box_start: Vec2, box_size: Vec2) -> bool {
+    (box_start.x..box_start.x + box_size.x).contains(&(point.x + 1.0))
+        && (box_start.y..box_start.y + box_size.y).contains(&(point.y + 1.0))
+}
+
+pub struct PauseMenu {
+    pub selection_index: Option<u8>,
+    prev_mouse_pos: Vec2,
+    prev_input: Vec2,
+}
+impl PauseMenu {
+    pub fn new() -> Self {
+        Self {
+            selection_index: None,
+            prev_mouse_pos: Vec2::ZERO,
+            prev_input: Vec2::ZERO,
+        }
+    }
+    pub fn update(&mut self, gamepad_engine: &mut Gamepads, mouse: Vec2) {
+        let start = vec2(18.0, 24.0);
+        let size = vec2(44.0, 12.0);
+        let gap = 4.0;
+
+        let buttons_amt = 4;
+
+        if mouse != self.prev_mouse_pos {
+            // handle mouse hovering
+            self.selection_index = None;
+            for i in 0..buttons_amt {
+                let p = start + vec2(0.0, size.y + gap) * i as f32;
+                if inside(mouse, p, size) {
+                    self.selection_index = Some(i)
+                }
+            }
+            self.prev_mouse_pos = mouse;
+        } else {
+            // navigate with keyboard/controller
+            let input = get_input_axis(gamepad_engine);
+            let changed = input != self.prev_input;
+            self.prev_input = input;
+
+            if changed {
+                if input.y == -1.0 {
+                    self.selection_index = Some(
+                        self.selection_index
+                            .map(|f| f.wrapping_sub(1).min(buttons_amt - 1))
+                            .unwrap_or_default(),
+                    );
+                } else if input.y == 1.0 {
+                    self.selection_index = Some(
+                        self.selection_index
+                            .map(|f| (f + 1) % buttons_amt)
+                            .unwrap_or_default(),
+                    );
+                }
+            }
+        }
+    }
+}
+
 pub struct MainMenu {
     camera: Camera3D,
     time: f32,

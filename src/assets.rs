@@ -38,6 +38,7 @@ pub struct Assets {
     pub pole: Animation,
     pub font: Font,
 
+    pub pause_menu: Animation,
     pub menu_button: Animation,
     pub logo: Texture2D,
     pub player_bubble: Animation,
@@ -117,6 +118,7 @@ impl Assets {
             gate: Animation::from_file(include_bytes!("../assets/gate.ase")),
             pole: Animation::from_file(include_bytes!("../assets/pole.ase")),
 
+            pause_menu: Animation::from_file(include_bytes!("../assets/pause_menu.ase")),
             menu_button: Animation::from_file(include_bytes!("../assets/menu_button.ase")),
             logo: load_ase_texture(include_bytes!("../assets/logo.ase"), None),
             player_bubble: Animation::from_file(include_bytes!("../assets/player_bubble.ase")),

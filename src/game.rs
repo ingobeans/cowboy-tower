@@ -8,6 +8,7 @@ use crate::{
     bosses::{Boss, new_boss},
     data::SaveManager,
     enemies::*,
+    menu::PauseMenu,
     player::{CinematicBars, Player, update_physicsbody},
     projectiles::*,
     tower::*,
@@ -112,6 +113,7 @@ pub struct Game<'a> {
     world_manager: WorldManager,
     fog_points: Vec<FogPoint>,
     title_text: Option<f32>,
+    pause_menu: PauseMenu,
     paused: bool,
 }
 impl<'a> Game<'a> {
@@ -151,6 +153,7 @@ impl<'a> Game<'a> {
             level_transition_time: 0.0,
             title_text: None,
             paused: false,
+            pause_menu: PauseMenu::new(),
         }
     }
     fn load_level(&mut self, level: usize) {
@@ -925,6 +928,22 @@ impl<'a> Game<'a> {
 
         if DEBUG_FLAGS.fps {
             draw_fps();
+        }
+
+        if self.paused {
+            let mouse: Vec2 = mouse_position().into();
+            let t = &self.assets.pause_menu.frames[0].0;
+            let pos = vec2(
+                (actual_screen_width / scale_factor - t.width()) / 2.0,
+                (actual_screen_height / scale_factor - t.height()) / 2.0,
+            );
+
+            self.pause_menu
+                .update(gamepad_engine, mouse / scale_factor - pos);
+            let t = &self.assets.pause_menu.frames
+                [self.pause_menu.selection_index.map(|f| f + 1).unwrap_or(0) as usize]
+                .0;
+            draw_texture(t, pos.x, pos.y, WHITE);
         }
 
         false
