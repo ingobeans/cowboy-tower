@@ -20,6 +20,7 @@ pub trait Boss {
         level: &Level,
         projectiles: &mut Vec<Projectile>,
         player: &mut Player,
+        paused: bool,
     ) {
     }
 }

@@ -81,6 +81,7 @@ impl Boss for Fireking {
         level: &Level,
         projectiles: &mut Vec<Projectile>,
         player: &mut Player,
+        paused: bool,
     ) {
         let dialogue_messages = &["I see you have defeated Henry.", "But now you shall burn."];
         const FIREBALL_FALL_TIME: f32 = 1.0;
@@ -103,7 +104,9 @@ impl Boss for Fireking {
             player.camera_pos.y = player.camera_pos.y.min(-80.0);
         }
 
-        self.time += delta_time;
+        if !paused {
+            self.time += delta_time;
+        }
         if self.activated <= 0.0 {
             loop_animation = true;
             animation = 0;
@@ -305,7 +308,6 @@ impl Boss for Fireking {
                 }
             }
         }
-
         let draw_pos = self.pos - vec2(30.0, 52.0);
 
         for projectile in projectiles {

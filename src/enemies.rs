@@ -49,6 +49,7 @@ impl Enemy {
         assets: &Assets,
         level: &Level,
         delta_time: f32,
+        paused: bool,
     ) -> bool {
         self.time += delta_time;
 
@@ -56,10 +57,10 @@ impl Enemy {
         let player_tile = level.get_tile(player_tx.x as i16, player_tx.y as i16);
 
         let mut force_moving_animation = false;
-        if self.death_frames > 0.0 {
+        if !paused && self.death_frames > 0.0 {
             self.death_frames += delta_time;
             self.time = 0.0;
-        } else if let Some(spawner) = &mut self.spawner {
+        } else if !paused && let Some(spawner) = &mut self.spawner {
             match spawner {
                 EnemySpawner::Spawning(time) => {
                     *time += delta_time;
@@ -85,7 +86,7 @@ impl Enemy {
                     }
                 }
             }
-        } else {
+        } else if !paused {
             match self.ty.movement_type {
                 MovementType::None => {}
                 MovementType::FollowPath => {

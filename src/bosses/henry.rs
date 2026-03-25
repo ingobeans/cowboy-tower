@@ -51,11 +51,13 @@ impl Boss for Henry {
         level: &Level,
         projectiles: &mut Vec<Projectile>,
         player: &mut Player,
+        paused: bool,
     ) {
         let mut pole_anim_time = None;
         let pole_anim = &assets.pole;
+        let dead = matches!(self.state, State::Death);
         if self.activated > 0.0 {
-            if (self.activated + delta_time) * 1000.0 < pole_anim.total_length as f32 {
+            if !paused && (self.activated + delta_time) * 1000.0 < pole_anim.total_length as f32 {
                 self.activated += delta_time;
             }
             pole_anim_time = Some(self.activated);
@@ -73,7 +75,6 @@ impl Boss for Henry {
                 0,
             );
         }
-        let dead = matches!(self.state, State::Death);
 
         if dead && self.time > 1.5 {
             let time = self.time - 1.5;
@@ -91,14 +92,15 @@ impl Boss for Henry {
             }
         }
 
+        if !paused {
+            self.time += delta_time;
+        }
         if let Some(time) = pole_anim_time {
             for pos in [level.find_marker(2), level.find_marker(3)] {
                 let t = pole_anim.get_at_time((time * 1000.0) as u32);
                 draw_texture(t, pos.x, pos.y - t.height() + 4.0, WHITE);
             }
         }
-
-        self.time += delta_time;
 
         // get general state info
         let animation = match &self.state {
@@ -117,6 +119,7 @@ impl Boss for Henry {
 
         // update states
         match &mut self.state {
+            _ if paused => {}
             State::Death => {}
             State::Idle => {
                 if self.time >= 2.0 {

@@ -30,6 +30,13 @@ pub fn create_camera(w: f32, h: f32) -> Camera2D {
     }
 }
 
+pub fn is_pause_pressed(gamepad_engine: &mut Gamepads) -> bool {
+    is_key_pressed(KeyCode::Escape)
+        || gamepad_engine.all().any(|f| {
+            f.is_just_pressed(Button::LeftCenterCluster)
+                || f.is_just_pressed(Button::RightCenterCluster)
+        })
+}
 pub fn is_lasso_pressed(gamepad_engine: &mut Gamepads) -> bool {
     is_mouse_button_pressed(MouseButton::Right)
         || gamepad_engine

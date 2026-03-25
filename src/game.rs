@@ -112,6 +112,7 @@ pub struct Game<'a> {
     world_manager: WorldManager,
     fog_points: Vec<FogPoint>,
     title_text: Option<f32>,
+    paused: bool,
 }
 impl<'a> Game<'a> {
     pub fn new(assets: &'a Assets, level: usize) -> Self {
@@ -147,6 +148,7 @@ impl<'a> Game<'a> {
             time: 0.0,
             level_transition_time: 0.0,
             title_text: None,
+            paused: false,
         }
     }
     fn load_level(&mut self, level: usize) {
@@ -163,7 +165,11 @@ impl<'a> Game<'a> {
         self.player = Player::new(get_player_spawn(self.assets, level));
         self.player.facing_left = self.level.is_multiple_of(2);
     }
-    pub fn update(&mut self, gamepad_engine: &mut Gamepads, save_manager: &mut SaveManager) {
+    pub fn update(
+        &mut self,
+        gamepad_engine: &mut Gamepads,
+        save_manager: &mut SaveManager,
+    ) -> bool {
         // cap delta time to a minimum of 60 fps.
         let delta_time = get_frame_time().min(1.0 / 60.0);
         self.time += delta_time;
@@ -171,6 +177,10 @@ impl<'a> Game<'a> {
         let scale_factor = (actual_screen_width / SCREEN_WIDTH)
             .min(actual_screen_height / SCREEN_HEIGHT)
             .floor();
+
+        if is_pause_pressed(gamepad_engine) {
+            self.paused = !self.paused;
+        }
 
         let elevator_doors_animation = &self.assets.doors.animations[0];
 
@@ -181,7 +191,8 @@ impl<'a> Game<'a> {
             }
         }
 
-        if let Some(time) = self.level_complete
+        if !self.paused
+            && let Some(time) = self.level_complete
             && time * 1000.0 >= elevator_doors_animation.total_length as f32
         {
             self.level_complete = None;
@@ -207,7 +218,8 @@ impl<'a> Game<'a> {
         let elevator_pos = get_elevator_pos(self.assets, self.level);
         let player_spawn = get_player_spawn(self.assets, self.level);
 
-        if self.level_complete.is_none()
+        if !self.paused
+            && self.level_complete.is_none()
             && (self.player.pos.x - (elevator_pos.x + elevator_texture.width() / 2.0)).abs() <= 6.0
         {
             self.level_complete = Some(0.0);
@@ -220,61 +232,63 @@ impl<'a> Game<'a> {
 
         // update horses
 
-        for horse in self.horses.iter_mut() {
-            const HORSE_SPEED: f32 = 128.0;
-            horse.time += delta_time;
-            if horse.running {
-                horse.returning_home = false;
-                horse.velocity = horse
-                    .velocity
-                    .lerp(HORSE_SPEED * horse.direction, 1.0 * delta_time);
-            } else if horse.returning_home {
-                if horse.pos.distance(horse.home_pos) <= 1.0 {
-                    horse.pos = horse.home_pos;
+        if !self.paused {
+            for horse in self.horses.iter_mut() {
+                const HORSE_SPEED: f32 = 128.0;
+                horse.time += delta_time;
+                if horse.running {
                     horse.returning_home = false;
-                    horse.velocity = Vec2::ZERO;
-                } else if !horse.player_riding {
                     horse.velocity = horse
                         .velocity
-                        .lerp(HORSE_SPEED * -horse.direction, 1.0 * delta_time);
+                        .lerp(HORSE_SPEED * horse.direction, 1.0 * delta_time);
+                } else if horse.returning_home {
+                    if horse.pos.distance(horse.home_pos) <= 1.0 {
+                        horse.pos = horse.home_pos;
+                        horse.returning_home = false;
+                        horse.velocity = Vec2::ZERO;
+                    } else if !horse.player_riding {
+                        horse.velocity = horse
+                            .velocity
+                            .lerp(HORSE_SPEED * -horse.direction, 1.0 * delta_time);
+                    }
                 }
-            }
-            let old_velocity = horse.velocity;
-            (horse.pos, _, _, _) = update_physicsbody(
-                horse.pos,
-                &mut horse.velocity,
-                delta_time,
-                level,
-                false,
-                false,
-            );
-            // if horse hits walls / stops, make horse.running = false
-            if horse.running
-                && (old_velocity.length() > horse.velocity.length()
-                    || horse.velocity.length() == 0.0)
-                && (old_velocity.normalize() - horse.direction.normalize()).length() < 0.1
-            {
-                // this if also
-                // checks that the old velocity was actually in the same direction as the horse should be moving
-                // otherwise, there would be an edge case where the horse was previously moving in the wrong direction, and
-                // is now accelerating in the correct direction, but this makes its total velocity decrease.
+                let old_velocity = horse.velocity;
+                (horse.pos, _, _, _) = update_physicsbody(
+                    horse.pos,
+                    &mut horse.velocity,
+                    delta_time,
+                    level,
+                    false,
+                    false,
+                );
+                // if horse hits walls / stops, make horse.running = false
+                if horse.running
+                    && (old_velocity.length() > horse.velocity.length()
+                        || horse.velocity.length() == 0.0)
+                    && (old_velocity.normalize() - horse.direction.normalize()).length() < 0.1
+                {
+                    // this if also
+                    // checks that the old velocity was actually in the same direction as the horse should be moving
+                    // otherwise, there would be an edge case where the horse was previously moving in the wrong direction, and
+                    // is now accelerating in the correct direction, but this makes its total velocity decrease.
 
-                horse.running = false;
-            }
-            if horse.running
-                && level.get_tile((horse.pos.x / 8.0) as i16, (horse.pos.y / 8.0) as i16)[3]
-                    == 418 + 1
-            {
-                horse.running = false;
-                horse.velocity = Vec2::ZERO;
-            }
-            if !horse.returning_home
-                && !horse.running
-                && !horse.player_riding
-                && horse.pos.distance(horse.home_pos) > 1.0
-                && player_tile != 419 + 1
-            {
-                horse.returning_home = true;
+                    horse.running = false;
+                }
+                if horse.running
+                    && level.get_tile((horse.pos.x / 8.0) as i16, (horse.pos.y / 8.0) as i16)[3]
+                        == 418 + 1
+                {
+                    horse.running = false;
+                    horse.velocity = Vec2::ZERO;
+                }
+                if !horse.returning_home
+                    && !horse.running
+                    && !horse.player_riding
+                    && horse.pos.distance(horse.home_pos) > 1.0
+                    && player_tile != 419 + 1
+                {
+                    horse.returning_home = true;
+                }
             }
         }
 
@@ -286,7 +300,9 @@ impl<'a> Game<'a> {
             self.player.camera_offset.set_target(0.0);
         }
 
-        if let Some(time) = &mut self.level_complete {
+        if !self.paused
+            && let Some(time) = &mut self.level_complete
+        {
             if *time == 0.0 {
                 self.player.time += delta_time;
                 self.player.moving = true;
@@ -302,7 +318,7 @@ impl<'a> Game<'a> {
             } else if *time > 0.0 {
                 *time += delta_time;
             }
-        } else if self.title_text.is_none() {
+        } else if !self.paused && self.title_text.is_none() {
             self.player.update(
                 delta_time,
                 &self.assets.levels[self.level],
@@ -312,7 +328,7 @@ impl<'a> Game<'a> {
             );
         }
 
-        if self.level_transition_time > 0.0 {
+        if !self.paused && self.level_transition_time > 0.0 {
             let old = &self.assets.levels[self.level - 1];
             let elevator_pos = get_elevator_pos(self.assets, self.level - 1);
             let y_diff = (old.min_pos.y - (level.max_pos.y + FLOOR_PADDING)).abs();
@@ -504,6 +520,7 @@ impl<'a> Game<'a> {
                 self.assets,
                 level,
                 delta_time,
+                self.paused,
             )
         });
 
@@ -581,6 +598,7 @@ impl<'a> Game<'a> {
                 level,
                 &mut self.projectiles,
                 &mut self.player,
+                self.paused,
             );
         }
         self.player.draw(self.assets);
@@ -593,25 +611,27 @@ impl<'a> Game<'a> {
         self.projectiles.retain_mut(|projectile| {
             let physics = projectile.get_physics();
 
-            if let Some(friction) = physics {
-                const OFFSET: Vec2 = vec2(4.0, 7.0);
-                projectile.direction.y += GRAVITY * delta_time;
+            if !self.paused {
+                if let Some(friction) = physics {
+                    const OFFSET: Vec2 = vec2(4.0, 7.0);
+                    projectile.direction.y += GRAVITY * delta_time;
 
-                let (new_pos, on_ground, _, _) = update_physicsbody(
-                    projectile.pos - OFFSET,
-                    &mut projectile.direction,
-                    delta_time,
-                    level,
-                    false,
-                    false,
-                );
-                projectile.pos = new_pos + OFFSET;
-                if on_ground {
-                    projectile.direction.x =
-                        projectile.direction.x.lerp(0.0, delta_time * friction);
+                    let (new_pos, on_ground, _, _) = update_physicsbody(
+                        projectile.pos - OFFSET,
+                        &mut projectile.direction,
+                        delta_time,
+                        level,
+                        false,
+                        false,
+                    );
+                    projectile.pos = new_pos + OFFSET;
+                    if on_ground {
+                        projectile.direction.x =
+                            projectile.direction.x.lerp(0.0, delta_time * friction);
+                    }
+                } else {
+                    projectile.pos += projectile.direction * delta_time;
                 }
-            } else {
-                projectile.pos += projectile.direction * delta_time;
             }
             let rotation = if physics.is_none() {
                 0.0
@@ -681,7 +701,9 @@ impl<'a> Game<'a> {
                     projectile.dead |= projectile.should_die_on_kill();
                 }
             }
-            projectile.time += delta_time;
+            if !self.paused {
+                projectile.time += delta_time;
+            }
             let lifetime = projectile.get_lifetime();
             let died = lifetime != 0.0 && projectile.time >= lifetime;
             if died && let Some(payload) = projectile.get_payload() {
@@ -859,7 +881,7 @@ impl<'a> Game<'a> {
         }
 
         // handle fading out
-        if self.fade_timer > 0.0 {
+        if !self.paused && self.fade_timer > 0.0 {
             self.fade_timer -= delta_time;
         }
         let mut fade_amt = self.fade_timer * 2.0;
@@ -896,5 +918,7 @@ impl<'a> Game<'a> {
         if DEBUG_FLAGS.fps {
             draw_fps();
         }
+
+        false
     }
 }
