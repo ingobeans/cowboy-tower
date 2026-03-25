@@ -117,8 +117,10 @@ pub struct Game<'a> {
 impl<'a> Game<'a> {
     pub fn new(assets: &'a Assets, level: usize) -> Self {
         let mut y = 0.0;
-        for l in &assets.levels[1..level] {
-            y += l.get_height() + FLOOR_PADDING + 16.0;
+        if level > 0 {
+            for l in &assets.levels[1..level] {
+                y += l.get_height() + FLOOR_PADDING + 16.0;
+            }
         }
         rand::srand(level as u64);
         let mut world_manager = WorldManager::new(assets);
