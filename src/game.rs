@@ -470,30 +470,34 @@ impl<'a> Game<'a> {
                 // but i dont want the regular level complete to trigger so instead of counting upward which would trigger
                 // the next level to load after some delay, i count negative and use this timer multiplied by -1.0.
                 // please dont hate me for this.
-                *time -= delta_time;
+                if !self.paused {
+                    *time -= delta_time;
+                }
 
-                if *time < -0.7 {
+                if !self.paused && *time < -0.7 {
                     self.fade_timer += delta_time + delta_time;
                 }
 
                 let anim_time = ((*time * -1000.0) as u32).min(self.assets.gate.total_length - 1);
                 draw_texture(self.assets.gate.get_at_time(anim_time), pos.x, pos.y, WHITE);
                 let target = level.find_marker(4);
-                self.player.pos.x += delta_time * 10.0;
-                self.player.pos.y = self.player.pos.move_towards(target, delta_time * 24.0).y;
-                if self.player.pos.x >= target.x {
-                    self.load_level(1);
-                    self.level_complete = None;
-                    self.title_text = Some(0.0);
-                    self.player.update(
-                        delta_time,
-                        &self.assets.levels[self.level],
-                        &mut self.projectiles,
-                        &mut self.horses,
-                        gamepad_engine,
-                    );
+                if !self.paused {
+                    self.player.pos.x += delta_time * 10.0;
+                    self.player.pos.y = self.player.pos.move_towards(target, delta_time * 24.0).y;
+                    if self.player.pos.x >= target.x {
+                        self.load_level(1);
+                        self.level_complete = None;
+                        self.title_text = Some(0.0);
+                        self.player.update(
+                            delta_time,
+                            &self.assets.levels[self.level],
+                            &mut self.projectiles,
+                            &mut self.horses,
+                            gamepad_engine,
+                        );
+                    }
+                    self.player.time += delta_time;
                 }
-                self.player.time += delta_time;
             } else {
                 draw_texture(&self.assets.gate.frames[0].0, pos.x, pos.y, WHITE);
                 if self.player.pos.x + 8.0 >= level.find_marker(0).x {
@@ -863,7 +867,9 @@ impl<'a> Game<'a> {
         }
         // handle title text
         if let Some(time) = &mut self.title_text {
-            *time += delta_time;
+            if !self.paused {
+                *time += delta_time;
+            }
 
             draw_rectangle(0.0, 0.0, actual_screen_width, actual_screen_height, BLACK);
             let mut fade_amt = (*time - 0.5).max(0.0);
