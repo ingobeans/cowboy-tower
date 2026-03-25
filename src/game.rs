@@ -938,7 +938,8 @@ impl<'a> Game<'a> {
                 (actual_screen_height / scale_factor - t.height()) / 2.0,
             );
 
-            // draw blurred background
+            // draw blurred, darkened background
+            const DARK_FACTOR: f32 = 0.7;
 
             BLUR_MATERIAL.set_uniform("res", vec2(actual_screen_width, actual_screen_height));
             gl_use_material(&BLUR_MATERIAL);
@@ -950,6 +951,14 @@ impl<'a> Game<'a> {
                 WHITE,
             );
             gl_use_default_material();
+
+            draw_rectangle(
+                0.0,
+                0.0,
+                actual_screen_width / scale_factor,
+                actual_screen_height / scale_factor,
+                BLACK.with_alpha(DARK_FACTOR),
+            );
 
             draw_rectangle(
                 pos.x,
