@@ -930,6 +930,7 @@ impl<'a> Game<'a> {
             draw_fps();
         }
 
+        let mut quit = false;
         if self.paused {
             let mouse: Vec2 = mouse_position().into();
             let t = &self.assets.pause_menu;
@@ -967,11 +968,26 @@ impl<'a> Game<'a> {
                 t.height(),
                 Color::from_hex(0x3e2004),
             );
-            self.pause_menu
-                .update(gamepad_engine, mouse / scale_factor - pos, pos);
+            let interacted =
+                self.pause_menu
+                    .update(gamepad_engine, mouse / scale_factor - pos, pos);
+            if let Some(i) = self.pause_menu.selection_index
+                && interacted
+            {
+                match i {
+                    0 => self.paused = false,
+                    2 => quit = true,
+                    3 => {
+                        self.load_level(self.level);
+                        self.fade_timer = 0.5;
+                        self.paused = false;
+                    }
+                    _ => {}
+                }
+            }
             draw_texture(t, pos.x, pos.y, WHITE);
         }
 
-        false
+        quit
     }
 }

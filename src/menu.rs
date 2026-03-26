@@ -23,7 +23,7 @@ impl PauseMenu {
             prev_input: Vec2::ZERO,
         }
     }
-    pub fn update(&mut self, gamepad_engine: &mut Gamepads, mouse: Vec2, origin: Vec2) {
+    pub fn update(&mut self, gamepad_engine: &mut Gamepads, mouse: Vec2, origin: Vec2) -> bool {
         let start = vec2(18.0, 24.0);
         let size = vec2(44.0, 12.0);
         let gap = 3.0;
@@ -68,6 +68,16 @@ impl PauseMenu {
             let p = start + vec2(0.0, size.y + gap) * *selected as f32 + origin;
             draw_rectangle(p.x, p.y, size.x, size.y, Color::from_hex(0x300f0a));
         }
+
+        let clicking_interact_button = is_jump_pressed(gamepad_engine);
+        let clicking_mouse = is_mouse_button_pressed(MouseButton::Left);
+
+        if clicking_interact_button && self.selection_index.is_none() {
+            self.selection_index = Some(0);
+            return false;
+        } else {
+        }
+        self.selection_index.is_some() && (clicking_interact_button || clicking_mouse)
     }
 }
 
