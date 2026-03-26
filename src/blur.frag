@@ -1,5 +1,8 @@
 #version 100
 
+// stolen from https://github.com/Experience-Monks/glsl-fast-gaussian-blur
+// :3
+
 precision mediump float;
 
 uniform sampler2D _ScreenTexture;
