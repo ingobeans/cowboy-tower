@@ -15,6 +15,7 @@ impl SaveManager {
         Self { storage, level }
     }
     pub fn save(&mut self, level: usize) {
+        self.level = level;
         self.storage.set("level", &level.to_string());
     }
 }
