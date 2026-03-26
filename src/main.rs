@@ -38,7 +38,11 @@ impl<'a> GameManager<'a> {
     fn update(&mut self) {
         self.gamepad_engine.poll();
         if let Some(game) = &mut self.game {
-            game.update(&mut self.gamepad_engine, &mut self.save_manager);
+            let quit = game.update(&mut self.gamepad_engine, &mut self.save_manager);
+            if quit {
+                self.game = None;
+                self.menu.reset();
+            }
         } else {
             let result = self.menu.update(
                 self.assets,

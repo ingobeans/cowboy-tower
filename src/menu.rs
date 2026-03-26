@@ -167,6 +167,9 @@ impl MainMenu {
             dbg!(self.camera.target);
         }
     }
+    pub fn reset(&mut self) {
+        self.fade_out = 0.0;
+    }
     pub fn update(
         &mut self,
         assets: &Assets,
