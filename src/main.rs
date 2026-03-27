@@ -75,12 +75,12 @@ fn window_conf() -> Conf {
         window_width: if DEBUG_FLAGS.unscaled {
             SCREEN_WIDTH as i32
         } else {
-            800
+            900
         },
         window_height: if DEBUG_FLAGS.unscaled {
             SCREEN_HEIGHT as i32
         } else {
-            600
+            500
         },
         ..Default::default()
     }
