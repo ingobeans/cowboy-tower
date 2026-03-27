@@ -179,6 +179,7 @@ impl Player {
         projectiles: &mut Vec<Projectile>,
         horses: &mut [Horse],
         gamepad_engine: &mut Gamepads,
+        ui_clicked: bool,
     ) {
         if let Some(death) = &mut self.death {
             death.0 += delta_time;
@@ -249,6 +250,7 @@ impl Player {
         if self.shooting > 0.0 {
             self.shooting += delta_time;
         } else if self.active_lasso.as_ref().is_none_or(|f| f.time == 0.0)
+            && !ui_clicked
             && is_shoot_down(gamepad_engine)
             && self.riding.is_none()
             && self.wall_climbing.is_none()

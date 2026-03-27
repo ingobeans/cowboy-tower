@@ -115,6 +115,9 @@ pub struct Game<'a> {
     title_text: Option<f32>,
     pause_menu: PauseMenu,
     paused: bool,
+    /// whether the current mouse press was started on a UI
+    /// element.
+    ui_clicked: bool,
 }
 impl<'a> Game<'a> {
     pub fn new(assets: &'a Assets, level: usize) -> Self {
@@ -154,6 +157,7 @@ impl<'a> Game<'a> {
             title_text: None,
             paused: false,
             pause_menu: PauseMenu::new(),
+            ui_clicked: false,
         }
     }
     fn load_level(&mut self, level: usize) {
@@ -187,6 +191,10 @@ impl<'a> Game<'a> {
             self.paused = !self.paused;
         }
 
+        if self.ui_clicked && !is_mouse_button_down(MouseButton::Left) {
+            self.ui_clicked = false;
+        }
+
         let elevator_doors_animation = &self.assets.doors.animations[0];
 
         #[cfg(debug_assertions)]
@@ -212,6 +220,7 @@ impl<'a> Game<'a> {
                 &mut self.projectiles,
                 &mut self.horses,
                 gamepad_engine,
+                self.ui_clicked,
             );
         }
         let level = &self.assets.levels[self.level];
@@ -330,6 +339,7 @@ impl<'a> Game<'a> {
                 &mut self.projectiles,
                 &mut self.horses,
                 gamepad_engine,
+                self.ui_clicked,
             );
         }
 
@@ -497,6 +507,7 @@ impl<'a> Game<'a> {
                             &mut self.projectiles,
                             &mut self.horses,
                             gamepad_engine,
+                            self.ui_clicked,
                         );
                     }
                     self.player.time += delta_time;
@@ -971,6 +982,7 @@ impl<'a> Game<'a> {
             let interacted =
                 self.pause_menu
                     .update(gamepad_engine, mouse / scale_factor - pos, pos);
+            self.ui_clicked = interacted;
             if let Some(i) = self.pause_menu.selection_index
                 && interacted
             {
