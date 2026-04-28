@@ -80,7 +80,7 @@ pub fn get_input_axis(gamepad_engine: &mut Gamepads) -> Vec2 {
 
     for controller in gamepad_engine.all() {
         let axis: Vec2 = controller.left_stick().into();
-        if axis == Vec2::ZERO {
+        if axis.length() <= 0.2 {
             // check d-pad
             let left = controller.is_currently_pressed(Button::DPadLeft);
             let right = controller.is_currently_pressed(Button::DPadRight);
