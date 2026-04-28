@@ -1011,8 +1011,8 @@ impl<'a> Game<'a> {
             {
                 match i {
                     0 => self.paused = false,
-                    2 => quit = true,
-                    3 => {
+                    1 => quit = true,
+                    2 => {
                         self.load_level(self.level);
                         self.fade_timer = 0.5;
                         self.paused = false;

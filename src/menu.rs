@@ -28,7 +28,7 @@ impl PauseMenu {
         let size = vec2(44.0, 12.0);
         let gap = 3.0;
 
-        let buttons_amt = 4;
+        let buttons_amt = 3;
 
         if mouse != self.prev_mouse_pos {
             // handle mouse hovering
@@ -283,14 +283,6 @@ impl MainMenu {
             assets,
             scale_factor,
             self.button_index.is_some_and(|f| f == 0),
-        );
-        draw_button(
-            margin.x,
-            margin.y + (57.0 + 15.0) * scale_factor,
-            2,
-            assets,
-            scale_factor,
-            self.button_index.is_some_and(|f| f == 1),
         );
 
         let level = &assets.levels[save_manager.level];
