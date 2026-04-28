@@ -2,3 +2,4 @@
 dev/
 *.wasm
 local.data
+*.7z
