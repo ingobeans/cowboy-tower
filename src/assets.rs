@@ -241,7 +241,7 @@ impl Level {
         self.name.chars().next().unwrap() as u32 - '0' as u32
     }
     pub fn find_marker(&self, marker_index: u16) -> Vec2 {
-        self.markers.get(&marker_index).unwrap().clone()
+        *self.markers.get(&marker_index).unwrap()
     }
     pub fn get_height(&self) -> f32 {
         self.floor_height - self.roof_height + 8.0

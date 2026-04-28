@@ -226,8 +226,7 @@ impl<'a> Game<'a> {
             );
         }
 
-        if !self.paused
-            && self.level == self.assets.levels.len() - 1
+        if self.level == self.assets.levels.len() - 1
             && let Some(time) = self.level_complete
         {
             ending_fade_out_time =
@@ -943,16 +942,14 @@ impl<'a> Game<'a> {
                 BLACK.with_alpha(fade_amt),
             );
         }
-        if ending_fade_out_time != 0.0 {
-            if ending_fade_out_time > ENDING_FADE_LENGTH {
-                let endscreen_fade = ending_fade_out_time - ENDING_FADE_LENGTH;
-                draw_texture(
-                    &self.assets.endscreen,
-                    (actual_screen_width / scale_factor - self.assets.endscreen.width()) / 2.0,
-                    (actual_screen_height / scale_factor - self.assets.endscreen.height()) / 2.0,
-                    WHITE.with_alpha(endscreen_fade),
-                );
-            }
+        if ending_fade_out_time != 0.0 && ending_fade_out_time > ENDING_FADE_LENGTH {
+            let endscreen_fade = ending_fade_out_time - ENDING_FADE_LENGTH;
+            draw_texture(
+                &self.assets.endscreen,
+                (actual_screen_width / scale_factor - self.assets.endscreen.width()) / 2.0,
+                (actual_screen_height / scale_factor - self.assets.endscreen.height()) / 2.0,
+                WHITE.with_alpha(endscreen_fade),
+            );
         }
         self.player.time_since_last_boss_defeated += delta_time;
 

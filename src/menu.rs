@@ -75,7 +75,6 @@ impl PauseMenu {
         if clicking_interact_button && self.selection_index.is_none() {
             self.selection_index = Some(0);
             return false;
-        } else {
         }
         self.selection_index.is_some() && (clicking_interact_button || clicking_mouse)
     }
@@ -301,7 +300,7 @@ impl MainMenu {
             .map(|f| {
                 (
                     f.0.parse::<usize>().unwrap(),
-                    (&f.1[..1]).parse::<u8>().unwrap_or_else(|_| {
+                    (f.1[..1]).parse::<u8>().unwrap_or_else(|_| {
                         assets.levels[save_manager.level - 1].name[2..3]
                             .parse::<u8>()
                             .unwrap()
