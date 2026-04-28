@@ -204,9 +204,11 @@ impl<'a> Game<'a> {
             }
         }
 
+        let mut ending_fade_out_time = 0.0;
         if !self.paused
             && let Some(time) = self.level_complete
             && time * 1000.0 >= elevator_doors_animation.total_length as f32
+            && self.level != self.assets.levels.len() - 1
         {
             self.level_complete = None;
             self.height += self.assets.levels[self.level].get_height() + FLOOR_PADDING + 16.0;
@@ -223,6 +225,15 @@ impl<'a> Game<'a> {
                 self.ui_clicked,
             );
         }
+
+        if !self.paused
+            && self.level == self.assets.levels.len() - 1
+            && let Some(time) = self.level_complete
+        {
+            ending_fade_out_time =
+                time / (elevator_doors_animation.total_length as f32 / 1000.0) * ENDING_FADE_LENGTH;
+        }
+
         let level = &self.assets.levels[self.level];
 
         let left_level_end = self.level.is_multiple_of(2);
@@ -919,6 +930,10 @@ impl<'a> Game<'a> {
                 fade_amt = delta * 2.0;
             }
         }
+        const ENDING_FADE_LENGTH: f32 = 2.0;
+        if ending_fade_out_time != 0.0 {
+            fade_amt = ending_fade_out_time / ENDING_FADE_LENGTH;
+        }
         if fade_amt > 0.0 {
             draw_rectangle(
                 0.0,
@@ -927,6 +942,17 @@ impl<'a> Game<'a> {
                 actual_screen_height,
                 BLACK.with_alpha(fade_amt),
             );
+        }
+        if ending_fade_out_time != 0.0 {
+            if ending_fade_out_time > ENDING_FADE_LENGTH {
+                let endscreen_fade = ending_fade_out_time - ENDING_FADE_LENGTH;
+                draw_texture(
+                    &self.assets.endscreen,
+                    (actual_screen_width / scale_factor - self.assets.endscreen.width()) / 2.0,
+                    (actual_screen_height / scale_factor - self.assets.endscreen.height()) / 2.0,
+                    WHITE.with_alpha(endscreen_fade),
+                );
+            }
         }
         self.player.time_since_last_boss_defeated += delta_time;
 

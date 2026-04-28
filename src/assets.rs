@@ -34,6 +34,7 @@ pub struct Assets {
     pub animated_tiles: Vec<Animation>,
     pub dialogue: Texture2D,
     pub title: Texture2D,
+    pub endscreen: Texture2D,
     pub gate: Animation,
     pub pole: Animation,
     pub font: Font,
@@ -115,6 +116,7 @@ impl Assets {
             ],
             dialogue: load_ase_texture(include_bytes!("../assets/dialogue.ase"), None),
             title: load_ase_texture(include_bytes!("../assets/title.ase"), None),
+            endscreen: load_ase_texture(include_bytes!("../assets/endscreen.ase"), None),
             gate: Animation::from_file(include_bytes!("../assets/gate.ase")),
             pole: Animation::from_file(include_bytes!("../assets/pole.ase")),
 
