@@ -58,21 +58,22 @@ pub fn is_shoot_down(gamepad_engine: &mut Gamepads) -> bool {
 
 pub fn is_jump_pressed(gamepad_engine: &mut Gamepads) -> bool {
     is_key_pressed(KeyCode::Space)
-        || gamepad_engine
-            .all()
-            .any(|f| f.is_just_pressed(Button::ActionRight))
+        || gamepad_engine.all().any(|f| {
+            f.is_just_pressed(Button::ActionRight) || f.is_just_pressed(Button::ActionDown)
+        })
 }
 pub fn is_jump_down(gamepad_engine: &mut Gamepads) -> bool {
     is_key_down(KeyCode::Space)
-        || gamepad_engine
-            .all()
-            .any(|f| f.is_currently_pressed(Button::ActionRight))
+        || gamepad_engine.all().any(|f| {
+            f.is_currently_pressed(Button::ActionRight)
+                || f.is_currently_pressed(Button::ActionDown)
+        })
 }
 pub fn is_interact_pressed(gamepad_engine: &mut Gamepads) -> bool {
     is_key_pressed(KeyCode::E)
-        || gamepad_engine
-            .all()
-            .any(|f| f.is_just_pressed(Button::ActionRight))
+        || gamepad_engine.all().any(|f| {
+            f.is_just_pressed(Button::ActionRight) || f.is_just_pressed(Button::ActionDown)
+        })
 }
 
 pub fn get_input_axis(gamepad_engine: &mut Gamepads) -> Vec2 {
