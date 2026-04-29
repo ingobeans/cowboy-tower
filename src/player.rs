@@ -296,6 +296,19 @@ impl Player {
 
                 lasso.speed *= 1.0.lerp(drag_factor, delta_time);
 
+                // handle user input
+                if input.x != 0.0 {
+                    let mut new = lasso.speed;
+                    if input.x < 0.0 {
+                        new += LASSO_SPEED_BUILDING_SPEED * delta_time;
+                    } else {
+                        new -= LASSO_SPEED_BUILDING_SPEED * delta_time;
+                    }
+                    if new.abs() < LASSO_SPEED_BUILDING_MAX {
+                        lasso.speed = new;
+                    }
+                }
+
                 let new_angle = angle + lasso.speed * delta_time / lasso.lasso_length;
                 let new_delta_normalized = Vec2::from_angle(new_angle);
                 let new_delta = new_delta_normalized * lasso.lasso_length;
