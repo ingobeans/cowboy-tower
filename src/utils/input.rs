@@ -15,25 +15,15 @@ impl Gamepads {
     pub fn poll(&mut self) {
         self.inner.poll();
     }
-    pub fn is_just_pressed(&mut self, buttons: &[Button]) -> bool {
-        let result = self
-            .inner
+    fn is_just_pressed(&mut self, buttons: &[Button]) -> bool {
+        self.inner
             .all()
-            .any(|f| buttons.iter().any(|b| f.is_just_pressed(*b)));
-        if result {
-            self.last_input_type_controller = true;
-        }
-        result
+            .any(|f| buttons.iter().any(|b| f.is_just_pressed(*b)))
     }
-    pub fn is_currently_pressed(&mut self, buttons: &[Button]) -> bool {
-        let result = self
-            .inner
+    fn is_currently_pressed(&mut self, buttons: &[Button]) -> bool {
+        self.inner
             .all()
-            .any(|f| buttons.iter().any(|b| f.is_currently_pressed(*b)));
-        if result {
-            self.last_input_type_controller = true;
-        }
-        result
+            .any(|f| buttons.iter().any(|b| f.is_currently_pressed(*b)))
     }
     pub fn get_axis(&mut self) -> Option<Vec2> {
         for controller in self.inner.all() {
@@ -65,37 +55,88 @@ impl Gamepads {
         }
         None
     }
+
+    pub fn is_action_pressed(&mut self, action: Action) -> bool {
+        match action {
+            Action::Keybased(keycode, buttons) => {
+                let key_pressed = is_key_pressed(keycode);
+                if key_pressed {
+                    self.last_input_type_controller = false;
+                    true
+                } else if self.is_just_pressed(buttons) {
+                    self.last_input_type_controller = true;
+                    true
+                } else {
+                    false
+                }
+            }
+            Action::Mousebased(mousebutton, buttons) => {
+                let mouse_pressed = is_mouse_button_pressed(mousebutton);
+                if mouse_pressed {
+                    self.last_input_type_controller = false;
+                    true
+                } else if self.is_just_pressed(buttons) {
+                    self.last_input_type_controller = true;
+                    true
+                } else {
+                    false
+                }
+            }
+        }
+    }
+    pub fn is_action_down(&mut self, action: Action) -> bool {
+        match action {
+            Action::Keybased(keycode, buttons) => {
+                let key_pressed = is_key_down(keycode);
+                if key_pressed {
+                    self.last_input_type_controller = false;
+                    true
+                } else if self.is_currently_pressed(buttons) {
+                    self.last_input_type_controller = true;
+                    true
+                } else {
+                    false
+                }
+            }
+            Action::Mousebased(mousebutton, buttons) => {
+                let mouse_pressed = is_mouse_button_down(mousebutton);
+                if mouse_pressed {
+                    self.last_input_type_controller = false;
+                    true
+                } else if self.is_currently_pressed(buttons) {
+                    self.last_input_type_controller = true;
+                    true
+                } else {
+                    false
+                }
+            }
+        }
+    }
 }
 
-pub fn is_pause_pressed(gamepad_engine: &mut Gamepads) -> bool {
-    is_key_pressed(KeyCode::Escape)
-        || gamepad_engine.is_just_pressed(&[Button::LeftCenterCluster, Button::RightCenterCluster])
-}
-pub fn is_lasso_pressed(gamepad_engine: &mut Gamepads) -> bool {
-    is_mouse_button_pressed(MouseButton::Right)
-        || gamepad_engine.is_just_pressed(&[Button::FrontLeftLower, Button::FrontLeftUpper])
-}
-pub fn is_lasso_down(gamepad_engine: &mut Gamepads) -> bool {
-    is_mouse_button_down(MouseButton::Right)
-        || gamepad_engine.is_currently_pressed(&[Button::FrontLeftLower, Button::FrontLeftUpper])
-}
-pub fn is_shoot_down(gamepad_engine: &mut Gamepads) -> bool {
-    is_mouse_button_down(MouseButton::Left)
-        || gamepad_engine.is_currently_pressed(&[Button::FrontRightLower, Button::FrontRightUpper])
+#[derive(Copy, Clone)]
+pub enum Action {
+    Keybased(KeyCode, &'static [Button]),
+    Mousebased(MouseButton, &'static [Button]),
 }
 
-pub fn is_jump_pressed(gamepad_engine: &mut Gamepads) -> bool {
-    is_key_pressed(KeyCode::Space)
-        || gamepad_engine.is_just_pressed(&[Button::ActionDown, Button::ActionRight])
-}
-pub fn is_jump_down(gamepad_engine: &mut Gamepads) -> bool {
-    is_key_down(KeyCode::Space)
-        || gamepad_engine.is_currently_pressed(&[Button::ActionDown, Button::ActionRight])
-}
-pub fn is_interact_pressed(gamepad_engine: &mut Gamepads) -> bool {
-    is_key_pressed(KeyCode::E)
-        || gamepad_engine.is_just_pressed(&[Button::ActionDown, Button::ActionRight])
-}
+// define actions
+pub static LASSO: Action = Action::Mousebased(
+    MouseButton::Right,
+    &[Button::FrontLeftLower, Button::FrontLeftUpper],
+);
+pub static SHOOT: Action = Action::Mousebased(
+    MouseButton::Left,
+    &[Button::FrontRightLower, Button::FrontRightUpper],
+);
+pub static PAUSE: Action = Action::Keybased(
+    KeyCode::Escape,
+    &[Button::LeftCenterCluster, Button::RightCenterCluster],
+);
+pub static JUMP: Action =
+    Action::Keybased(KeyCode::Space, &[Button::ActionDown, Button::ActionRight]);
+pub static INTERACT: Action =
+    Action::Keybased(KeyCode::E, &[Button::ActionDown, Button::ActionRight]);
 
 pub fn get_input_axis(gamepad_engine: &mut Gamepads) -> Vec2 {
     let mut i = Vec2::ZERO;

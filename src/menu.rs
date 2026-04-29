@@ -68,7 +68,7 @@ impl PauseMenu {
             draw_rectangle(p.x, p.y, size.x, size.y, Color::from_hex(0x300f0a));
         }
 
-        let clicking_interact_button = is_jump_pressed(gamepad_engine);
+        let clicking_interact_button = gamepad_engine.is_action_pressed(JUMP);
         let clicking_mouse = is_mouse_button_pressed(MouseButton::Left);
 
         if clicking_interact_button && self.selection_index.is_none() {
@@ -348,7 +348,7 @@ impl MainMenu {
                 BLACK.with_alpha(self.fade_out / FADE_OUT_TIME),
             );
         } else if (play_hovered && is_mouse_button_pressed(MouseButton::Left))
-            || (self.button_index.is_some_and(|f| f == 0) && is_jump_pressed(gamepad_engine))
+            || (self.button_index.is_some_and(|f| f == 0) && gamepad_engine.is_action_pressed(JUMP))
         {
             self.fade_out = get_frame_time();
         }

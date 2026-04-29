@@ -186,7 +186,7 @@ impl<'a> Game<'a> {
             .min(actual_screen_height / SCREEN_HEIGHT)
             .floor();
 
-        if is_pause_pressed(gamepad_engine) {
+        if gamepad_engine.is_action_pressed(PAUSE) {
             self.paused = !self.paused;
         }
 

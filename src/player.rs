@@ -201,7 +201,7 @@ impl Player {
         }
         if let Some(dialogue) = &mut self.active_dialogue {
             dialogue.time += delta_time;
-            if is_interact_pressed(gamepad_engine) {
+            if gamepad_engine.is_action_pressed(INTERACT) {
                 dialogue.closed = true;
             }
             return;
@@ -250,7 +250,7 @@ impl Player {
             self.shooting += delta_time;
         } else if self.active_lasso.as_ref().is_none_or(|f| f.time == 0.0)
             && !ui_clicked
-            && is_shoot_down(gamepad_engine)
+            && gamepad_engine.is_action_down(SHOOT)
             && self.riding.is_none()
             && self.wall_climbing.is_none()
         {
@@ -328,10 +328,10 @@ impl Player {
                 self.velocity = self.velocity.lerp(self.velocity * 1.2, delta_time * 5.0);
             }
             if lasso.space_activated {
-                if !is_jump_down(gamepad_engine) && !is_lasso_down(gamepad_engine) {
+                if !gamepad_engine.is_action_down(JUMP) && !gamepad_engine.is_action_down(LASSO) {
                     self.active_lasso = None;
                 }
-            } else if !is_lasso_down(gamepad_engine) {
+            } else if !gamepad_engine.is_action_down(LASSO) {
                 self.active_lasso = None;
             }
         } else {
@@ -358,7 +358,7 @@ impl Player {
                 let closest = *targets[0];
                 self.lasso_target = Some(closest);
             }
-            if is_lasso_pressed(gamepad_engine)
+            if gamepad_engine.is_action_pressed(LASSO)
                 && let Some(target) = &self.lasso_target
             {
                 self.active_lasso = Some(ActiveLasso {
@@ -421,7 +421,7 @@ impl Player {
                 None
             };
 
-            if is_jump_pressed(gamepad_engine) {
+            if gamepad_engine.is_action_pressed(JUMP) {
                 if let Some(direction) = wall_jump_state {
                     self.jump_time = delta_time;
                     self.velocity.y = -JUMP_FORCE * 1.2;
