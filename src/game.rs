@@ -437,11 +437,16 @@ impl<'a> Game<'a> {
         draw_texture(t, level.min_pos.x, level.min_pos.y, WHITE);
 
         // draw tooltips!!
+        let tooltip_offset = if gamepad_engine.last_input_type_controller {
+            3
+        } else {
+            0
+        };
         if self.level == 1 {
             for (marker_index, texture_index) in [(4, 0), (5, 1)] {
                 let pos = level.find_marker(marker_index);
                 draw_texture(
-                    &self.assets.tooltips.frames[texture_index].0,
+                    &self.assets.tooltips.frames[texture_index + tooltip_offset].0,
                     pos.x,
                     pos.y,
                     WHITE,
@@ -449,7 +454,12 @@ impl<'a> Game<'a> {
             }
         } else if level.name.starts_with("1-0") {
             let pos = level.find_marker(0);
-            draw_texture(&self.assets.tooltips.frames[2].0, pos.x, pos.y, WHITE);
+            draw_texture(
+                &self.assets.tooltips.frames[2 + tooltip_offset].0,
+                pos.x,
+                pos.y,
+                WHITE,
+            );
         }
 
         if self.level_transition_time > 0.0 {
