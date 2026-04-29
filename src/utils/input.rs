@@ -142,6 +142,7 @@ pub fn get_input_axis(gamepad_engine: &mut Gamepads) -> Vec2 {
     let mut i = Vec2::ZERO;
 
     if let Some(axis) = gamepad_engine.get_axis() {
+        gamepad_engine.last_input_type_controller = true;
         return axis;
     }
 
@@ -157,5 +158,10 @@ pub fn get_input_axis(gamepad_engine: &mut Gamepads) -> Vec2 {
     if is_key_down(KeyCode::S) {
         i.y += 1.0;
     }
+
+    if i != Vec2::ZERO {
+        gamepad_engine.last_input_type_controller = false;
+    }
+
     i
 }
