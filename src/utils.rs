@@ -39,21 +39,23 @@ pub fn is_pause_pressed(gamepad_engine: &mut Gamepads) -> bool {
 }
 pub fn is_lasso_pressed(gamepad_engine: &mut Gamepads) -> bool {
     is_mouse_button_pressed(MouseButton::Right)
-        || gamepad_engine
-            .all()
-            .any(|f| f.is_just_pressed(Button::FrontLeftUpper))
+        || gamepad_engine.all().any(|f| {
+            f.is_just_pressed(Button::FrontLeftUpper) || f.is_just_pressed(Button::FrontLeftLower)
+        })
 }
 pub fn is_lasso_down(gamepad_engine: &mut Gamepads) -> bool {
     is_mouse_button_down(MouseButton::Right)
-        || gamepad_engine
-            .all()
-            .any(|f| f.is_currently_pressed(Button::FrontLeftUpper))
+        || gamepad_engine.all().any(|f| {
+            f.is_currently_pressed(Button::FrontLeftUpper)
+                || f.is_currently_pressed(Button::FrontLeftLower)
+        })
 }
 pub fn is_shoot_down(gamepad_engine: &mut Gamepads) -> bool {
     is_mouse_button_down(MouseButton::Left)
-        || gamepad_engine
-            .all()
-            .any(|f| f.is_currently_pressed(Button::FrontRightUpper))
+        || gamepad_engine.all().any(|f| {
+            f.is_currently_pressed(Button::FrontRightUpper)
+                || f.is_currently_pressed(Button::FrontRightLower)
+        })
 }
 
 pub fn is_jump_pressed(gamepad_engine: &mut Gamepads) -> bool {
