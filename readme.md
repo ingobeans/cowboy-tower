@@ -8,6 +8,10 @@ theres bandits, lasso-swinging, horses, lasers, lava, wall climbing, monsters an
 
 ![cowboy](https://github.com/ingobeans/cowboy-tower/blob/main/readme_assets/cowboy.png?raw=true)
 
+## controls
+
+​play either with keyboard and mouse, or with a controller!! if you have a controller, i definitely recommend playing with one :3​
+
 ## about
 
 all assets and code made by me. no ai (slop) here!
