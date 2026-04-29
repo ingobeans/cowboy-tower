@@ -1,4 +1,3 @@
-use gamepads::{Button, Gamepads};
 use macroquad::{miniquad::*, prelude::*};
 #[cfg(test)]
 use std::f32::consts::PI;
