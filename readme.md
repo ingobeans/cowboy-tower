@@ -1,12 +1,12 @@
 # cowboy tower
 
-![banner](https://github.com/ingobeans/cowboy-tower/blob/main/web/banner.png?raw=true)
+![banner](https://github.com/ingobeans/cowboy-tower/blob/main/readme_assets/banner.png?raw=true)
 
 cowboy tower is an action platformer written in rust hwere you are cowboy!! you need to climb the tower and defeat bosses to reach the top! 
 
 theres bandits, lasso-swinging, horses, lasers, lava, wall climbing, monsters and mooooreeeeeeee!!!!!!!
 
-![cowboy](https://github.com/ingobeans/cowboy-tower/blob/main/web/cowboy.png?raw=true)
+![cowboy](https://github.com/ingobeans/cowboy-tower/blob/main/readme_assets/cowboy.png?raw=true)
 
 ## about
 
@@ -16,9 +16,9 @@ project made entirely for Hackclub's [flavortown](https://flavortown.hackclub.co
 
 the project is written in rust, but also uses GLSL shaders. as of writing this the project is almost nearing 4000 lines !
 
-![madeinrustbutton.png](./web/madeinrustbutton.png)
-![madeinaseprite.png](./web/madeinaseprite.png)
-![madeintiledbutton.png](./web/madeintiledbutton.png)
+![madeinrustbutton.png](./readme_assets/madeinrustbutton.png)
+![madeinaseprite.png](./readme_assets/madeinaseprite.png)
+![madeintiledbutton.png](./readme_assets/madeintiledbutton.png)
 
 ## building
 
