@@ -1,6 +1,5 @@
 use std::env::args;
 
-use gamepads::Gamepads;
 use macroquad::{miniquad::conf::Platform, prelude::*};
 
 use crate::{assets::Assets, data::SaveManager, game::Game, menu::MainMenu, utils::*};

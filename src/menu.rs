@@ -1,6 +1,5 @@
 use std::f32::consts::PI;
 
-use gamepads::Gamepads;
 use macroquad::prelude::*;
 
 use crate::{assets::Assets, data::SaveManager, utils::*};

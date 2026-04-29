@@ -39,6 +39,8 @@ pub struct Assets {
     pub pole: Animation,
     pub font: Font,
 
+    pub tooltips: Animation,
+
     pub pause_menu: Texture2D,
     pub menu_button: Animation,
     pub logo: Texture2D,
@@ -119,6 +121,8 @@ impl Assets {
             endscreen: load_ase_texture(include_bytes!("../assets/endscreen.ase"), None),
             gate: Animation::from_file(include_bytes!("../assets/gate.ase")),
             pole: Animation::from_file(include_bytes!("../assets/pole.ase")),
+
+            tooltips: Animation::from_file(include_bytes!("../assets/tooltips.ase")),
 
             pause_menu: load_ase_texture(include_bytes!("../assets/pause_menu.ase"), None),
             menu_button: Animation::from_file(include_bytes!("../assets/menu_button.ase")),

@@ -1,6 +1,5 @@
 use std::f32::consts::PI;
 
-use gamepads::Gamepads;
 use macroquad::{miniquad::window::screen_size, prelude::*};
 
 use crate::{
@@ -436,6 +435,22 @@ impl<'a> Game<'a> {
         // draw level
         let t = &level.camera.render_target.as_ref().unwrap().texture;
         draw_texture(t, level.min_pos.x, level.min_pos.y, WHITE);
+
+        // draw tooltips!!
+        if self.level == 1 {
+            for (marker_index, texture_index) in [(4, 0), (5, 1)] {
+                let pos = level.find_marker(marker_index);
+                draw_texture(
+                    &self.assets.tooltips.frames[texture_index].0,
+                    pos.x,
+                    pos.y,
+                    WHITE,
+                );
+            }
+        } else if level.name.starts_with("1-0") {
+            let pos = level.find_marker(0);
+            draw_texture(&self.assets.tooltips.frames[2].0, pos.x, pos.y, WHITE);
+        }
 
         if self.level_transition_time > 0.0 {
             // draw previous level if during transition
