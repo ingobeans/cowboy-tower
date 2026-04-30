@@ -22,6 +22,7 @@ struct GameManager<'a> {
     menu: MainMenu,
     gamepad_engine: Gamepads,
     save_manager: SaveManager,
+    fullscreen: bool,
 }
 
 impl<'a> GameManager<'a> {
@@ -32,6 +33,7 @@ impl<'a> GameManager<'a> {
             save_manager: SaveManager::new(),
             game: level.map(|i| Game::new(assets, i)),
             menu: MainMenu::new(),
+            fullscreen: false,
         }
     }
     fn update(&mut self) {
@@ -52,6 +54,14 @@ impl<'a> GameManager<'a> {
                 let mut game = Game::new(self.assets, self.save_manager.level);
                 game.fade_timer = 0.5;
                 self.game = Some(game);
+            }
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            if is_key_pressed(KeyCode::Enter) {
+                self.fullscreen = !self.fullscreen;
+                set_fullscreen(self.fullscreen);
             }
         }
     }
