@@ -85,6 +85,8 @@ pub struct MainMenu {
     button_index: Option<usize>,
     last_input: Vec2,
     fade_out: f32,
+    reset_fade: f32,
+    reset_pressed: bool,
 }
 
 impl MainMenu {
@@ -100,6 +102,8 @@ impl MainMenu {
             button_index: None,
             last_input: Vec2::ZERO,
             fade_out: 0.0,
+            reset_fade: 0.0,
+            reset_pressed: false,
         }
     }
     fn get_look_angle(&self) -> Vec2 {
@@ -338,6 +342,58 @@ impl MainMenu {
                 ..Default::default()
             },
         );
+
+        if save_manager.level > 0 {
+            let wipe_button_size = assets.wipesave.frames[0].0.size();
+            let wipe_button_pos = vec2(
+                actual_screen_width - (wipe_button_size.x + 1.0) * scale_factor,
+                actual_screen_height - (wipe_button_size.y + 1.0) * scale_factor,
+            );
+            let hover_wipe_button = inside(
+                mouse_position().into(),
+                wipe_button_pos,
+                wipe_button_size * scale_factor,
+            );
+
+            if hover_wipe_button && is_mouse_button_pressed(MouseButton::Left) {
+                if self.reset_pressed {
+                    self.reset_fade = get_frame_time();
+                } else {
+                    self.reset_pressed = true;
+                }
+            }
+
+            draw_texture_ex(
+                &assets.wipesave.frames[if hover_wipe_button { 1 } else { 0 }
+                    + if self.reset_pressed { 2 } else { 0 }]
+                .0,
+                wipe_button_pos.x,
+                wipe_button_pos.y,
+                WHITE,
+                DrawTextureParams {
+                    dest_size: Some(wipe_button_size * scale_factor),
+                    ..Default::default()
+                },
+            );
+        }
+        if self.reset_fade > 0.0 {
+            self.reset_fade += get_frame_time();
+            if self.reset_fade > 1.0 {
+                self.reset_fade = 0.0;
+            } else if self.reset_fade > 0.5 && save_manager.level != 0 {
+                save_manager.save(0);
+            }
+            let y = -4.0 * self.reset_fade.powi(2) + 4.0 * self.reset_fade;
+
+            draw_rectangle(
+                -1.0,
+                -1.0,
+                actual_screen_width + 2.0,
+                actual_screen_height + 2.0,
+                BLACK.with_alpha(y),
+            );
+        }
+
         const FADE_OUT_TIME: f32 = 0.5;
         if self.fade_out > 0.0 {
             draw_rectangle(

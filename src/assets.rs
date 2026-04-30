@@ -41,6 +41,8 @@ pub struct Assets {
 
     pub tooltips: Animation,
 
+    pub wipesave: Animation,
+
     pub pause_menu: Texture2D,
     pub menu_button: Animation,
     pub logo: Texture2D,
@@ -123,6 +125,8 @@ impl Assets {
             pole: Animation::from_file(include_bytes!("../assets/pole.ase")),
 
             tooltips: Animation::from_file(include_bytes!("../assets/tooltips.ase")),
+
+            wipesave: Animation::from_file(include_bytes!("../assets/wipesave.ase")),
 
             pause_menu: load_ase_texture(include_bytes!("../assets/pause_menu.ase"), None),
             menu_button: Animation::from_file(include_bytes!("../assets/menu_button.ase")),
