@@ -382,6 +382,7 @@ impl MainMenu {
                 self.reset_fade = 0.0;
             } else if self.reset_fade > 0.5 && save_manager.level != 0 {
                 save_manager.save(0);
+                self.reset_pressed = false;
             }
             let y = -4.0 * self.reset_fade.powi(2) + 4.0 * self.reset_fade;
 
