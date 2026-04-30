@@ -127,7 +127,12 @@ pub static LASSO: Action = Action::Mousebased(
 );
 pub static SHOOT: Action = Action::Mousebased(
     MouseButton::Left,
-    &[Button::FrontRightLower, Button::FrontRightUpper],
+    &[
+        Button::FrontRightLower,
+        Button::FrontRightUpper,
+        Button::ActionLeft,
+        Button::ActionUp,
+    ],
 );
 pub static PAUSE: Action = Action::Keybased(
     KeyCode::Escape,
