@@ -70,8 +70,8 @@ impl Gamepads {
                     false
                 }
             }
-            Action::Mousebased(mousebutton, buttons) => {
-                let mouse_pressed = is_mouse_button_pressed(mousebutton);
+            Action::Mousebased(mousebutton, keycode, buttons) => {
+                let mouse_pressed = is_mouse_button_pressed(mousebutton) || is_key_pressed(keycode);
                 if mouse_pressed {
                     self.last_input_type_controller = false;
                     true
@@ -98,8 +98,8 @@ impl Gamepads {
                     false
                 }
             }
-            Action::Mousebased(mousebutton, buttons) => {
-                let mouse_pressed = is_mouse_button_down(mousebutton);
+            Action::Mousebased(mousebutton, keycode, buttons) => {
+                let mouse_pressed = is_mouse_button_down(mousebutton) || is_key_down(keycode);
                 if mouse_pressed {
                     self.last_input_type_controller = false;
                     true
@@ -117,16 +117,18 @@ impl Gamepads {
 #[derive(Copy, Clone)]
 pub enum Action {
     Keybased(KeyCode, &'static [Button]),
-    Mousebased(MouseButton, &'static [Button]),
+    Mousebased(MouseButton, KeyCode, &'static [Button]),
 }
 
 // define actions
 pub static LASSO: Action = Action::Mousebased(
     MouseButton::Right,
+    KeyCode::N,
     &[Button::FrontLeftLower, Button::FrontLeftUpper],
 );
 pub static SHOOT: Action = Action::Mousebased(
     MouseButton::Left,
+    KeyCode::M,
     &[
         Button::FrontRightLower,
         Button::FrontRightUpper,
