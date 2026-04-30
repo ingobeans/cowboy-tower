@@ -13,6 +13,7 @@ mod physics;
 struct ActiveLasso {
     starting_velocity: Vec2,
     time: f32,
+    anim_time: f32,
     hook_pos: Vec2,
     speed: f32,
     lasso_length: f32,
@@ -303,21 +304,26 @@ impl Player {
                     speed += lasso.starting_velocity.y.max(0.0)
                         * if speed.is_sign_negative() { -1.0 } else { 1.0 };
 
-                    dbg!(speed);
                     let max_speed =
                         LASSO_MAX_ENTRY_SPEED.lerp(LASSO_MAX_ENTRY_SPEED * 1.4, down_delta_amt);
                     lasso.speed = speed.clamp(-max_speed, max_speed);
                 }
+
+                lasso.anim_time +=
+                    delta_time * ((lasso.speed.abs() - 50.0) / 120.0).clamp(0.5, 1.0);
 
                 lasso.speed *= 1.0.lerp(drag_factor, delta_time);
 
                 // handle user input
                 if input.x != 0.0 {
                     let mut new = lasso.speed;
+                    self.moving = true;
                     if input.x < 0.0 {
                         new += LASSO_SPEED_BUILDING_SPEED * delta_time;
+                        self.facing_left = true;
                     } else {
                         new -= LASSO_SPEED_BUILDING_SPEED * delta_time;
+                        self.facing_left = false;
                     }
                     if new.abs() < LASSO_SPEED_BUILDING_MAX {
                         lasso.speed = new;
@@ -390,6 +396,7 @@ impl Player {
                 self.active_lasso = Some(ActiveLasso {
                     starting_velocity: self.velocity,
                     time: delta_time,
+                    anim_time: 0.0,
                     hook_pos: *target,
                     speed: f32::NAN,
                     lasso_length: target.distance(self.pos),
@@ -495,6 +502,7 @@ impl Player {
                             self.active_lasso = Some(ActiveLasso {
                                 starting_velocity: self.velocity,
                                 time: delta_time,
+                                anim_time: 0.0,
                                 hook_pos: *target,
                                 speed: f32::NAN,
                                 lasso_length: target.distance(self.pos),
@@ -749,7 +757,11 @@ impl Player {
 
         // draw legs and torso textures
 
-        let legs = if self.wall_climbing.is_some() {
+        let legs = if self.moving
+            && let Some(lasso) = &self.active_lasso
+        {
+            &assets.legs.animations[4].get_at_time((lasso.anim_time * 1000.0) as u32)
+        } else if self.wall_climbing.is_some() {
             &assets.legs.animations[3].frames[0].0
         } else if self.jump_time > 0.0 {
             let anim = &assets.legs.animations[2];
