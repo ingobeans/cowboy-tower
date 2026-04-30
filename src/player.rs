@@ -11,6 +11,7 @@ pub use physics::*;
 
 mod physics;
 struct ActiveLasso {
+    starting_velocity: Vec2,
     time: f32,
     hook_pos: Vec2,
     speed: f32,
@@ -285,13 +286,27 @@ impl Player {
                 // yields faster acceleration
                 let drag_factor: f32 = 0.8 * lasso.lasso_length / 32.0;
 
-                let down = vec2(0.0, lasso.lasso_length);
                 let delta = self.pos - lasso.hook_pos;
+                let down = vec2(0.0, lasso.lasso_length);
+                let down_delta_amt = delta.y / lasso.lasso_length;
 
                 let angle = delta.to_angle();
                 let right_half_circle = angle < PI / 2.0 && angle > -PI / 2.0;
                 if lasso.speed.is_nan() {
-                    lasso.speed = (-self.velocity.x).clamp(-GRAVITY, GRAVITY);
+                    let mut speed = self.velocity.x.abs().clamp(-GRAVITY, GRAVITY)
+                        * if lasso.starting_velocity.x.is_sign_negative() {
+                            1.0
+                        } else {
+                            -1.0
+                        };
+
+                    speed += lasso.starting_velocity.y.max(0.0)
+                        * if speed.is_sign_negative() { -1.0 } else { 1.0 };
+
+                    dbg!(speed);
+                    let max_speed =
+                        LASSO_MAX_ENTRY_SPEED.lerp(LASSO_MAX_ENTRY_SPEED * 1.4, down_delta_amt);
+                    lasso.speed = speed.clamp(-max_speed, max_speed);
                 }
 
                 lasso.speed *= 1.0.lerp(drag_factor, delta_time);
@@ -319,7 +334,7 @@ impl Player {
                 lasso.speed += down_delta_delta.y * delta_time * GRAVITY / lasso.lasso_length
                     * if right_half_circle { 1.0 } else { -1.0 };
             } else {
-                const MOVE_SPEED: f32 = 128.0;
+                const MOVE_SPEED: f32 = 512.0;
                 let mut target_pos = (lasso.lerp_source - lasso.hook_pos).normalize()
                     * lasso.lasso_length
                     + lasso.hook_pos;
@@ -335,10 +350,8 @@ impl Player {
 
                 let delta = target_pos - self.pos;
                 let normalized = delta.normalize();
-                self.velocity = self
-                    .velocity
-                    .lerp(normalized * MOVE_SPEED, delta_time * 5.0);
-                self.velocity = self.velocity.lerp(self.velocity * 1.2, delta_time * 5.0);
+
+                self.velocity += normalized * MOVE_SPEED * delta_time;
             }
             if lasso.space_activated {
                 if !gamepad_engine.is_action_down(JUMP) && !gamepad_engine.is_action_down(LASSO) {
@@ -375,6 +388,7 @@ impl Player {
                 && let Some(target) = &self.lasso_target
             {
                 self.active_lasso = Some(ActiveLasso {
+                    starting_velocity: self.velocity,
                     time: delta_time,
                     hook_pos: *target,
                     speed: f32::NAN,
@@ -479,6 +493,7 @@ impl Player {
                             && let Some(target) = &self.lasso_target
                         {
                             self.active_lasso = Some(ActiveLasso {
+                                starting_velocity: self.velocity,
                                 time: delta_time,
                                 hook_pos: *target,
                                 speed: f32::NAN,

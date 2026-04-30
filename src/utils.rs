@@ -10,9 +10,12 @@ pub use input::*;
 
 pub const SCREEN_WIDTH: f32 = 256.0;
 pub const SCREEN_HEIGHT: f32 = 144.0;
+
 pub const MAX_LASSO_DISTANCE: f32 = 64.0;
 pub const LASSO_SPEED_BUILDING_SPEED: f32 = 60.0;
 pub const LASSO_SPEED_BUILDING_MAX: f32 = 180.0;
+pub const LASSO_MAX_ENTRY_SPEED: f32 = 120.0;
+
 pub const GRAVITY: f32 = 9.8 * 75.0;
 pub const LEVEL_TRANSITION_LENGTH: f32 = 0.5;
 pub const DEATH_TILES: &[u16] = &[128, 352, 288];
