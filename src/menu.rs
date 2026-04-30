@@ -201,7 +201,7 @@ impl MainMenu {
             self.camera.position.z =
                 (self.time * ORBIT_SPEED).sin() * ORBIT_RADIUS + ORBIT_CENTER.z;
         }
-        const BUTTON_AMT: usize = 2;
+        const BUTTON_AMT: usize = 1;
 
         let input = get_input_axis(gamepad_engine);
         if input != self.last_input {
