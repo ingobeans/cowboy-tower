@@ -346,7 +346,7 @@ impl MainMenu {
         if save_manager.level > 0 {
             let wipe_button_size = assets.wipesave.frames[0].0.size();
             let wipe_button_pos = vec2(
-                actual_screen_width - (wipe_button_size.x + 1.0) * scale_factor,
+                1.0 * scale_factor,
                 actual_screen_height - (wipe_button_size.y + 1.0) * scale_factor,
             );
             let hover_wipe_button = inside(
