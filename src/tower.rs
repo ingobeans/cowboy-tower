@@ -18,7 +18,9 @@ fn calculate_world_heights(assets: &Assets) -> Vec<(f32, f32)> {
         total += height + FLOOR_PADDING + 16.0;
         worlds.last_mut().unwrap().0 += height + FLOOR_PADDING + 8.0;
     }
-    worlds.last_mut().unwrap().0 -= 2.0 * FLOOR_PADDING + 8.0;
+    // hack fix to not make last level show sky above
+    worlds.last_mut().unwrap().0 += 16.0 * FLOOR_PADDING + 8.0;
+
     worlds
 }
 
