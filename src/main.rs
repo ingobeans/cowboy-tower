@@ -54,6 +54,7 @@ impl<'a> GameManager<'a> {
                 let mut game = Game::new(self.assets, self.save_manager.level);
                 game.fade_timer = 0.5;
                 self.game = Some(game);
+                show_mouse(false);
             }
         }
 

@@ -188,6 +188,7 @@ impl<'a> Game<'a> {
 
         if gamepad_engine.is_action_pressed(PAUSE) {
             self.paused = !self.paused;
+            show_mouse(self.paused);
         }
 
         if self.ui_clicked && !is_mouse_button_down(MouseButton::Left) {
@@ -1035,12 +1036,16 @@ impl<'a> Game<'a> {
                 && interacted
             {
                 match i {
-                    0 => self.paused = false,
+                    0 => {
+                        self.paused = false;
+                        show_mouse(false);
+                    }
                     1 => quit = true,
                     2 => {
                         self.load_level(self.level);
                         self.fade_timer = 0.5;
                         self.paused = false;
+                        show_mouse(false);
                     }
                     _ => {}
                 }
